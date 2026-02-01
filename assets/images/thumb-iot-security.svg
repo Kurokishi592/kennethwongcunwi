@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 675" role="img" aria-label="IoT Tilt & IR Security">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7c3aed" stop-opacity="0.85"/>
+      <stop offset="1" stop-color="#22c55e" stop-opacity="0.75"/>
+    </linearGradient>
+    <filter id="s" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="675" fill="#0b1220"/>
+  <rect x="70" y="70" width="1060" height="535" rx="36" fill="url(#g)" filter="url(#s)" opacity="0.32"/>
+  <g fill="none" stroke="rgba(255,255,255,0.85)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M360 350c0-80 65-145 145-145s145 65 145 145"/>
+    <path d="M390 350c0-64 52-116 116-116s116 52 116 116" opacity="0.75"/>
+    <path d="M420 350c0-48 39-87 87-87s87 39 87 87" opacity="0.55"/>
+    <path d="M720 430h140c35 0 64-29 64-64v-32c0-35-29-64-64-64H720"/>
+    <path d="M744 430v-160"/>
+  </g>
+  <g fill="rgba(255,255,255,0.9)">
+    <text x="90" y="570" font-family="ui-monospace, Menlo, Consolas, monospace" font-size="44">~/projects/iot-tilt-ir-security</text>
+    <text x="90" y="615" font-family="ui-sans-serif, system-ui" font-size="30" fill="rgba(255,255,255,0.75)">FreeRTOS • ESP32 • Cortex‑M • Sensors</text>
+  </g>
+</svg>

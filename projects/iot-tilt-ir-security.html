@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IoT Tilt & IR Security Device | Kenneth Wong Cun Wi</title>
+  <meta name="description" content="FreeRTOS-based IoT security device using tilt/IR sensing with remote web UI monitoring." />
+  <link rel="canonical" href="https://kennethwongcunwi.com/projects/iot-tilt-ir-security.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark" aria-hidden="true">KW</span>
+        <span class="brand-text">
+          <span class="prompt" aria-hidden="true">kenneth@main:~$</span>
+          <span class="brand-name">Kenneth Wong Cun Wi</span>
+        </span>
+      </a>
+      <nav class="nav" id="primaryNav" aria-label="Primary">
+        <a href="/">~/</a>
+        <a href="/projects/">~/projects/</a>
+        <a href="/blog/">~/blog/</a>
+        <a href="/#contact">~/contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-button" type="button" id="menuToggle" aria-label="Toggle menu" title="Menu"><span aria-hidden="true">☰</span></button>
+        <button class="icon-button" type="button" id="themeToggle" aria-label="Toggle theme" title="Toggle theme"><span aria-hidden="true">◐</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="content" class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>IoT Tilt & IR Security Device</h2>
+        <p class="muted">FreeRTOS • ESP32 • Cortex‑M • ISRs/queues/semaphores • Web UI</p>
+      </div>
+
+      <article class="panel">
+        <h3>Overview</h3>
+        <p class="muted">
+          A fast-paced 2‑day embedded IoT build: detect device tilt and high infra-red (IR) light and trigger immediate visual and audible alarms.
+          The device can also be monitored and controlled remotely via a web UI.
+        </p>
+
+        <h3>Key technical highlights</h3>
+        <ul class="bullets">
+          <li>FreeRTOS firmware with ISRs, semaphores, queues, message passing, time-slicing and pre-emption.</li>
+          <li>Dual‑MCU architecture: FRDM‑MCXC444 + ESP32‑S2‑DevkitM‑1U.</li>
+          <li>Peripherals: mercury ball tilt switch, IR sensor, MPU‑6050 IMU.</li>
+          <li>Focus areas: task prioritization, ISR design, low-latency state transitions.</li>
+        </ul>
+
+        <h3>Media</h3>
+        <ul class="bullets">
+          <li>Photo (add): <span class="mono">RTOS Device.JPEG</span></li>
+          <li>Write-up PDF (add): <span class="mono">RTOS Project.pdf</span></li>
+        </ul>
+
+        <h3>Links</h3>
+        <ul class="bullets">
+          <li>Repo: add GitHub link</li>
+          <li>Write-up: add PDF under <span class="mono">/assets/</span> and link here</li>
+        </ul>
+      </article>
+
+      <div class="section-foot">
+        <a class="button" href="/projects/">← Back to projects</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <p class="muted">© <span id="year"></span> Kenneth Wong Cun Wi.</p>
+    </div>
+  </footer>
+
+  <script src="/main.js" defer></script>
+</body>
+</html>

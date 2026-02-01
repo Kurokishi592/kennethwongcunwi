@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Teleoperated Search-and-Rescue Robot | Kenneth Wong Cun Wi</title>
+  <meta name="description" content="Teleoperated robot with SLAM, LiDAR, camera, IMU heading, and secure remote operation." />
+  <link rel="canonical" href="https://kennethwongcunwi.com/projects/teleop-search-rescue-robot.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark" aria-hidden="true">KW</span>
+        <span class="brand-text">
+          <span class="prompt" aria-hidden="true">kenneth@main:~$</span>
+          <span class="brand-name">Kenneth Wong Cun Wi</span>
+        </span>
+      </a>
+      <nav class="nav" id="primaryNav" aria-label="Primary">
+        <a href="/">~/</a>
+        <a href="/projects/">~/projects/</a>
+        <a href="/blog/">~/blog/</a>
+        <a href="/#contact">~/contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-button" type="button" id="menuToggle" aria-label="Toggle menu" title="Menu"><span aria-hidden="true">☰</span></button>
+        <button class="icon-button" type="button" id="themeToggle" aria-label="Toggle theme" title="Toggle theme"><span aria-hidden="true">◐</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="content" class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Teleoperated Search-and-Rescue Robot</h2>
+        <p class="muted">NUS CG2111A final project • Jan 2025 – Apr 2025</p>
+      </div>
+
+      <article class="panel">
+        <h3>Overview</h3>
+        <p class="muted">
+          Designed for a remote operator to control the robot using a keyboard from a separate room.
+          The operator perceives the environment via sensors and mapping, searches for targets, delivers a care package, and returns to a safe zone.
+        </p>
+
+        <h3>What I built</h3>
+        <ul class="bullets">
+          <li>Integrated LiDAR + SLAM, RPi Camera, HC‑SR04 for mapping and obstacle detection.</li>
+          <li>Integrated BNO‑085 IMU for yaw/heading estimates to turn accurately.</li>
+          <li>Developed low-level firmware using bare-metal programming on Arduino Mega.</li>
+          <li>Implemented TLS encryption for secure remote operation.</li>
+        </ul>
+
+        <h3>Links</h3>
+        <ul class="bullets">
+          <li>GitHub: <a href="https://github.com/Kurokishi592/CG2111A-Alex" target="_blank" rel="noopener">github.com/Kurokishi592/CG2111A-Alex</a></li>
+        </ul>
+
+        <h3>Media</h3>
+        <ul class="bullets">
+          <li>Robot photo (add): <span class="mono">Robot.JPG</span></li>
+        </ul>
+      </article>
+
+      <div class="section-foot">
+        <a class="button" href="/projects/">← Back to projects</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <p class="muted">© <span id="year"></span> Kenneth Wong Cun Wi.</p>
+    </div>
+  </footer>
+
+  <script src="/main.js" defer></script>
+</body>
+</html>

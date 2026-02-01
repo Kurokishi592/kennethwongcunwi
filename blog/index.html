@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog | Kenneth Wong Cun Wi</title>
+  <meta name="description" content="Documenting the past and present for the future." />
+  <link rel="canonical" href="https://kennethwongcunwi.com/blog/" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark" aria-hidden="true">KW</span>
+        <span class="brand-text">
+          <span class="prompt" aria-hidden="true">kenneth@main:~$</span>
+          <span class="brand-name">Kenneth Wong Cun Wi</span>
+        </span>
+      </a>
+      <nav class="nav" id="primaryNav" aria-label="Primary">
+        <a href="/">~/</a>
+        <a href="/projects/">~/projects/</a>
+        <a href="/blog/">~/blog/</a>
+        <a href="/#contact">~/contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-button" type="button" id="menuToggle" aria-label="Toggle menu" title="Menu">
+          <span aria-hidden="true">☰</span>
+        </button>
+        <button class="icon-button" type="button" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">
+          <span aria-hidden="true">◐</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="content" class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Blog / The start</h2>
+        <p class="muted">Testing stuff out now</p>
+      </div>
+
+      <div class="grid cards">
+        <article class="card">
+          <div class="card-top">
+            <h3><a href="/blog/sensors.html">Yaw changes when I roll/pitch my IMU board</a></h3>
+            <p class="muted">Debugging log: coupling, tilt compensation, and why atan2(magX, magY) can betray you.</p>
+          </div>
+          <div class="tag-row">
+            <span class="tag">Sensors</span>
+            <span class="tag">IMU</span>
+            <span class="tag">Debugging</span>
+          </div>
+          <div class="card-actions">
+            <a class="text-link" href="/blog/sensors.html">Read →</a>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-top">
+            <h3>ROS nodes: my mental model</h3>
+            <p class="muted">(Add post) Explaining topics/services/actions from a debugging perspective.</p>
+          </div>
+          <div class="tag-row">
+            <span class="tag">ROS</span>
+            <span class="tag">Systems</span>
+          </div>
+          <div class="card-actions">
+            <a class="text-link" href="#">Write (add)</a>
+          </div>
+        </article>
+      </div>
+
+      <div class="section-foot">
+        <a class="button" href="/">← Back home</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <p class="muted">© <span id="year"></span> Kenneth Wong Cun Wi.</p>
+    </div>
+  </footer>
+
+  <script src="/main.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hornet X | Kenneth Wong Cun Wi</title>
+  <meta name="description" content="Built an AUV sensors daughterboard PCB and custom sensor fusion using quaternions and Kalman filtering." />
+  <link rel="canonical" href="https://kennethwongcunwi.com/projects/hornet-x.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark" aria-hidden="true">KW</span>
+        <span class="brand-text">
+          <span class="prompt" aria-hidden="true">kenneth@main:~$</span>
+          <span class="brand-name">Kenneth Wong Cun Wi</span>
+        </span>
+      </a>
+      <nav class="nav" id="primaryNav" aria-label="Primary">
+        <a href="/">~/</a>
+        <a href="/projects/">~/projects/</a>
+        <a href="/blog/">~/blog/</a>
+        <a href="/#contact">~/contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-button" type="button" id="menuToggle" aria-label="Toggle menu" title="Menu"><span aria-hidden="true">☰</span></button>
+        <button class="icon-button" type="button" id="themeToggle" aria-label="Toggle theme" title="Toggle theme"><span aria-hidden="true">◐</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="content" class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Hornet X</h2>
+        <p class="muted">Bumblebee Autonomous Systems training • Sep 2024 – Mar 2025</p>
+      </div>
+
+      <article class="panel">
+        <h3>What I built</h3>
+        <ul class="bullets">
+          <li>Designed and soldered a custom sensors daughterboard PCB integrating LIS3MDL magnetometer, MPU6500 accel/gyro, and Teensy 4.1.</li>
+          <li>Wrote a custom sensor fusion pipeline using polar coordinates and quaternions, then applied a Kalman filter for robust yaw/roll/pitch.</li>
+          <li>Worked with I2C, SPI, and CAN bus interfacing and general electrical debugging.</li>
+        </ul>
+
+        <h3>Links</h3>
+        <ul class="bullets">
+          <li>GitHub: <a href="https://github.com/Kurokishi592/HX-Sensors-Code" target="_blank" rel="noopener">github.com/Kurokishi592/HX-Sensors-Code</a></li>
+        </ul>
+
+        <h3>Media</h3>
+        <ul class="bullets">
+          <li>Demo photo (add): <span class="mono">sensors.PNG</span></li>
+          <li>PCB photo (add): <span class="mono">sensors_pcb.png</span></li>
+        </ul>
+      </article>
+
+      <div class="section-foot">
+        <a class="button" href="/projects/">← Back to projects</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <p class="muted">© <span id="year"></span> Kenneth Wong Cun Wi.</p>
+    </div>
+  </footer>
+
+  <script src="/main.js" defer></script>
+</body>
+</html>

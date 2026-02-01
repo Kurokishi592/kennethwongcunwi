@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yaw changes when I roll/pitch my IMU board | Kenneth Wong Cun Wi</title>
+  <meta name="description" content="Debugging log: why yaw changes when I roll/pitch an IMU board, what I tried, and what worked." />
+  <link rel="canonical" href="https://kennethwongcunwi.com/blog/sensors.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark" aria-hidden="true">KW</span>
+        <span class="brand-text">
+          <span class="prompt" aria-hidden="true">kenneth@main:~$</span>
+          <span class="brand-name">Kenneth Wong Cun Wi</span>
+        </span>
+      </a>
+      <nav class="nav" id="primaryNav" aria-label="Primary">
+        <a href="/">~/</a>
+        <a href="/projects/">~/projects/</a>
+        <a href="/blog/">~/blog/</a>
+        <a href="/#contact">~/contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-button" type="button" id="menuToggle" aria-label="Toggle menu" title="Menu">
+          <span aria-hidden="true">☰</span>
+        </button>
+        <button class="icon-button" type="button" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">
+          <span aria-hidden="true">◐</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="content" class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Yaw changes when I roll/pitch my IMU board</h2>
+        <p class="muted">Debugging notes from a real robotics build — the kind of problem that looks “impossible” until you model the frames correctly.</p>
+      </div>
+
+      <article class="panel">
+        <h3>Problem</h3>
+        <p class="muted">
+          When I roll or pitch my sensor board, roll and pitch readings are clean and stable (no drift). But at the same time, my yaw value changes,
+          even though I did not yaw the board.
+        </p>
+
+        <h3>Observation</h3>
+        <ul class="bullets">
+          <li>Roll/pitch look accurate and not drifting.</li>
+          <li>Yaw changes as roll/pitch changes (coupled).</li>
+          <li>The coupling is asymmetric: some directions (e.g. positive roll/pitch) behave “more correct” than others.</li>
+        </ul>
+
+        <h3>Images / plots</h3>
+        <p class="muted">
+          I’m keeping the original screenshots referenced in my notes. When I publish the final version, I’ll export them as PNGs and put them under
+          <span class="mono">/assets/images/</span>.
+        </p>
+        <ul class="bullets">
+          <li>Placeholder: <span class="mono">Pasted image 20250228204519.png</span></li>
+          <li>Placeholder: <span class="mono">Pasted image 20250228204307.png</span></li>
+          <li>Placeholder: <span class="mono">Pasted image 20250228204314.png</span></li>
+        </ul>
+
+        <h3>What we tried (and what we learned)</h3>
+        <ol class="bullets">
+          <li>
+            <strong>Mag recalibration (outside, minimal interference)</strong>
+            <div class="muted">
+              We suspected raw data issues. In microtesla vector form, the direction to magnetic north looks reasonable, but when each axis is pointed to
+              magnetic north, the axes don’t return the same magnitude.
+            </div>
+          </li>
+          <li>
+            <strong>Tilt compensation using accel + magnetometer projection</strong>
+            <div class="muted">
+              Yaw was computed by correcting tilt of the mag heading using accel. But accel is noisy, so the gravity unit vector (a-hat) becomes unreliable.
+              We explored using Madgwick’s <span class="mono">getGrav()</span> as an alternative gravity vector; <span class="mono">gravX</span>/<span class="mono">gravY</span> looked reliable,
+              but <span class="mono">gravZ</span> never reached 1.00g, so we weren’t sure if this was due to interference or modeling.
+            </div>
+          </li>
+          <li>
+            <strong>3×3 rotation matrix to decouple magnetometer under roll/pitch</strong>
+            <div class="muted">
+              Applying a rotation matrix helped for positive pitch and positive roll coupling, but other directions still produced the yaw problem.
+            </div>
+          </li>
+          <li>
+            <strong>Switching away from Madgwick for yaw (Kalman filter)</strong>
+            <div class="muted">
+              Madgwick was hard to debug, so we tried a Kalman approach for yaw. Inputs: corrected yaw (from offset mag + rotation correction) and gyroZ.
+              But the filter barely had any effect.
+            </div>
+          </li>
+          <li>
+            <strong>Suspected overdamping / tuning issues</strong>
+            <div class="muted">
+              The yaw response didn’t correspond to the real-world tilt angle magnitude — it felt overdamped. I attempted to tune filter parameters (e.g.
+              Q/R values depending on the filter), but it didn’t improve.
+            </div>
+          </li>
+        </ol>
+
+        <h3>Working hypothesis (what finally made this make sense)</h3>
+        <p class="muted">
+          Yaw is typically computed from <span class="mono">atan2(magX, magY)</span>. But roll/pitch changes can change <span class="mono">magX</span> and <span class="mono">magY</span>
+          even if the board isn’t yawed. So “yaw changes when I roll/pitch” can be a frame/coupling issue rather than a yaw rotation.
+        </p>
+
+        <h3>Solution direction</h3>
+        <p class="muted">
+          To solve the coupling effect, the core idea is: offset/correct the roll/pitch-induced change in the horizontal components used for yaw so yaw doesn’t move
+          when it shouldn’t.
+        </p>
+        <ul class="bullets">
+          <li>Model how roll affects the XZ plane (rotation about Y) and pitch affects the YZ plane (rotation about X).</li>
+          <li>Recognize that yaw uses the XY projection, so if roll/pitch changes X/Y, yaw will change.</li>
+          <li>Use a quaternion or rotation-based compensation so the magnetometer is expressed in a consistent reference frame before heading is computed.</li>
+          <li>For the “90 degrees test”: fit a regression line (yaw vs pitch/roll) to learn a corrective function.</li>
+        </ul>
+
+        <h3>Snippet (tilt-compensated magnetometer yaw)</h3>
+        <p class="muted">This is the core structure I used while experimenting (cleaned up formatting, same idea):</p>
+        <pre><code>// Compute yaw using tilt-compensated magnetometer
+// roll = phi (rad), pitch = theta (rad)
+
+float cosPhi = cos(roll);
+float sinPhi = sin(roll);
+float cosTheta = cos(pitch);
+float sinTheta = sin(pitch);
+
+float mX_rot = magX * cosTheta + magZ * sinTheta;
+float mY_rot = magX * sinPhi * sinTheta + magY * cosPhi - magZ * sinPhi * cosTheta;
+
+float yaw = atan2(mY_rot, mX_rot) * 180.0f / M_PI;
+</code></pre>
+
+        <h3>Next steps</h3>
+        <ul class="bullets">
+          <li>Export the referenced images and add them under <span class="mono">/assets/images/</span>.</li>
+          <li>Add a short “final takeaway” once the regression/quaternion approach is fully validated.</li>
+          <li>Write a follow-up: how I validate calibration quality (hard/soft iron, misalignment).</li>
+        </ul>
+      </article>
+
+      <div class="section-foot">
+        <a class="button" href="/blog/">← Back to blog</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <p class="muted">© <span id="year"></span> Kenneth Wong Cun Wi.</p>
+    </div>
+  </footer>
+
+  <script src="/main.js" defer></script>
+</body>
+</html>

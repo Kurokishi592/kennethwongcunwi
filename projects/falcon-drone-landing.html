@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FALCON: Dynamic Drone Landing System | Kenneth Wong Cun Wi</title>
+  <meta name="description" content="Vision-based dynamic drone landing using AprilTags, sensor fusion, and PID control with a Python GUI." />
+  <link rel="canonical" href="https://kennethwongcunwi.com/projects/falcon-drone-landing.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark" aria-hidden="true">KW</span>
+        <span class="brand-text">
+          <span class="prompt" aria-hidden="true">kenneth@main:~$</span>
+          <span class="brand-name">Kenneth Wong Cun Wi</span>
+        </span>
+      </a>
+      <nav class="nav" id="primaryNav" aria-label="Primary">
+        <a href="/">~/</a>
+        <a href="/projects/">~/projects/</a>
+        <a href="/blog/">~/blog/</a>
+        <a href="/#contact">~/contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-button" type="button" id="menuToggle" aria-label="Toggle menu" title="Menu"><span aria-hidden="true">☰</span></button>
+        <button class="icon-button" type="button" id="themeToggle" aria-label="Toggle theme" title="Toggle theme"><span aria-hidden="true">◐</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="content" class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>FALCON</h2>
+        <p class="muted">Vision-based dynamic drone landing • NUS Orbital (Apollo 11 / Advanced)</p>
+      </div>
+
+      <article class="panel">
+        <h3>Overview</h3>
+        <p class="muted">
+          FALCON is a vision-based dynamic drone landing system that enables UAVs to land autonomously on moving platforms.
+          It provides a Python GUI that abstracts backend algorithms so users can adapt and tune the system in real time.
+        </p>
+
+        <h3>Core methods</h3>
+        <ul class="bullets">
+          <li>AprilTags for real-time visual localization.</li>
+          <li>Sensor fusion for motion estimation.</li>
+          <li>PID controller with noise filtering for trajectory correction.</li>
+          <li>Designed as a modular, reusable library (extensible to different hardware).</li>
+        </ul>
+
+        <h3>Links</h3>
+        <ul class="bullets">
+          <li>GitHub: <a href="https://github.com/Kurokishi592/Falcon" target="_blank" rel="noopener">github.com/Kurokishi592/Falcon</a></li>
+          <li>Poster / screenshots: add under <span class="mono">/assets/images/</span></li>
+        </ul>
+
+        <h3>Media</h3>
+        <ul class="bullets">
+          <li>Screenshot (add): <span class="mono">Falcon GUI.png</span></li>
+          <li>Poster (add): <span class="mono">poster.png</span></li>
+        </ul>
+      </article>
+
+      <div class="section-foot">
+        <a class="button" href="/projects/">← Back to projects</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <p class="muted">© <span id="year"></span> Kenneth Wong Cun Wi.</p>
+    </div>
+  </footer>
+
+  <script src="/main.js" defer></script>
+</body>
+</html>
