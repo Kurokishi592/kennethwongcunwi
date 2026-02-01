@@ -30,9 +30,9 @@
       </a>
 
       <nav class="nav" id="primaryNav" aria-label="Primary">
-        <a href="#projects">~/projects</a>
+        <a href="/projects/">~/projects</a>
         <a href="#experience">~/experience</a>
-        <a href="#blog">~/blog</a>
+        <a href="/blog/">~/blog</a>
         <a href="#skills">~/skills</a>
         <a href="#contact">~/contact</a>
       </nav>
@@ -60,7 +60,7 @@
 
         <div class="cta-row">
           <a class="button primary" href="#contact">Contact</a>
-          <a class="button" href="/assets/resume.pdf" target="_blank" rel="noopener">Resume (PDF)</a>
+          <a class="button" href="mailto:kennethwongcunwi@gmail.com?subject=Resume%20request%20-%20Kenneth%20Wong%20Cun%20Wi">Resume (request)</a>
           <a class="button" href="#projects">View projects</a>
         </div>
 
@@ -83,50 +83,54 @@
 
         <div class="grid cards">
           <article class="card">
-            <div class="card-top">
-              <h3>Autonomous Line-Following Robot</h3>
-              <p class="muted">PID control + embedded tuning for stable tracking under changing lighting.</p>
-            </div>
-            <div class="tag-row">
-              <span class="tag">Embedded</span>
-              <span class="tag">Control</span>
-              <span class="tag">Sensors</span>
-            </div>
-            <div class="card-actions">
-              <a class="text-link" href="/projects/">Details →</a>
-              <a class="text-link" href="https://github.com/kennethwongcunwi" target="_blank" rel="noopener">Code ↗</a>
-            </div>
+            <a class="card-link" href="/projects/iot-tilt-ir-security.html">
+              <div class="card-media">
+                <img src="/assets/images/thumb-iot-security.svg" alt="IoT Tilt & IR Security Device thumbnail" loading="lazy" />
+              </div>
+              <div class="card-top">
+                <h3>IoT Tilt & IR Security Device</h3>
+                <p class="muted">FreeRTOS security device with tilt + IR detection, alarms, and remote monitoring via web UI.</p>
+              </div>
+              <div class="tag-row">
+                <span class="tag">FreeRTOS</span>
+                <span class="tag">ESP32</span>
+                <span class="tag">IoT</span>
+              </div>
+            </a>
           </article>
 
           <article class="card">
-            <div class="card-top">
-              <h3>ROS Navigation / SLAM (Course + Build)</h3>
-              <p class="muted">Mapping, localization, and navigation experiments with reproducible configs.</p>
-            </div>
-            <div class="tag-row">
-              <span class="tag">ROS</span>
-              <span class="tag">SLAM</span>
-              <span class="tag">Linux</span>
-            </div>
-            <div class="card-actions">
-              <a class="text-link" href="/projects/">Details →</a>
-              <a class="text-link" href="#contact">Request demo</a>
-            </div>
+            <a class="card-link" href="/projects/mini-auv-robosub-2025.html">
+              <div class="card-media">
+                <img src="/assets/images/thumb-mini-auv.svg" alt="Mini-AUV for RoboSub 2025 thumbnail" loading="lazy" />
+              </div>
+              <div class="card-top">
+                <h3>Mini Autonomous Underwater Vehicle (Mini‑AUV) — RoboSub 2025</h3>
+                <p class="muted">Co-led build of a maneuverability-focused Mini‑AUV with telemetry, PCBs, and MAVROS integration.</p>
+              </div>
+              <div class="tag-row">
+                <span class="tag">AUV</span>
+                <span class="tag">Pixhawk</span>
+                <span class="tag">MAVROS</span>
+              </div>
+            </a>
           </article>
 
           <article class="card">
-            <div class="card-top">
-              <h3>Robotics Perception Notes</h3>
-              <p class="muted">Short write-ups on filters, kinematics intuition, and debugging failures.</p>
-            </div>
-            <div class="tag-row">
-              <span class="tag">Math</span>
-              <span class="tag">Perception</span>
-              <span class="tag">Writing</span>
-            </div>
-            <div class="card-actions">
-              <a class="text-link" href="/blog/">Read →</a>
-            </div>
+            <a class="card-link" href="/projects/falcon-drone-landing.html">
+              <div class="card-media">
+                <img src="/assets/images/thumb-falcon.svg" alt="FALCON project thumbnail" loading="lazy" />
+              </div>
+              <div class="card-top">
+                <h3>FALCON — Dynamic Drone Landing</h3>
+                <p class="muted">AprilTags + sensor fusion + PID control, packaged as a modular library with a Python GUI.</p>
+              </div>
+              <div class="tag-row">
+                <span class="tag">Computer Vision</span>
+                <span class="tag">Sensor Fusion</span>
+                <span class="tag">Python</span>
+              </div>
+            </a>
           </article>
         </div>
 
@@ -250,7 +254,7 @@
   <footer class="site-footer">
     <div class="container footer-row">
       <p class="muted">© <span id="year"></span> Kenneth Wong Cun Wi. Built with HTML/CSS/JS. Hosted on Cloudflare Pages.</p>
-      <p class="muted">Tip: add your resume at <span class="mono">/assets/resume.pdf</span>.</p>
+      <p class="muted">Resume available on request.</p>
     </div>
   </footer>
 
