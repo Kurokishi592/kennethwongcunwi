@@ -1,3 +1,3 @@
 # kennethwongcunwi.com
 
-Documenting my past and present for the future
+Documenting my past and present for the future.
