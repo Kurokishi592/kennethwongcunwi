@@ -1,0 +1,82 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout
+  title="Kenneth Wong Cun Wi | Computer Engineering (Robotics)"
+  description="Kenneth Wong Cun Wi — Computer Engineering student in robotics. Portfolio, projects, and robotics learning notes."
+  canonicalPath="/"
+  activeNav="home"
+>
+  <section class="hero">
+    <div class="container">
+      <p class="eyebrow">Computer Engineering • Robotics</p>
+      <h1 class="hero-title">Building reliable robots from sensors to software.</h1>
+      <p class="hero-subtitle">
+        I’m Kenneth, a university student focused on robotics, embedded systems, and autonomy. I document projects, write concise learning notes,
+        and I’m currently looking for internship / full-time opportunities.
+      </p>
+
+      <div class="cta-row">
+        <a class="button primary" href="/#contact">Contact</a>
+        <a class="button" href="/projects/">View projects</a>
+        <a class="button" href="/blog/">Read notes</a>
+      </div>
+
+      <div class="link-row" aria-label="Social links">
+        <a href="mailto:kennethwongcunwi@gmail.com">Email</a>
+        <span class="dot" aria-hidden="true">•</span>
+        <a href="https://github.com/kennethwongcunwi" target="_blank" rel="noopener">GitHub</a>
+        <span class="dot" aria-hidden="true">•</span>
+        <a href="https://www.linkedin.com/in/kennethwongcunwi/" target="_blank" rel="noopener">LinkedIn</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="projects">
+    <div class="container">
+      <div class="section-head">
+        <h2>Projects</h2>
+        <p class="muted">Clickable write-ups, edited in Markdown.</p>
+      </div>
+
+      <div class="section-foot">
+        <a class="button" href="/projects/">Browse projects →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="blog">
+    <div class="container">
+      <div class="section-head">
+        <h2>Blog / Learning Notes</h2>
+        <p class="muted">Short, practical debugging notes.</p>
+      </div>
+
+      <div class="section-foot">
+        <a class="button" href="/blog/">Browse posts →</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="contact">
+    <div class="container">
+      <div class="section-head">
+        <h2>Contact</h2>
+        <p class="muted">Best way to reach me: email.</p>
+      </div>
+
+      <div class="contact-panel">
+        <div>
+          <p class="contact-line"><strong>Email</strong>: <a href="mailto:kennethwongcunwi@gmail.com">kennethwongcunwi@gmail.com</a></p>
+          <p class="contact-line"><strong>GitHub</strong>: <a href="https://github.com/kennethwongcunwi" target="_blank" rel="noopener">github.com/kennethwongcunwi</a></p>
+          <p class="contact-line"><strong>LinkedIn</strong>: <a href="https://www.linkedin.com/in/kennethwongcunwi/" target="_blank" rel="noopener">linkedin.com/in/kennethwongcunwi</a></p>
+        </div>
+        <div class="contact-actions">
+          <a class="button primary" href="mailto:kennethwongcunwi@gmail.com?subject=Kenneth%20Wong%20Cun%20Wi%20-%20Opportunity">Email me</a>
+          <button class="button" type="button" id="copyEmail">Copy email</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

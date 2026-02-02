@@ -1,0 +1,53 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const projects = await getCollection('projects');
+const sorted = projects
+  .slice()
+  .sort((a, b) => Number(b.data.featured) - Number(a.data.featured));
+---
+
+<BaseLayout
+  title="Projects | Kenneth Wong Cun Wi"
+  description="Robotics and embedded projects by Kenneth Wong Cun Wi."
+  canonicalPath="/projects/"
+  activeNav="projects"
+>
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Projects</h2>
+        <p class="muted">Everything here is Markdown-backed (easy to edit).</p>
+      </div>
+
+      <div class="grid cards">
+        {sorted.map((p) => (
+          <article class="card">
+            <a class="card-link" href={`/projects/${p.slug}/`}>
+              {p.data.thumbnail ? (
+                <div class="card-media">
+                  <img src={p.data.thumbnail} alt={`${p.data.title} thumbnail`} loading="lazy" />
+                </div>
+              ) : null}
+              <div class="card-top">
+                <h3>{p.data.title}</h3>
+                <p class="muted">{p.data.subtitle}</p>
+              </div>
+              {p.data.date ? <div class="card-meta">{p.data.date}</div> : null}
+              <div class="tag-row">
+                {p.data.tags.slice(0, 6).map((t) => (
+                  <span class="tag">{t}</span>
+                ))}
+              </div>
+            </a>
+          </article>
+        ))}
+      </div>
+
+      <div class="section-foot">
+        <a class="button" href="/">← Back home</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

@@ -11,3 +11,11 @@ Desktop.ini
 
 # Secrets (don’t commit)
 .env
+
+# Node / Astro
+node_modules/
+dist/
+.astro/
+
+# Local env overrides
+.env.*

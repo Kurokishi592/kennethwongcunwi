@@ -1,0 +1,27 @@
+---
+const { active } = Astro.props;
+---
+
+<header class="site-header">
+  <div class="container header-row">
+    <a class="brand" href="/" aria-label="Home">
+      <span class="brand-mark" aria-hidden="true">KW</span>
+      <span class="brand-text">
+        <span class="prompt" aria-hidden="true">kenneth@robotics:~$</span>
+        <span class="brand-name">Kenneth Wong Cun Wi</span>
+      </span>
+    </a>
+
+    <nav class="nav" id="primaryNav" aria-label="Primary">
+      <a href="/" class={active === 'home' ? 'active' : ''}>~/</a>
+      <a href="/projects/" class={active === 'projects' ? 'active' : ''}>~/projects</a>
+      <a href="/blog/" class={active === 'blog' ? 'active' : ''}>~/blog</a>
+      <a href="/#contact">~/contact</a>
+    </nav>
+
+    <div class="header-actions">
+      <button class="icon-button" type="button" id="menuToggle" aria-label="Toggle menu" title="Menu"><span aria-hidden="true">☰</span></button>
+      <button class="icon-button" type="button" id="themeToggle" aria-label="Toggle theme" title="Toggle theme"><span aria-hidden="true">◐</span></button>
+    </div>
+  </div>
+</header>

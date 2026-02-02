@@ -1,0 +1,42 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+
+type Props = {
+  title: string;
+  description?: string;
+  canonicalPath?: string;
+  activeNav?: 'home' | 'projects' | 'blog';
+};
+
+const {
+  title,
+  description = 'Portfolio, projects, and robotics learning notes.',
+  canonicalPath,
+  activeNav
+} = Astro.props;
+
+const canonical = canonicalPath ? new URL(canonicalPath, Astro.site).toString() : undefined;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    {canonical ? <link rel="canonical" href={canonical} /> : null}
+    <meta name="theme-color" content="#0b1220" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#content">Skip to content</a>
+    <Header active={activeNav} />
+    <main id="content">
+      <slot />
+    </main>
+    <Footer />
+  </body>
+</html>

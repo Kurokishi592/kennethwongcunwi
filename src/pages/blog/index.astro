@@ -1,0 +1,46 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getCollection } from 'astro:content';
+
+const posts = await getCollection('blog');
+const sorted = posts.slice().sort((a, b) => b.data.pubDate.getTime() - a.data.pubDate.getTime());
+---
+
+<BaseLayout
+  title="Blog | Kenneth Wong Cun Wi"
+  description="Robotics learning notes and debugging write-ups."
+  canonicalPath="/blog/"
+  activeNav="blog"
+>
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Blog / Learning Notes</h2>
+        <p class="muted">Short, clear write-ups. Edited in Markdown.</p>
+      </div>
+
+      <div class="grid cards">
+        {sorted.map((p) => (
+          <article class="card">
+            <div class="card-top">
+              <h3><a href={`/blog/${p.slug}/`}>{p.data.title}</a></h3>
+              <p class="muted">{p.data.description}</p>
+            </div>
+            <div class="tag-row">
+              {p.data.tags.slice(0, 6).map((t) => (
+                <span class="tag">{t}</span>
+              ))}
+            </div>
+            <div class="card-actions">
+              <a class="text-link" href={`/blog/${p.slug}/`}>Read →</a>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <div class="section-foot">
+        <a class="button" href="/">← Back home</a>
+      </div>
+    </div>
+  </section>
+</BaseLayout>
