@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Object Tracker with FPGA | Kenneth Wong Cun Wi</title>
+  <meta name="description" content="EE2026: Using a single Basys3 FPGA to make an object tracker with full GUI for user customisation." />
+  <link rel="canonical" href="https://kennethwongcunwi.com/projects/object-tracker-fpga.html" />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <a class="brand" href="/" aria-label="Home">
+        <span class="brand-mark" aria-hidden="true">KW</span>
+        <span class="brand-text">
+          <span class="prompt" aria-hidden="true">kenneth@main:~$</span>
+          <span class="brand-name">Kenneth Wong Cun Wi</span>
+        </span>
+      </a>
+      <nav class="nav" id="primaryNav" aria-label="Primary">
+        <a href="/">~/</a>
+        <a href="/projects/">~/projects/</a>
+        <a href="/blog/">~/blog/</a>
+        <a href="/#contact">~/contact</a>
+      </nav>
+      <div class="header-actions">
+        <button class="icon-button" type="button" id="menuToggle" aria-label="Toggle menu" title="Menu"><span aria-hidden="true">☰</span></button>
+        <button class="icon-button" type="button" id="themeToggle" aria-label="Toggle theme" title="Toggle theme"><span aria-hidden="true">◐</span></button>
+      </div>
+    </div>
+  </header>
+
+  <main id="content" class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>Object Tracker with FPGA</h2>
+        <p class="muted">EE2026: Using a single Basys3 FPGA to make an object tracker with full GUI for user customisation.</p>
+      </div>
+
+      <article class="panel">
+        <h3>Draft notes (WIP)</h3>
+        <p class="muted">
+          These are my working notes as I build the tracker. The goal is a single-board pipeline with a settings GUI that helps users learn how
+          image processing and connected-components labeling work.
+        </p>
+
+        <h3>Variables / registers / memories</h3>
+        <p class="muted">Variables are labeled memory spaces (registers, LUTRAM, BRAM). Treat them like global storage: you can read/write whenever the label is referenced.</p>
+        <ul class="bullets">
+          <li>They are treated as global variables; access to register anytime the label is referred to.</li>
+          <li>Pointers can be implemented by storing the “memory address” of the target.</li>
+        </ul>
+        <pre><code>// LUTRAM
+(* ram_style = "distributed" *) reg [x_bitsize-1:0] x;
+(* ram_style = "distributed" *) reg [y_bitsize-1:0] y;
+
+// registers
+reg [16:0] ua_area_new;
+reg [16:0] best_area;
+reg [label_bits-1:0] best_lbl;
+</code></pre>
+
+        <h3>Wires</h3>
+        <p class="muted">Wires connect registers/inputs/outputs. When the RHS changes, the LHS signal reflects it immediately (combinational).</p>
+        <pre><code>// connecting wires to a RHS value
+wire [label_bits-1:0] left_label = (x == 0) ? 0 :
+                                  (toggle_line == 0) ? row1_labels[x-1] : row0_labels[x-1];
+
+wire [label_bits-1:0] up_label = (y == 0) ? 0 :
+                                (toggle_line == 0) ? row0_labels[x] : row1_labels[x];
+
+wire [label_bits-1:0] upleft_label = (x == 0 || y == 0) ? 0 :
+                                    (toggle_line == 0) ? row0_labels[x-1] : row1_labels[x-1];
+
+wire [label_bits-1:0] upright_label = (x == WIDTH-1 || y == 0) ? 0 :
+                                     (toggle_line == 0) ? row0_labels[x+1] : row1_labels[x+1];
+
+// then wire to a LHS register
+reg [label_bits-1:0] left;
+always @(posedge clk) begin
+  left &lt;= left_label; // left updates whenever x/toggle_line/row buffers change
+end
+
+// to output a boolean of whether state is ready:
+output wire ready_to_read;
+assign ready_to_read = (state == S_READY);
+</code></pre>
+
+        <h3>Functions via FSM</h3>
+        <p class="muted">In FPGA designs, “functions” are commonly implemented as FSM states that pass control across clock cycles.</p>
+        <ul class="bullets">
+          <li>At every clock cycle: check the current state (case/switch).</li>
+          <li>Each state behaves like a function body.</li>
+          <li>Updating the state passes control to the next “function” on the next clock cycle.</li>
+        </ul>
+        <pre><code>// FSM encoding
+reg [4:0] state;
+localparam S_RESET = 0;
+localparam S_INIT_LINES = 1;
+localparam S_INIT_UFDS = 2;
+localparam S_READY = 3;
+localparam S_SAMPLE = 4;
+// ... (many more states)
+localparam S_ADVANCE = 26;
+
+always @(posedge clk) begin
+  case (state)
+    S_INIT_LINES: begin
+      // ...
+      if (a) state &lt;= S_INIT_UFDS;
+    end
+
+    S_INIT_UFDS: begin
+      // ...
+      if (b) state &lt;= S_READY;
+    end
+
+    S_READY: begin
+      // ...
+      state &lt;= S_SAMPLE;
+    end
+
+    S_FIND_UR: begin
+      if (upright != 0) begin
+        find_curr &lt;= upright;
+        state &lt;= S_FIND_UR_RD;
+      end else begin
+        root_upright &lt;= 0;
+        state &lt;= S_CHOOSE;
+      end
+    end
+
+    S_ADVANCE: begin
+      x &lt;= x + 1;
+      state &lt;= S_READY;
+    end
+
+    default: state &lt;= S_READY;
+  endcase
+end
+</code></pre>
+
+        <h3>Loops / recursion</h3>
+        <p class="muted">Loops are typically unrolled or implemented as “repeat next cycle until condition met”. Recursion becomes repeated state execution until the base case.</p>
+        <pre><code>// Example: root-walk style recursion (one hop per cycle)
+
+S_FIND_UL_RD: begin
+  if (parent_curr == find_curr) begin
+    root_upleft &lt;= find_curr;
+    state &lt;= S_FIND_UR;
+  end else begin
+    find_curr &lt;= parent_curr;
+  end
+end
+</code></pre>
+
+        <hr />
+
+        <h3>Union-Find Disjoint Set (UFDS) for object/blob detection</h3>
+        <p class="muted">
+          This module performs object detection using UFDS while streaming a binary image in raster order. It extracts object bounding boxes
+          (and optionally centroids) as the frame is processed, without storing the full image.
+        </p>
+        <ul class="bullets">
+          <li>Goal: identify connected components and compute bounding boxes + area (+ centroid online).</li>
+          <li>Space constraint: Basys3 has limited memory; avoid full-frame buffers.</li>
+          <li>Throughput constraint: camera/VGA timing pushes for near-constant per-pixel work.</li>
+        </ul>
+
+        <h3>Reduced neighbor set (raster scan)</h3>
+        <p class="muted">
+          To achieve single-pass raster processing, scan only neighbors that are already processed: Left, Up-left, Up, Up-right.
+        </p>
+
+        <h3>Key optimization</h3>
+        <ul class="bullets">
+          <li>Store <em>root labels</em> in the line buffers so that reading a neighbor gives the root immediately.</li>
+          <li>This avoids per-pixel find-walks and makes worst-case timing much more stable.</li>
+        </ul>
+
+        <h3>FIFO + bridge (pixel feeding)</h3>
+        <p class="muted">
+          The pixel source and UFDS core may run on different clocks. A FIFO buffers pixels and a bridge asserts valid only when UFDS is ready.
+        </p>
+
+        <h3>Notes on the settings GUI</h3>
+        <p class="muted">
+          I’m building a runtime settings UI so users can configure the image-processing pipeline (raw → preprocessing → threshold → morphology → UFDS)
+          and learn how each stage affects the final object detection.
+        </p>
+      </article>
+
+      <div class="section-foot">
+        <a class="button" href="/projects/">← Back to projects</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-row">
+      <p class="muted">© <span id="year"></span> Kenneth Wong Cun Wi.</p>
+    </div>
+  </footer>
+
+  <script src="/main.js" defer></script>
+</body>
+</html>
