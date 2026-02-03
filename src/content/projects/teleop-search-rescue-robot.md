@@ -3,7 +3,7 @@ title: "Teleoperated Search-and-Rescue Robot"
 subtitle: "Teleop robot with LiDAR + SLAM, camera sensing, IMU heading, and secure remote operation."
 date: "Jan 2025 – Apr 2025"
 tags: ["SLAM", "LiDAR", "Embedded", "TLS"]
-thumbnail: "/assets/images/thumb-sar-robot.svg"
+thumbnail: "/assets/cg2111a-alex/alex-main.JPEG"
 featured: false
 ---
 

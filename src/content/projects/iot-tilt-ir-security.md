@@ -3,8 +3,9 @@ title: "IoT Tilt & IR Security Device"
 subtitle: "FreeRTOS security device with tilt + IR detection, alarms, and remote monitoring via web UI."
 date: "Nov 2025"
 tags: ["FreeRTOS", "ESP32", "IoT", "Embedded"]
-thumbnail: "/assets/images/thumb-iot-security.svg"
-featured: false
+thumbnail: "/assets/cg2271-iot-security/iot-security-main.JPEG"
+featured: true
+featuredRank: 2
 ---
 
 ## Overview

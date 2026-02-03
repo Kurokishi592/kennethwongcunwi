@@ -1,0 +1,29 @@
+---
+const { entry, kicker } = Astro.props;
+
+const href = entry?.slug ? `/projects/${entry.slug}/` : entry?.href;
+const data = entry?.data ?? entry;
+---
+
+<article class="card">
+  <a class="card-link" href={href}>
+    {data?.thumbnail ? (
+      <div class="card-media">
+        <img src={data.thumbnail} alt={`${data.title} thumbnail`} loading="lazy" />
+      </div>
+    ) : null}
+    <div class="card-top">
+      {kicker ? <p class="card-kicker mono muted">{kicker}</p> : null}
+      <h3>{data?.title}</h3>
+      {data?.subtitle ? <p class="muted">{data.subtitle}</p> : null}
+    </div>
+    {data?.date ? <div class="card-meta">{data.date}</div> : null}
+    {Array.isArray(data?.tags) && data.tags.length ? (
+      <div class="tag-row">
+        {data.tags.slice(0, 6).map((t) => (
+          <span class="tag">{t}</span>
+        ))}
+      </div>
+    ) : null}
+  </a>
+</article>

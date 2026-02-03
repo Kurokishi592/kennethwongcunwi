@@ -1,0 +1,213 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import SocialIcons from '../components/SocialIcons.astro';
+
+// This page is intentionally easy to edit.
+// If you want, we can later move these sections into Markdown or a content collection.
+const highlights = [
+  {
+    title: 'What I do',
+    body:
+      'I build across hardware and software, and I’m happiest at the integration layer: electrical → firmware → sensors → control → application.'
+  },
+  {
+    title: 'What I’m aiming for',
+    body:
+      'Robotics — making systems feel alive and reliable. But more broadly: if there’s a real problem to solve, I want in.'
+  },
+  {
+    title: 'How I work',
+    body:
+      'Fast iteration, tight feedback loops, measurable tests, and clear documentation — the stuff that makes projects actually ship.'
+  }
+];
+
+const experience = [
+  {
+    when: 'YYYY — YYYY',
+    title: 'Role • Company / Lab',
+    bullets: [
+      'Replace this with your work experience bullet points.',
+      'Focus on impact, constraints, and what you built end-to-end.'
+    ]
+  }
+];
+
+const education = [
+  {
+    when: 'YYYY — YYYY',
+    title: 'B.Eng / B.Sc • University',
+    bullets: ['Major / track', 'Relevant modules / focus areas']
+  }
+];
+
+const awards = [
+  {
+    when: 'YYYY',
+    title: 'Award / Scholarship / Competition',
+    bullets: ['Short context + what it recognizes']
+  }
+];
+
+const stack = [
+  { title: 'Hardware', body: 'Embedded platforms, basic EE design, bring-up, sensors, interfaces.' },
+  { title: 'Firmware', body: 'C/C++, microcontrollers, drivers, serial protocols, logging.' },
+  { title: 'Software', body: 'Python/TypeScript, tooling, data pipelines, visualization.' },
+  { title: 'Robotics', body: 'Calibration, estimation, control, autonomy — grounded in real sensors.' },
+  { title: 'Tools', body: 'Git, Linux, debugging workflows, docs that stay usable.' },
+  { title: 'Mindset', body: 'Own the system. Find the bottleneck. Make it testable.' }
+];
+---
+
+<BaseLayout
+  title="About | Kenneth Wong Cun Wi"
+  description="About Kenneth Wong Cun Wi — integration-focused engineering across hardware and software."
+  canonicalPath="/about/"
+  activeNav="whoami"
+>
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <p class="eyebrow">~/whoami</p>
+        <h1 class="hero-title">Hi — I’m Kenneth.</h1>
+        <p class="hero-subtitle">
+          I care about making complex systems behave. That usually means working across multiple layers — from circuits and sensors all the way up
+          to software and tooling — and sweating the integration details until it’s reliable.
+        </p>
+
+        <div class="cta-row">
+          <a class="button primary" href="#footer">Socials</a>
+          <a class="button" href="/projects/">Projects</a>
+          <a class="button" href="/blog/">Cache</a>
+        </div>
+      </div>
+
+      <aside class="intro-card" aria-label="Quick bio">
+        <div class="intro-top">
+          <div class="avatar">
+            <img
+              src="/assets/images/profile.jpg"
+              alt="Portrait of Kenneth Wong Cun Wi"
+              loading="lazy"
+            />
+          </div>
+          <div>
+            <p class="intro-name"><strong>Kenneth Wong Cun Wi</strong></p>
+            <p class="intro-meta">Electrical → Software integration • Robotics</p>
+          </div>
+        </div>
+        <div class="mini-links" aria-label="Social links">
+          <div class="icon-row" aria-label="Social links">
+            <SocialIcons linkClass="mini-social" />
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="container">
+      <div class="section-head">
+        <h2>In a nutshell</h2>
+        <p class="muted">A quick overview — then the details.</p>
+      </div>
+
+      <div class="grid cards">
+        {highlights.map((h) => (
+          <article class="card">
+            <div class="card-top">
+              <h3>{h.title}</h3>
+              <p class="muted">{h.body}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="work-experiences">
+    <div class="container">
+      <div class="section-head">
+        <h2>Work Experiences</h2>
+        <p class="muted">Impact-focused. Edit this to match your resume/LinkedIn.</p>
+      </div>
+
+      <div class="timeline">
+        {experience.map((e) => (
+          <div class="timeline-item">
+            <div class="timeline-meta">{e.when}</div>
+            <h3 class="timeline-title">{e.title}</h3>
+            <ul class="bullets">
+              {e.bullets.map((b) => (
+                <li>{b}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="education">
+    <div class="container">
+      <div class="section-head">
+        <h2>Education</h2>
+      </div>
+
+      <div class="timeline">
+        {education.map((e) => (
+          <div class="timeline-item">
+            <div class="timeline-meta">{e.when}</div>
+            <h3 class="timeline-title">{e.title}</h3>
+            <ul class="bullets">
+              {e.bullets.map((b) => (
+                <li>{b}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="stack">
+    <div class="container">
+      <div class="section-head">
+        <h2>Tech stack</h2>
+        <p class="muted">The tools I reach for most often.</p>
+      </div>
+
+      <div class="grid skills">
+        {stack.map((s) => (
+          <div class="panel">
+            <h3>{s.title}</h3>
+            <p class="muted">{s.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="awards">
+    <div class="container">
+      <div class="section-head">
+        <h2>Honours & awards</h2>
+      </div>
+
+      <div class="timeline">
+        {awards.map((a) => (
+          <div class="timeline-item">
+            <div class="timeline-meta">{a.when}</div>
+            <h3 class="timeline-title">{a.title}</h3>
+            <ul class="bullets">
+              {a.bullets.map((b) => (
+                <li>{b}</li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+</BaseLayout>

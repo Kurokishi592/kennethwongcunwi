@@ -3,7 +3,7 @@ title: "FALCON — Dynamic Drone Landing Simulator"
 subtitle: "AprilTags + sensor fusion + PID control, packaged as a modular library with a Python GUI."
 date: "May 2025 – Jul 2025"
 tags: ["Computer Vision", "Sensor Fusion", "PID", "Python"]
-thumbnail: "/assets/images/thumb-falcon.svg"
+thumbnail: "/assets/falcon/thumb-falcon.svg"
 featured: false
 ---
 

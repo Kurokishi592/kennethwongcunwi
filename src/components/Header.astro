@@ -1,27 +1,40 @@
 ---
 const { active } = Astro.props;
+import SocialIcons from './SocialIcons.astro';
 ---
 
 <header class="site-header">
   <div class="container header-row">
     <a class="brand" href="/" aria-label="Home">
       <span class="brand-mark" aria-hidden="true">KW</span>
-      <span class="brand-text">
-        <span class="prompt" aria-hidden="true">kenneth@robotics:~$</span>
-        <span class="brand-name">Kenneth Wong Cun Wi</span>
-      </span>
+      <span class="brand-hover mono" aria-hidden="true">kenneth@home:~$</span>
     </a>
 
-    <nav class="nav" id="primaryNav" aria-label="Primary">
-      <a href="/" class={active === 'home' ? 'active' : ''}>~/</a>
-      <a href="/projects/" class={active === 'projects' ? 'active' : ''}>~/projects</a>
-      <a href="/blog/" class={active === 'blog' ? 'active' : ''}>~/blog</a>
-      <a href="/#contact">~/contact</a>
-    </nav>
+    <div class="header-right">
+      <nav class="nav" id="primaryNav" aria-label="Primary">
+        <a href="/about/" class={active === 'whoami' ? 'active' : ''}>~/whoami</a>
+        <a href="/projects/" class={active === 'projects' ? 'active' : ''}>~/projects</a>
+        <a href="/blog/" class={active === 'blog' ? 'active' : ''}>~/cache</a>
+        <div class="contact-wrap">
+          <button
+            class="nav-button"
+            type="button"
+            id="contactToggle"
+            aria-haspopup="menu"
+            aria-expanded="false"
+          >
+            ~/contact
+          </button>
+          <div class="contact-menu" id="contactMenu" role="menu" aria-label="Contact links">
+            <SocialIcons variant="menu" />
+          </div>
+        </div>
+      </nav>
 
-    <div class="header-actions">
-      <button class="icon-button" type="button" id="menuToggle" aria-label="Toggle menu" title="Menu"><span aria-hidden="true">☰</span></button>
-      <button class="icon-button" type="button" id="themeToggle" aria-label="Toggle theme" title="Toggle theme"><span aria-hidden="true">◐</span></button>
+      <div class="header-actions">
+        <button class="icon-button" type="button" id="menuToggle" aria-label="Toggle menu" title="Menu"><span aria-hidden="true">☰</span></button>
+        <button class="icon-button" type="button" id="themeToggle" aria-label="Toggle theme" title="Toggle theme"><span aria-hidden="true">◐</span></button>
+      </div>
     </div>
   </div>
 </header>

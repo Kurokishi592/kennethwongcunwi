@@ -3,7 +3,7 @@ title: "Hornet X"
 subtitle: "Custom sensor PCB + sensor fusion (quaternions + Kalman) for robust yaw/roll/pitch."
 date: "Sep 2024 – Mar 2025"
 tags: ["PCB", "Sensors", "Quaternions", "Kalman"]
-thumbnail: "/assets/images/thumb-hornetx.svg"
+thumbnail: "/assets/hornetx/thumb-hornetx.svg"
 featured: false
 ---
 

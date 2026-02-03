@@ -1,0 +1,59 @@
+---
+import { siGithub, siLinkedin } from 'simple-icons/icons';
+
+const {
+  variant = 'icon',
+  email = 'kennethwongcunwi@outlook.com',
+  github = 'https://github.com/Kurokishi592',
+  linkedin = 'https://www.linkedin.com/in/kwcw7/',
+  linkClass = '',
+  ariaLabel = 'Social links'
+} = Astro.props;
+
+const baseClass = variant === 'menu' ? 'contact-icon social-link' : 'icon-link social-link';
+const cls = (extra = '') => [baseClass, linkClass, extra].filter(Boolean).join(' ');
+
+const iconViewBox = '0 0 24 24';
+---
+
+<span class="sr-only">{ariaLabel}</span>
+<a
+  class={cls()}
+  href={`mailto:${email}`}
+  aria-label="Email"
+  title={email}
+  data-tooltip={email}
+>
+  <svg class="social-icon" viewBox={iconViewBox} aria-hidden="true" focusable="false">
+    <path
+      fill="currentColor"
+      d="M20 6H4c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2Zm0 2-8 5L4 8h16Zm0 8H4V10l8 5 8-5v6Z"
+    />
+  </svg>
+</a>
+<a
+  class={cls()}
+  href={github}
+  target="_blank"
+  rel="noopener"
+  aria-label="GitHub"
+  title={github}
+  data-tooltip={github}
+>
+  <svg class="social-icon" viewBox={iconViewBox} aria-hidden="true" focusable="false">
+    <path fill="currentColor" d={siGithub.path} />
+  </svg>
+</a>
+<a
+  class={cls()}
+  href={linkedin}
+  target="_blank"
+  rel="noopener"
+  aria-label="LinkedIn"
+  title={linkedin}
+  data-tooltip={linkedin}
+>
+  <svg class="social-icon" viewBox={iconViewBox} aria-hidden="true" focusable="false">
+    <path fill="currentColor" d={siLinkedin.path} />
+  </svg>
+</a>

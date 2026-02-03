@@ -1,6 +1,13 @@
-<footer class="site-footer">
+---
+import SocialIcons from './SocialIcons.astro';
+---
+
+<footer class="site-footer" id="footer">
   <div class="container footer-row">
-    <p class="muted">© <span id="year"></span> Kenneth Wong Cun Wi.</p>
+    <div class="icon-row" aria-label="Social links">
+      <SocialIcons />
+    </div>
+    <p class="muted">© 2026 Kenneth Wong Cun Wi.</p>
   </div>
 </footer>
 

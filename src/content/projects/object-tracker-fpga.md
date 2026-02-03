@@ -3,8 +3,9 @@ title: "Object Tracker with FPGA"
 subtitle: "EE2026: Using a single Basys3 FPGA to make an object tracker with full GUI for user customisation."
 date: "EE2026"
 tags: ["FPGA", "Basys3", "UFDS", "GUI", "Verilog"]
-thumbnail: "/assets/images/thumb-fpga-tracker.svg"
+thumbnail: "/assets/ee2026-fpga-object-tracker/fpga-object-tracker-main.JPEG"
 featured: true
+featuredRank: 1
 ---
 
 ## Draft notes (WIP)

@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection } from 'astro:content';
+import ProjectCard from '../../components/ProjectCard.astro';
 
 const projects = await getCollection('projects');
 const sorted = projects
@@ -23,25 +24,7 @@ const sorted = projects
 
       <div class="grid cards">
         {sorted.map((p) => (
-          <article class="card">
-            <a class="card-link" href={`/projects/${p.slug}/`}>
-              {p.data.thumbnail ? (
-                <div class="card-media">
-                  <img src={p.data.thumbnail} alt={`${p.data.title} thumbnail`} loading="lazy" />
-                </div>
-              ) : null}
-              <div class="card-top">
-                <h3>{p.data.title}</h3>
-                <p class="muted">{p.data.subtitle}</p>
-              </div>
-              {p.data.date ? <div class="card-meta">{p.data.date}</div> : null}
-              <div class="tag-row">
-                {p.data.tags.slice(0, 6).map((t) => (
-                  <span class="tag">{t}</span>
-                ))}
-              </div>
-            </a>
-          </article>
+          <ProjectCard entry={p} />
         ))}
       </div>
 

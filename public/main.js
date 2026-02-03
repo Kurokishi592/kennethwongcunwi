@@ -92,6 +92,46 @@
     });
   };
 
+  const initContactMenu = () => {
+    const toggle = document.getElementById('contactToggle');
+    const menu = document.getElementById('contactMenu');
+    if (!toggle || !menu) return;
+
+    const close = () => {
+      menu.classList.remove('is-open');
+      toggle.setAttribute('aria-expanded', 'false');
+    };
+
+    const open = () => {
+      menu.classList.add('is-open');
+      toggle.setAttribute('aria-expanded', 'true');
+    };
+
+    const isOpen = () => menu.classList.contains('is-open');
+
+    toggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      isOpen() ? close() : open();
+    });
+
+    menu.addEventListener('click', (e) => {
+      const target = e.target;
+      if (target instanceof HTMLAnchorElement) close();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') close();
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!isOpen()) return;
+      const target = e.target;
+      if (!(target instanceof Node)) return;
+      if (menu.contains(target) || toggle.contains(target)) return;
+      close();
+    });
+  };
+
   const initYear = () => {
     const el = document.getElementById('year');
     if (el) el.textContent = String(new Date().getFullYear());
@@ -101,7 +141,7 @@
     const btn = document.getElementById('copyEmail');
     if (!btn) return;
 
-    const email = 'kennethwongcunwi@gmail.com';
+    const email = 'kennethwongcunwi@outlook.com';
     btn.addEventListener('click', async () => {
       try {
         await navigator.clipboard.writeText(email);
@@ -117,6 +157,7 @@
   document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initMenu();
+    initContactMenu();
     initYear();
     initCopyEmail();
   });

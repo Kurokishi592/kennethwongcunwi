@@ -3,8 +3,9 @@ title: "Mini Autonomous Underwater Vehicle (Mini‑AUV) — RoboSub 2025"
 subtitle: "Co-led build of a maneuverability-focused Mini‑AUV with telemetry, PCBs, and MAVROS integration."
 date: "May 2025 – Aug 2025"
 tags: ["AUV", "Pixhawk", "Jetson", "MAVROS"]
-thumbnail: "/assets/images/thumb-mini-auv.svg"
-featured: false
+thumbnail: "/assets/mini-auv/thumb-mini-auv.svg"
+featured: true
+featuredRank: 2
 ---
 
 ## Overview

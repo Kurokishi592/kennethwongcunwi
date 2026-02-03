@@ -7,13 +7,16 @@
     <loc>https://kennethwongcunwi.com/projects/</loc>
   </url>
   <url>
+    <loc>https://kennethwongcunwi.com/about/</loc>
+  </url>
+  <url>
     <loc>https://kennethwongcunwi.com/projects/object-tracker-fpga/</loc>
   </url>
   <url>
     <loc>https://kennethwongcunwi.com/blog/</loc>
   </url>
   <url>
-    <loc>https://kennethwongcunwi.com/blog/sensors/</loc>
+    <loc>https://kennethwongcunwi.com/blog/yaw/</loc>
   </url>
   <url>
     <loc>https://kennethwongcunwi.com/projects/iot-tilt-ir-security/</loc>
