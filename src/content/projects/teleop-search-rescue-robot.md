@@ -15,3 +15,7 @@ Built a teleoperated robot stack focused on navigability, sensing, and robust re
 
 - LiDAR mapping/localization experiments.
 - Remote control with emphasis on stability and safety.
+
+TODO:
+Add report
+Add pictures

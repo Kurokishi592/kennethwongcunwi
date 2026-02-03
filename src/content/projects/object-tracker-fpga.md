@@ -11,6 +11,11 @@ featured: true
 
 These are my working notes as I build the tracker. The goal is a single-board pipeline with a settings GUI that helps users learn how image processing and connected-components labeling work.
 
+TODO:
+Add poster
+Add full write up for UFDS
+Add full write up for GUI
+
 ## Variables / registers / memories
 
 Variables are labeled memory spaces (registers, LUTRAM, BRAM). Treat them like global storage: you can read/write whenever the label is referenced.

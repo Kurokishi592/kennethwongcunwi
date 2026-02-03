@@ -16,3 +16,7 @@ A fast-paced embedded IoT build: detect device tilt and high infra-red (IR) ligh
 - FreeRTOS firmware with ISRs, semaphores, queues, and task prioritization.
 - Dual-MCU architecture (FRDM + ESP32).
 - Sensors: tilt switch, IR sensor, IMU.
+
+>[!note] TODO:
+> Transfer what is written in the Project PDF into a full entry
+> Paste the codes out instead of those screenshots in pdf

@@ -10,3 +10,6 @@ featured: false
 ## Overview
 
 Competition robotics experience: rapid iteration, mechanism design, and troubleshooting under deadlines.
+
+TODO:
+Add pictures and some mech design

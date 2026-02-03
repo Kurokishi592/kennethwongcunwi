@@ -1,13 +1,13 @@
 ---
-title: "Yaw changes when I roll/pitch my IMU board"
+title: "Coupling Effect: Problem of Yaw value changing when rolling or pitching"
 description: "Debugging log: coupling, tilt compensation, and why atan2(magX, magY) can betray you."
 pubDate: 2025-02-28
-tags: ["Sensors", "IMU", "Debugging"]
+tags: ["Sensor Fusion", "IMU", "Debugging"]
 ---
 
-## Problem
+## Problem and Context
 
-When I roll or pitch my sensor board, roll and pitch readings are clean and stable (no drift). But at the same time, my yaw value changes—even though I did not yaw the board.
+While developing my sensors board for HornetX programme, a phenomenon was discovered: When I roll or pitch it, roll and pitch readings are clean and stable (no drift), yet yaw values changes even though I did not yaw the board.
 
 ## Observation
 
@@ -44,7 +44,7 @@ float mY_rot = magX * sinPhi * sinTheta + magY * cosPhi - magZ * sinPhi * cosThe
 float yaw = atan2(mY_rot, mX_rot) * 180.0f / M_PI;
 ```
 
-## Next steps
+## TODO
 
 - Export the referenced screenshots and add them under `/assets/images/`.
 - Add a short “final takeaway” once the quaternion/rotation approach is fully validated.

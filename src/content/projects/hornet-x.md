@@ -9,9 +9,13 @@ featured: false
 
 ## Overview
 
-Designed a sensor-focused build with an emphasis on orientation estimation and robustness.
+Wrote a custom sensor fusion algorithm for yaw roll and pitch 
 
 ## Highlights
 
 - Sensor fusion experiments (quaternions + Kalman).
 - Calibration, frame alignment, and debugging.
+
+>[!note] TODO:
+>- (link to blog) 
+>- pictures and experiences

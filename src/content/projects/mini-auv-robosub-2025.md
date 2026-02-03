@@ -15,3 +15,8 @@ Co-led a Mini‑AUV build focused on reliable field operation: electronics integ
 
 - Autopilot + companion computer integration.
 - Hardware bring-up, wiring, and testing for underwater reliability.
+
+> [!note] TODO:
+> add in dev timeline and process
+> competition experience
+> AAR
