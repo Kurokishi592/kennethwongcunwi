@@ -17,6 +17,10 @@ const {
 } = Astro.props;
 
 const canonical = canonicalPath ? new URL(canonicalPath, Astro.site).toString() : undefined;
+
+// Cache-bust static assets in production so HTML/CSS/JS never get out of sync.
+// This primarily helps with CDN/browser caching after deployments.
+const assetVersion = import.meta.env.PUBLIC_ASSET_VERSION ?? String(Date.now());
 ---
 
 <!doctype html>
@@ -29,7 +33,7 @@ const canonical = canonicalPath ? new URL(canonicalPath, Astro.site).toString() 
     {canonical ? <link rel="canonical" href={canonical} /> : null}
     <meta name="theme-color" content="#0b1220" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/style.css" />
+    <link rel="stylesheet" href={`/style.css?v=${assetVersion}`} />
   </head>
   <body>
     <a class="skip-link" href="#content">Skip to content</a>
@@ -38,5 +42,6 @@ const canonical = canonicalPath ? new URL(canonicalPath, Astro.site).toString() 
       <slot />
     </main>
     <Footer />
+    <script src={`/main.js?v=${assetVersion}`} defer></script>
   </body>
 </html>
