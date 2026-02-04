@@ -924,6 +924,56 @@ a:hover {
   color: var(--muted);
 }
 
+/* Obsidian-style callouts (remark-callout) */
+.callout {
+  margin: 1rem 0;
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  padding: 0.75rem 0.9rem;
+  box-shadow: var(--shadow);
+}
+
+.callout-title {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--text);
+}
+
+.callout-title p {
+  margin: 0;
+  font-weight: 750;
+}
+
+.callout-icon {
+  display: inline-grid;
+  place-items: center;
+}
+
+.callout-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.callout-content {
+  margin-top: 0.35rem;
+  color: var(--muted);
+}
+
+.callout-content > :first-child { margin-top: 0; }
+.callout-content > :last-child { margin-bottom: 0; }
+
+.callout.note { border-left-color: color-mix(in srgb, var(--brand) 65%, #60a5fa); }
+.callout.info { border-left-color: #60a5fa; }
+.callout.tip { border-left-color: #22c55e; }
+.callout.success { border-left-color: #22c55e; }
+.callout.warning { border-left-color: #f59e0b; }
+.callout.danger { border-left-color: #ef4444; }
+.callout.bug { border-left-color: #ef4444; }
+.callout.quote { border-left-color: color-mix(in srgb, var(--muted) 55%, #a78bfa); }
+
 .skills {
   grid-template-columns: 1fr;
 }
@@ -941,6 +991,35 @@ a:hover {
 }
 
 .panel p { margin: 0.45rem 0 0; }
+
+/* Markdown/MDX content styling (used by blog/project pages) */
+.prose a {
+  color: color-mix(in srgb, var(--text) 80%, var(--brand) 55%);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.prose a:hover {
+  color: color-mix(in srgb, var(--text) 90%, var(--brand) 75%);
+}
+
+.prose a:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand) 75%, transparent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+.prose figure {
+  margin: 1rem 0;
+}
+
+.prose figcaption {
+  margin-top: 0.45rem;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
 
 pre {
   margin: 0.8rem 0;
