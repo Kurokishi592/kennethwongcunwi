@@ -14,8 +14,8 @@ const featuredTop = projects
 ---
 
 <BaseLayout
-  title="Kenneth Wong Cun Wi | Computer Engineering (Robotics)"
-  description="Kenneth Wong Cun Wi — electrical-to-software integration, robotics, embedded systems, and practical problem-solving."
+  title="Kenneth Wong Cun Wi | Aspiring Robotics Engineer"
+  description="Kenneth Wong Cun Wi —  Robotics, Embedded Systems, and Engineering"
   canonicalPath="/"
   activeNav="home"
 >
@@ -35,8 +35,9 @@ const featuredTop = projects
 
         <div class="hero-writeup">
           <p>
-            When my innovations and iterations take shape to resolve real-world problems, that is what gives my work meaning.
+            It all started when my first robot came alive. Over 10 years later, I’m still diving into the abyss of mechanical, electrical, and software engineering in robotics, and the world that exists in between.
           </p>
+          <p>Feel free to explore this brain cache of mine!</p>
         </div>
 
         <div class="motive-box" aria-label="Current motive">
@@ -51,8 +52,6 @@ const featuredTop = projects
         <div class="icon-row" aria-label="Social links">
           <SocialIcons />
         </div>
-
-        <p class="hero-cache">Feel free to explore this brain cache of mine as i document my present and past for the future!</p>
       </div>
     </div>
   </section>
@@ -63,28 +62,30 @@ const featuredTop = projects
         <h2>What I'm focused on right now</h2>
       </div>
 
-      <div class="grid cards">
-        <article class="card">
-          <div class="card-top">
-            <h3>My current role</h3>
-            <p class="muted">
-              Electrical Lead, Robotics Engineer, Bumblebee Autonomous Systems. Leads the Electrical team to develop the electrical systems of every vehicle for both local and international competitions.
-            </p>
+      <div class="grid cards focus-cards">
+        <article class="card li-card focus-role">
+          <div class="li-head">
+            <div class="li-logo dark" aria-hidden="true">
+              <img src="/assets/images/logo-bbas.png" alt="" loading="lazy" />
+            </div>
+            <div class="li-head-text">
+              <p class="li-title">Electrical Lead</p>
+              <p class="li-subtitle muted">Bumblebee Autonomous Systems</p>
+              <p class="li-dates muted">Nov 2025 – Present</p>
+            </div>
           </div>
+          <p class="li-desc muted">Leads the Electrical team to develop the electrical systems of every vehicle for both local and international competitions.</p>
+
+          <p class="li-desc muted">
+            Collaborates with Mechanical and Software subteams (~50 members) to drive overall vehicle developments.
+          </p>
+
+          <p class="li-desc muted">
+              Oversees developments and maintenance with high standards (in hardware design, firmware development, systems testing & integration) to ensure reliability and robustness.
+          </p>
+
           <div class="card-actions">
             <a class="text-link" href="/about/#work-experiences">More Details →</a>
-          </div>
-        </article>
-
-        <article class="card">
-          <div class="card-top">
-            <h3>Education</h3>
-            <p class="muted">
-              National University of Singapore. Bachelor of Engineering - BE, Computer Engineering, Specialisation in Robotics, Specialisation in Advanced Electronics, Minor in AI.
-            </p>
-          </div>
-          <div class="card-actions">
-            <a class="text-link" href="/about/#education">More Details →</a>
           </div>
         </article>
 
@@ -98,6 +99,39 @@ const featuredTop = projects
             </div>
           </article>
         )}
+
+        <article class="card li-card focus-edu">
+          <div class="li-head">
+            <div class="li-logo" aria-hidden="true">
+              <img src="/assets/images/logo-nus.jpg" alt="" loading="lazy" />
+            </div>
+            <div class="li-head-text">
+              <p class="li-title">National University of Singapore</p>
+            </div>
+          </div>
+
+          <p class="li-subtitle muted">Bachelor of Engineering - BE, Computer Engineering</p>
+
+          <p class="li-dates muted">2024 – 2028</p>
+          <div class="li-lines muted">
+            <p>Specialisation in Robotics</p>
+            <p>Specialisation in Advanced Electronics</p>
+            <p>Minor in Artificial Intelligence</p>
+          </div>
+
+          <div class="li-block">
+            <p class="li-label">Activities and societies:</p>
+            <ul class="bullets">
+              <li>NUS Bumblebee Autonomous Systems (NUS BBAS)</li>
+              <li>IEEE-Eta Kappa Nu (HKN) Honor Society</li>
+              <li>Current undergraduate assistant for CG2111A (Engineering Principles and Practices II) in AY25/26</li>
+            </ul>
+          </div>
+
+          <div class="card-actions">
+            <a class="text-link" href="/about/#education">More Details →</a>
+          </div>
+        </article>
       </div>
     </div>
   </section>

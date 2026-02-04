@@ -745,19 +745,141 @@ a:hover {
 
 .card-top p { margin: 0.4rem 0 0; }
 
+/* LinkedIn-style cards (Focus section) */
+.li-card {
+  row-gap: 0.45rem;
+}
+
+.li-head {
+  display: grid;
+  grid-template-columns: 46px 1fr;
+  gap: 0.7rem;
+  align-items: start;
+}
+
+.li-logo {
+  width: 46px;
+  height: 46px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, #ffffff 88%, var(--bg-elev));
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  padding: 6px;
+}
+
+.li-logo.dark {
+  background: #000;
+}
+
+.li-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border: 0;
+  border-radius: 0;
+}
+
+.li-head-text {
+  display: grid;
+  gap: 0.15rem;
+  padding-top: 0.05rem;
+}
+
+.li-title {
+  margin: 0;
+  font-size: 1.08rem;
+  font-weight: 850;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.li-subtitle {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.li-dates {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.li-desc {
+  margin: 0;
+  font-size: 0.97rem;
+  line-height: 1.55;
+}
+
+.li-lines {
+  display: grid;
+  gap: 0.08rem;
+  margin-top: 0.06rem;
+}
+
+.li-lines p {
+  margin: 0;
+  line-height: 1.22;
+}
+
+.li-label {
+  margin: 0.06rem 0 0;
+  font-size: 0.98rem;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.li-grade {
+  margin: 0.25rem 0 0;
+  color: var(--text);
+  opacity: 0.92;
+  font-size: 0.98rem;
+}
+
+.li-grade-value {
+  font-weight: 800;
+}
+
+.li-block {
+  display: grid;
+  gap: 0.12rem;
+  margin-top: 0.32rem;
+}
+
+.li-card .bullets {
+  margin-top: 0.05rem;
+  padding-left: 1rem;
+  font-size: 0.93rem;
+}
+
+.li-card .bullets li {
+  margin-top: 0.14rem;
+  line-height: 1.35;
+}
+
+.focus-cards {
+  align-items: start;
+}
+
 .tag-row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+  align-items: center;
 }
 
 .tag {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.86rem;
   padding: 0.3rem 0.55rem;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--bg-elev);
   color: var(--muted);
+  line-height: 1.2;
 }
 
 .card-actions {
@@ -897,7 +1019,13 @@ img {
   }
   .hero-grid {
     grid-template-columns: 0.95fr 1.35fr;
-    align-items: start;
+    align-items: stretch;
+  }
+  .hero-photo {
+    align-self: stretch;
+  }
+  .hero-photo img {
+    max-height: none;
   }
   .split-grid { grid-template-columns: 1fr 1fr; }
   .cards { grid-template-columns: repeat(3, 1fr); }
