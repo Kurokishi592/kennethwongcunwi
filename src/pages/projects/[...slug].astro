@@ -3,12 +3,12 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
-  const projects = await getCollection('projects');
+  const projects = (await getCollection('projects')).filter((p) => p.id.endsWith('.mdx'));
   return projects.map((p) => ({ params: { slug: p.slug } }));
 }
 
 const { slug } = Astro.params;
-const projects = await getCollection('projects');
+const projects = (await getCollection('projects')).filter((p) => p.id.endsWith('.mdx'));
 const entry = projects.find((p) => p.slug === slug);
 if (!entry) throw new Error(`Missing project: ${slug}`);
 

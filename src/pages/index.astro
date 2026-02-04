@@ -4,7 +4,7 @@ import { getCollection } from 'astro:content';
 import SocialIcons from '../components/SocialIcons.astro';
 import ProjectCard from '../components/ProjectCard.astro';
 
-const projects = await getCollection('projects');
+const projects = (await getCollection('projects')).filter((p) => p.id.endsWith('.mdx'));
 const currentProject = projects.find((p) => p.slug === 'full-electrical-stack-auv5');
 const featuredTop = projects
   .filter((p) => p.data.featured)
@@ -74,14 +74,14 @@ const featuredTop = projects
               <p class="li-dates muted">Nov 2025 – Present</p>
             </div>
           </div>
-          <p class="li-desc muted">Leads the Electrical team to develop the electrical systems of every vehicle for both local and international competitions.</p>
+          <p class="li-desc muted">Leading the Electrical team to develop the electrical systems of every vehicle for both local and international competitions.</p>
 
           <p class="li-desc muted">
-            Collaborates with Mechanical and Software subteams (~50 members) to drive overall vehicle developments.
+            Collaborating with Mechanical and Software subteams (~50 members) to drive overall vehicle developments.
           </p>
 
           <p class="li-desc muted">
-              Oversees developments and maintenance with high standards (in hardware design, firmware development, systems testing & integration) to ensure reliability and robustness.
+              Overseeing developments and maintenance with high standards (in hardware design, firmware development, systems testing & integration) to ensure reliability and robustness.
           </p>
 
           <div class="card-actions">
