@@ -20,7 +20,7 @@ const data = entry?.data ?? entry;
     {data?.date ? <div class="card-meta">{data.date}</div> : null}
     {Array.isArray(data?.tags) && data.tags.length ? (
       <div class="tag-row">
-        {data.tags.slice(0, 6).map((t) => (
+        {data.tags.slice(0, 6).map((t: string) => (
           <span class="tag">{t}</span>
         ))}
       </div>

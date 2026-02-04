@@ -22,93 +22,66 @@ const highlights = [
   }
 ];
 
-const experience = [
-  {
-    when: 'YYYY — YYYY',
-    title: 'Role • Company / Lab',
-    bullets: [
-      'Replace this with your work experience bullet points.',
-      'Focus on impact, constraints, and what you built end-to-end.'
-    ]
-  }
-];
-
-const education = [
-  {
-    when: 'YYYY — YYYY',
-    title: 'B.Eng / B.Sc • University',
-    bullets: ['Major / track', 'Relevant modules / focus areas']
-  }
-];
-
-const awards = [
-  {
-    when: 'YYYY',
-    title: 'Award / Scholarship / Competition',
-    bullets: ['Short context + what it recognizes']
-  }
-];
-
-const stack = [
-  { title: 'Hardware', body: 'Embedded platforms, basic EE design, bring-up, sensors, interfaces.' },
-  { title: 'Firmware', body: 'C/C++, microcontrollers, drivers, serial protocols, logging.' },
-  { title: 'Software', body: 'Python/TypeScript, tooling, data pipelines, visualization.' },
-  { title: 'Robotics', body: 'Calibration, estimation, control, autonomy — grounded in real sensors.' },
-  { title: 'Tools', body: 'Git, Linux, debugging workflows, docs that stay usable.' },
-  { title: 'Mindset', body: 'Own the system. Find the bottleneck. Make it testable.' }
-];
+const experienceTags = {
+  bbasLead: ['Leadership', 'Electrical Systems', 'Integration', 'Robotics'],
+  bbasEngineer: ['Robotics', 'Embedded', 'Electrical Architecture', 'Testing'],
+  spf: ['Automation', 'Stakeholder Management', 'Project Management', 'Analytics'],
+  hcirs: ['Mentoring', 'Robotics', 'Leadership', 'Operations']
+};
 ---
 
 <BaseLayout
   title="About | Kenneth Wong Cun Wi"
-  description="About Kenneth Wong Cun Wi — integration-focused engineering across hardware and software."
+  description="About Kenneth Wong Cun Wi — a Self-intro."
   canonicalPath="/about/"
   activeNav="whoami"
 >
-  <section class="hero">
+  <section class="hero whoami-hero">
     <div class="container hero-grid">
-      <div>
-        <p class="eyebrow">~/whoami</p>
-        <h1 class="hero-title">Hi — I’m Kenneth.</h1>
-        <p class="hero-subtitle">
-          I care about making complex systems behave. That usually means working across multiple layers — from circuits and sensors all the way up
-          to software and tooling — and sweating the integration details until it’s reliable.
-        </p>
-
-        <div class="cta-row">
-          <a class="button primary" href="#footer">Socials</a>
-          <a class="button" href="/projects/">Projects</a>
-          <a class="button" href="/blog/">Cache</a>
+      <div class="whoami-hero-media" aria-label="Whoami hero image">
+        <img src="/assets/images/profile-rs25.jpg" alt="Portrait of Kenneth Wong Cun Wi" loading="lazy" />
+        <div class="whoami-hero-overlay" aria-hidden="true"></div>
+        <div class="whoami-hero-text">
+          <h1 class="hero-title">Hi — I’m Kenneth.</h1>
+          <p class="hero-subtitle">
+            "Shall we start by introducing ourselves?"
+          </p>
         </div>
       </div>
 
-      <aside class="intro-card" aria-label="Quick bio">
-        <div class="intro-top">
-          <div class="avatar">
-            <img
-              src="/assets/images/profile.jpg"
-              alt="Portrait of Kenneth Wong Cun Wi"
-              loading="lazy"
-            />
-          </div>
-          <div>
-            <p class="intro-name"><strong>Kenneth Wong Cun Wi</strong></p>
-            <p class="intro-meta">Electrical → Software integration • Robotics</p>
-          </div>
+      <aside class="toc-card" aria-label="Contents">
+        <div class="toc-top">
+          <p class="toc-title">Contents</p>
         </div>
-        <div class="mini-links" aria-label="Social links">
-          <div class="icon-row" aria-label="Social links">
-            <SocialIcons linkClass="mini-social" />
-          </div>
+        <nav class="toc" aria-label="On this page">
+          <a href="#nutshell">A short intro</a>
+          <a href="#work-experiences">Experience</a>
+          <a href="#education">Education</a>
+          <a href="#skills">Skills & Tech Stack</a>
+        </nav>
+
+        <div class="toc-actions" aria-label="Filter">
+          <p class="filter-title">Filter</p>
+          <button
+            class="filter-btn filter-flag"
+            type="button"
+            data-era-toggle
+            aria-pressed="false"
+            aria-label="Show all older entries"
+            title="Show all older entries"
+          >
+            ls -a
+          </button>
+          <p class="filter-help muted">Show all older entries</p>
         </div>
       </aside>
     </div>
   </section>
 
-  <section class="section">
+  <section class="section" id="nutshell">
     <div class="container">
       <div class="section-head">
-        <h2>In a nutshell</h2>
+        <h2>A short intro</h2>
         <p class="muted">A quick overview — then the details.</p>
       </div>
 
@@ -128,22 +101,185 @@ const stack = [
   <section class="section" id="work-experiences">
     <div class="container">
       <div class="section-head">
-        <h2>Work Experiences</h2>
-        <p class="muted">Impact-focused. Edit this to match your resume/LinkedIn.</p>
+        <h2>Experience</h2>
       </div>
 
-      <div class="timeline">
-        {experience.map((e) => (
-          <div class="timeline-item">
-            <div class="timeline-meta">{e.when}</div>
-            <h3 class="timeline-title">{e.title}</h3>
-            <ul class="bullets">
-              {e.bullets.map((b) => (
-                <li>{b}</li>
-              ))}
-            </ul>
+      <div class="li-timeline">
+        <article class="li-item" data-era="current">
+          <div class="li-head">
+            <div class="li-logo dark" aria-hidden="true">
+              <img src="/assets/images/logo-bbas.png" alt="" loading="lazy" />
+            </div>
+            <div class="li-head-text">
+              <p class="li-title">Bumblebee Autonomous Systems</p>
+              <p class="li-subtitle muted">Singapore, Singapore · On-site</p>
+              <p class="li-dates muted">May 2025 – Present</p>
+            </div>
           </div>
-        ))}
+
+          <div class="li-positions">
+            <section class="li-position">
+              <div class="li-pos-head">
+                <p class="li-pos-title">Electrical Lead</p>
+                <p class="li-dates muted">Nov 2025 – Present</p>
+              </div>
+              <ul class="bullets">
+                <li>Leads the Electrical team to develop the electrical systems of every vehicle for both local and international competitions.</li>
+                <li>Collaborates with Mechanical and Software subteams in overall developments for all vehicles.</li>
+                <li>Oversees developments and maintenance with high standards (hardware design, firmware development, systems testing & integration) to ensure reliability and robustness.</li>
+              </ul>
+              <div class="tag-row">
+                {experienceTags.bbasLead.map((t) => (
+                  <span class="tag">{t}</span>
+                ))}
+              </div>
+            </section>
+
+            <section class="li-position">
+              <div class="li-pos-head">
+                <p class="li-pos-title">Robotics Engineer</p>
+                <p class="li-dates muted">May 2025 – Present</p>
+              </div>
+
+              <ul class="bullets">
+                <li>Developing the electrical stack of the new AUV.</li>
+                <li>Developing the electrical stack of the new ASV.</li>
+              </ul>
+
+              <details class="see-more">
+                <summary>See more…</summary>
+                <ul class="bullets">
+                  <li>Member of Competitive Robotics Team specialising in Autonomous Maritime Systems (ASVs, AUVs) and Drones for international competitions.</li>
+                  <li>
+                    Led the development of MiniAUV for RoboSub 2025 — designed its electrical stack and firmware, coordinated cross-functional efforts
+                    across mechanical/electrical/software subteams, and drove end-to-end testing and on-site operations during the competition.
+                  </li>
+                  <li><strong>Award:</strong> 1st Place — RoboSub 2025 (Irvine, California).</li>
+                </ul>
+              </details>
+
+              <div class="tag-row">
+                {experienceTags.bbasEngineer.map((t) => (
+                  <span class="tag">{t}</span>
+                ))}
+              </div>
+            </section>
+          </div>
+        </article>
+
+        <article class="li-item" data-era="legacy">
+          <div class="li-head">
+            <div class="li-logo" aria-hidden="true">
+              <span class="mono" aria-hidden="true">SPF</span>
+            </div>
+            <div class="li-head-text">
+              <p class="li-title">Singapore Police Force</p>
+              <p class="li-subtitle muted">Singapore, Singapore</p>
+              <p class="li-dates muted">Apr 2022 – Apr 2024</p>
+            </div>
+          </div>
+
+          <p class="li-desc muted">
+            Police National Service Full-Time (PNSF) in Police National Service Department (PNSD) at Police HQ; collaborated with MHA, HTX, NCS and
+            internal business process owners.
+          </p>
+
+          <details class="see-more">
+            <summary>See more…</summary>
+            <ul class="bullets">
+              <li><strong>Role:</strong> SGT(NS), NS Policy & Planning Officer (Systems & Planning Tech, Manpower and Resource Planning).</li>
+              <li>Led a dedicated systems task force during a ministry-wide system transition.</li>
+              <li>Spearheaded a year-long project to automate NS officer meal allowance submissions.</li>
+              <li>Oversaw organizational systems critical to business operations and HR management.</li>
+              <li>Managed data, reviewed statistics, and provided analytical insights for MHA-related reports.</li>
+              <li><strong>Achievement:</strong> SPF NSF OF THE YEAR 2024.</li>
+            </ul>
+          </details>
+
+          <div class="tag-row">
+            {experienceTags.spf.map((t) => (
+              <span class="tag">{t}</span>
+            ))}
+          </div>
+        </article>
+
+        <article class="li-item" data-era="legacy">
+          <div class="li-head">
+            <div class="li-logo" aria-hidden="true">
+              <span class="mono" aria-hidden="true">HC</span>
+            </div>
+            <div class="li-head-text">
+              <p class="li-title">Hwa Chong Infocomm & Robotics Society</p>
+              <p class="li-subtitle muted">Hwa Chong Institution</p>
+              <p class="li-dates muted">Jan 2016 – May 2021</p>
+            </div>
+          </div>
+
+          <ul class="bullets">
+            <li>Senior mentor for Hwa Chong Robotics International and National teams (VEX Robotics).</li>
+            <li>
+              Executive Committee (College), General Secretary — overcame challenges in managing ~50 active members across 5 sections, logistics and
+              finance during the COVID-19 pandemic.
+            </li>
+          </ul>
+
+          <details class="see-more">
+            <summary>See more…</summary>
+            <div class="li-positions">
+              <section class="li-position">
+                <div class="li-pos-head">
+                  <p class="li-pos-title">Executive Committee (College)</p>
+                  <p class="li-dates muted">May 2020 – May 2021</p>
+                </div>
+                <ul class="bullets">
+                  <li>Senior mentor for HC robotics teams (VEX).</li>
+                  <li>General Secretary — team ops, logistics accountability and finance handling.</li>
+                </ul>
+              </section>
+
+              <section class="li-position">
+                <div class="li-pos-head">
+                  <p class="li-pos-title">Member (College)</p>
+                  <p class="li-dates muted">Jan 2020 – May 2020</p>
+                </div>
+                <ul class="bullets">
+                  <li>Tournament Champions — Singapore VEX Robotics Competition National Championships (2020).</li>
+                  <li>Represented Singapore at VEX Robotics World Championship 2020 (High School Division).</li>
+                </ul>
+              </section>
+
+              <section class="li-position">
+                <div class="li-pos-head">
+                  <p class="li-pos-title">Executive Committee (High School)</p>
+                  <p class="li-dates muted">Aug 2018 – Dec 2019</p>
+                </div>
+                <ul class="bullets">
+                  <li>Core Team Member — Singapore VEX Robotics Competition National Championships (2018–2019).</li>
+                  <li>Vice-Chairperson & Committee Member — Mechanics Sabbatical (2018–2019).</li>
+                  <li>General Secretary / Quartermaster — reformed practices, ran AARs and pre-competition strategizing, and managed inventory + claims.</li>
+                </ul>
+              </section>
+
+              <section class="li-position">
+                <div class="li-pos-head">
+                  <p class="li-pos-title">Member (High School)</p>
+                  <p class="li-dates muted">Jan 2016 – Aug 2018</p>
+                </div>
+                <ul class="bullets">
+                  <li>Singapore VEX Robotics Championships (2017–2019).</li>
+                  <li>National Robotics Competition (2016–2018).</li>
+                  <li>First Lego League (2016–2017).</li>
+                </ul>
+              </section>
+            </div>
+          </details>
+
+          <div class="tag-row">
+            {experienceTags.hcirs.map((t) => (
+              <span class="tag">{t}</span>
+            ))}
+          </div>
+        </article>
       </div>
     </div>
   </section>
@@ -154,60 +290,225 @@ const stack = [
         <h2>Education</h2>
       </div>
 
-      <div class="timeline">
-        {education.map((e) => (
-          <div class="timeline-item">
-            <div class="timeline-meta">{e.when}</div>
-            <h3 class="timeline-title">{e.title}</h3>
+      <div class="li-timeline">
+        <article class="li-item" data-era="current">
+          <div class="li-head">
+            <div class="li-logo" aria-hidden="true">
+              <img src="/assets/images/logo-nus.jpg" alt="" loading="lazy" />
+            </div>
+            <div class="li-head-text">
+              <p class="li-title">National University of Singapore</p>
+              <p class="li-subtitle muted">Bachelor of Engineering (B.Eng), Computer Engineering — Robotics Specialisation</p>
+              <p class="li-dates muted">2024 – 2028</p>
+            </div>
+          </div>
+
+          <div class="li-lines muted">
+            <p><strong>GPA:</strong> 4.93 / 5.00</p>
+          </div>
+
+          <div class="li-block">
+            <p class="li-label">Activities and societies</p>
             <ul class="bullets">
-              {e.bullets.map((b) => (
-                <li>{b}</li>
-              ))}
+              <li>NUS Bumblebee Autonomous Systems (NUS BBAS)</li>
+              <li>IEEE-Eta Kappa Nu (HKN) Honor Society</li>
             </ul>
           </div>
-        ))}
-      </div>
-    </div>
-  </section>
 
-  <section class="section" id="stack">
-    <div class="container">
-      <div class="section-head">
-        <h2>Tech stack</h2>
-        <p class="muted">The tools I reach for most often.</p>
-      </div>
-
-      <div class="grid skills">
-        {stack.map((s) => (
-          <div class="panel">
-            <h3>{s.title}</h3>
-            <p class="muted">{s.body}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="awards">
-    <div class="container">
-      <div class="section-head">
-        <h2>Honours & awards</h2>
-      </div>
-
-      <div class="timeline">
-        {awards.map((a) => (
-          <div class="timeline-item">
-            <div class="timeline-meta">{a.when}</div>
-            <h3 class="timeline-title">{a.title}</h3>
+          <div class="li-block">
+            <p class="li-label">Undergraduate Teaching Assistant</p>
             <ul class="bullets">
-              {a.bullets.map((b) => (
-                <li>{b}</li>
-              ))}
+              <li>CG1111A (Engineering Principles and Practices I) — AY25/26</li>
+              <li>CG2111A (Engineering Principles and Practices II) — AY25/26</li>
             </ul>
           </div>
-        ))}
+
+          <div class="li-block">
+            <p class="li-label">Relevant coursework</p>
+            <ul class="bullets">
+              <li>CS2040C Data Structures and Algorithms</li>
+              <li>CG2271 Real-Time Operating Systems</li>
+              <li>EE2026 Digital Design</li>
+              <li>CG2027 Transistor-level Digital Circuits</li>
+              <li>CG2028 Computer Organisation</li>
+              <li>CG2023 Signals and Systems</li>
+              <li>EE2211 Introduction to Machine Learning</li>
+              <li>EE2213 Introduction to Artificial Intelligence</li>
+              <li>CG3201 Machine Learning and Deep Learning</li>
+              <li>CS2113 Software Engineering & Object-Oriented Programming</li>
+            </ul>
+          </div>
+
+          <details class="see-more">
+            <summary>Foundational courses (see more…)</summary>
+            <ul class="bullets">
+              <li>CS1010 Programming Methodology</li>
+              <li>CS1231 Discrete Structures</li>
+              <li>MA1511 Engineering Calculus</li>
+              <li>MA1512 Differential Equations for Engineering</li>
+              <li>MA1508E Linear Algebra for Engineering</li>
+              <li>CG1111A Engineering Principles and Practice I</li>
+              <li>CG2111A Engineering Principles and Practice II</li>
+              <li>CP2106 Independent Software Development Project (Orbital)</li>
+            </ul>
+          </details>
+
+          <p class="li-desc muted">For my transcript, please email me directly.</p>
+        </article>
+
+        <article class="li-item" data-era="current">
+          <div class="li-head">
+            <div class="li-logo" aria-hidden="true">
+              <span class="mono" aria-hidden="true">RC4</span>
+            </div>
+            <div class="li-head-text">
+              <p class="li-title">Residential College 4 (RC4)</p>
+              <p class="li-subtitle muted">National University of Singapore</p>
+              <p class="li-dates muted">2024 – 2026</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="li-item" data-era="legacy">
+          <div class="li-head">
+            <div class="li-logo" aria-hidden="true">
+              <span class="mono" aria-hidden="true">HCI</span>
+            </div>
+            <div class="li-head-text">
+              <p class="li-title">Hwa Chong Institution</p>
+              <p class="li-subtitle muted">Singapore-Cambridge GCE 'A' Levels</p>
+              <p class="li-dates muted">Jan 2020 – Nov 2021</p>
+            </div>
+          </div>
+          <div class="li-lines muted">
+            <p><strong>Grade:</strong> 90RP (AAAA/AA)</p>
+          </div>
+          <ul class="bullets">
+            <li>Activities: Hwa Chong Infocomm & Robotics Society (HCIRS)</li>
+            <li>General Secretary for HCIRS (Executive Committee)</li>
+            <li>VEX Robotics World Championship 2020 — VRC High School Division</li>
+            <li>Singapore VEX Robotics National Championships — Tournament Champions (2020)</li>
+            <li>Organising Team — Project Ikigai (community project, 2020)</li>
+          </ul>
+        </article>
+
+        <article class="li-item" data-era="legacy">
+          <div class="li-head">
+            <div class="li-logo" aria-hidden="true">
+              <span class="mono" aria-hidden="true">HCI</span>
+            </div>
+            <div class="li-head-text">
+              <p class="li-title">Hwa Chong Institution</p>
+              <p class="li-subtitle muted">Integrated Programme</p>
+              <p class="li-dates muted">Jan 2016 – Dec 2019</p>
+            </div>
+          </div>
+          <ul class="bullets">
+            <li>Activities: Hwa Chong Robotics & Infocomm</li>
+            <li>Upper Secondary Executive Committee — Hwa Chong Robotics & Infocomm (2018–2019)</li>
+            <li>Singapore VEX Robotics Championships (2017–2019)</li>
+            <li>National Robotics Competition (2016–2018)</li>
+            <li>First Lego League (2016–2017)</li>
+            <li>Vice-Chairperson & Committee Member — Mechanics Sabbatical (2018–2019)</li>
+            <li>Projects Day: High Distinction (2017–2019), Distinction (2016)</li>
+          </ul>
+        </article>
+
+        <article class="li-item" data-era="legacy">
+          <div class="li-head">
+            <div class="li-logo" aria-hidden="true">
+              <span class="mono" aria-hidden="true">PH</span>
+            </div>
+            <div class="li-head-text">
+              <p class="li-title">Pei Hwa Presbyterian Primary School</p>
+              <p class="li-subtitle muted">Singapore</p>
+              <p class="li-dates muted">Jan 2010 – Dec 2015</p>
+            </div>
+          </div>
+
+          <details class="see-more">
+            <summary>See more…</summary>
+            <div class="li-block">
+              <p class="li-label">Robotics</p>
+              <ul class="bullets">
+                <li>RoboCup Singapore Open, CoSpace Rescue (2015)</li>
+                <li>National Junior Robotics Competition (NJRC) (2014)</li>
+                <li>8th National RoboPreneur (NPRC) (2014)</li>
+              </ul>
+            </div>
+            <div class="li-block">
+              <p class="li-label">Student Leader (2012–2015)</p>
+              <ul class="bullets">
+                <li>Overseas Service Learning Trip 2014 — Hangzhou, China</li>
+                <li>Overseas Service Learning Trip 2013 — Ho Chi Minh City, Vietnam</li>
+                <li>Student Leaders Leadership Trainings</li>
+              </ul>
+            </div>
+          </details>
+        </article>
       </div>
     </div>
   </section>
+
+  <section class="section" id="skills">
+    <div class="container">
+      <div class="section-head">
+        <h2>Skills & Tech Stack</h2>
+        <p class="muted">No fluff — just what I actually use.</p>
+      </div>
+
+      <div class="panel">
+        <ul class="bullets">
+          <li><strong>Programming Languages:</strong> C | C++ | Verilog | Python | Java</li>
+          <li>
+            <strong>Electrical Design:</strong> PCB Design (Altium Designer), full electrical stack for an Autonomous Underwater Vehicle, kill switch
+            designs, circuit analysis and debugging
+          </li>
+          <li>
+            <strong>Embedded & Firmware:</strong> Bare-metal programming and communication protocols (UART, I²C, SPI, CAN bus), FreeRTOS and RTOS
+            scheduling, MAVLink, MAVROS
+          </li>
+          <li><strong>Microcontrollers / SBCs:</strong> ESP32, Teensy, NXP FRDM, Arduino, Jetson, Raspberry Pi</li>
+          <li>
+            <strong>Robotics & Perception:</strong> Sensor fusion (Kalman filter, quaternion/polar methods), IMU processing, AprilTags, PID control,
+            Computer Vision, SLAM, LiDAR integration, ROS
+          </li>
+          <li><strong>Mechanical & CAD:</strong> VEX Robotics, actuation design, Autodesk Fusion 360, Solidworks</li>
+          <li>
+            <strong>FPGA & Digital Design:</strong> Basys3, image-processing pipelines, union–find connected components for blob detection, interactive
+            GUIs
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    (() => {
+      const items = Array.from(document.querySelectorAll('.li-item[data-era]'));
+      const toggle = document.querySelector('[data-era-toggle]');
+      const help = document.querySelector('.filter-help');
+
+      if (!toggle || !items.length) return;
+
+      const setLegacyVisible = (visible) => {
+        document.documentElement.classList.toggle('show-legacy', visible);
+        toggle.setAttribute('aria-pressed', String(visible));
+        toggle.classList.toggle('is-active', visible);
+
+        const label = visible ? 'Hide older entries' : 'Show all older entries';
+        toggle.setAttribute('aria-label', label);
+        toggle.setAttribute('title', label);
+        if (help) help.textContent = visible ? 'Showing older entries' : 'Show all older entries';
+      };
+
+      toggle.addEventListener('click', () => {
+        const visible = !document.documentElement.classList.contains('show-legacy');
+        setLegacyVisible(visible);
+      });
+
+      setLegacyVisible(false);
+    })();
+  </script>
 
 </BaseLayout>

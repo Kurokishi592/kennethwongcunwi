@@ -228,6 +228,13 @@ a:hover {
   color: var(--text);
 }
 
+.nav a.active {
+  text-decoration: none;
+  color: var(--text);
+  background: color-mix(in srgb, var(--bg-elev) 70%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 65%, var(--brand) 35%);
+}
+
 .nav-button {
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 0.95rem;
@@ -354,6 +361,198 @@ a:hover {
   display: grid;
   gap: 1.25rem;
   align-items: start;
+}
+
+/* Whoami hero image */
+.whoami-hero-media {
+  position: relative;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  min-height: 360px;
+}
+
+.whoami-hero-media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  border: 0;
+  border-radius: 0;
+  filter: brightness(0.62) saturate(1.02);
+}
+
+.whoami-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(900px 500px at 20% 20%, rgba(124, 58, 237, 0.25), transparent 60%),
+    radial-gradient(900px 500px at 85% 25%, rgba(34, 197, 94, 0.18), transparent 55%),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.55));
+  pointer-events: none;
+}
+
+.whoami-hero-text {
+  position: absolute;
+  inset: 0 auto auto 0;
+  padding: 1.15rem;
+  max-width: 72ch;
+}
+
+.whoami-hero-text .eyebrow {
+  display: inline-flex;
+  padding: 0.3rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+}
+
+.whoami-hero-text .hero-title {
+  margin-top: 0.5rem;
+}
+
+.whoami-hero-text .hero-subtitle {
+  margin-top: 0.45rem;
+  max-width: 65ch;
+}
+
+/* Whoami contents card */
+.toc-card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  box-shadow: var(--shadow);
+  padding: 0.75rem;
+}
+
+.toc-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.toc-title {
+  margin: 0;
+  font-weight: 850;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  font-size: 1.2rem;
+}
+
+.filter-row {
+  display: inline-flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.toc-actions {
+  margin-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
+}
+
+.filter-title {
+  margin: 0.15rem 0 0;
+  font-weight: 850;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  font-size: 1.02rem;
+}
+
+.filter-help {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.filter-btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 65%, transparent);
+  color: var(--muted);
+  border-radius: 999px;
+  padding: 0.8rem 1.05rem;
+  font-size: 1.25rem;
+  min-height: 56px;
+  width: 100%;
+  cursor: pointer;
+}
+
+.filter-btn.filter-flag {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  letter-spacing: -0.01em;
+}
+
+.filter-btn:hover {
+  color: var(--text);
+  filter: brightness(1.06);
+}
+
+.filter-btn.is-active {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--border) 65%, var(--brand) 45%);
+  background: color-mix(in srgb, var(--brand) 14%, var(--bg-elev));
+}
+
+.toc {
+  display: grid;
+  gap: 0.25rem;
+  margin-top: 0.65rem;
+  justify-items: start;
+  padding-left: 0.25rem;
+}
+
+.toc a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.35rem 0.45rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 1.05rem;
+  text-align: left;
+}
+
+.toc a:hover {
+  border-color: var(--border);
+  background: var(--bg-elev);
+  color: var(--text);
+}
+
+@media (min-width: 960px) {
+  .whoami-hero .toc-card {
+    width: min(100%, 320px);
+    justify-self: end;
+  }
+
+  .whoami-hero .hero-grid {
+    grid-template-columns: 1.35fr 0.65fr;
+    align-items: stretch;
+  }
+
+  .whoami-hero-media {
+    min-height: 420px;
+  }
+}
+
+.li-item.is-hidden {
+  display: none;
+}
+
+/* Legacy toggle: current is always visible */
+.li-item[data-era="legacy"] {
+  display: none;
+}
+
+html.show-legacy .li-item[data-era="legacy"] {
+  display: grid;
 }
 
 .hero-photo {
@@ -594,12 +793,13 @@ a:hover {
   display: inline-flex;
   gap: 0.5rem;
   align-items: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   color: var(--muted);
   border: 1px solid var(--border);
   background: var(--bg-elev);
   padding: 0.35rem 0.7rem;
   border-radius: 999px;
-  font-size: 0.9rem;
+  font-size: 0.96rem;
 }
 
 .hero-title {
@@ -748,6 +948,65 @@ a:hover {
 /* LinkedIn-style cards (Focus section) */
 .li-card {
   row-gap: 0.45rem;
+}
+
+/* LinkedIn-style timeline items (Whoami) */
+.li-timeline {
+  display: grid;
+  gap: 1rem;
+}
+
+.li-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  box-shadow: var(--shadow);
+  padding: 1.05rem;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.li-positions {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.li-position {
+  padding-top: 0.1rem;
+}
+
+.li-pos-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.li-pos-title {
+  margin: 0;
+  font-weight: 850;
+  color: var(--text);
+}
+
+/* "See more" blocks */
+.see-more {
+  border-top: 1px dashed color-mix(in srgb, var(--border) 65%, transparent);
+  padding-top: 0.65rem;
+}
+
+.see-more > summary {
+  list-style: none;
+  cursor: pointer;
+  color: color-mix(in srgb, var(--text) 90%, var(--brand) 35%);
+  font-weight: 700;
+}
+
+.see-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.see-more[open] > summary {
+  margin-bottom: 0.5rem;
 }
 
 .li-head {
