@@ -897,7 +897,13 @@ img {
   }
   .hero-grid {
     grid-template-columns: 0.95fr 1.35fr;
-    align-items: start;
+    align-items: stretch;
+  }
+  .hero-photo {
+    align-self: stretch;
+  }
+  .hero-photo img {
+    max-height: none;
   }
   .split-grid { grid-template-columns: 1fr 1fr; }
   .cards { grid-template-columns: repeat(3, 1fr); }
