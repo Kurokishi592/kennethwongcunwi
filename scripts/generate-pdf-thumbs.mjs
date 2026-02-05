@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { createCanvas } from '@napi-rs/canvas';
 import * as pdfjs from 'pdfjs-dist/legacy/build/pdf.mjs';
@@ -11,8 +11,9 @@ const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
 const docsRoot = path.join(repoRoot, 'public', 'docs');
 
-const workerSrc = path.join(repoRoot, 'node_modules', 'pdfjs-dist', 'legacy', 'build', 'pdf.worker.mjs');
-pdfjs.GlobalWorkerOptions.workerSrc = workerSrc;
+const workerSrcPath = path.join(repoRoot, 'node_modules', 'pdfjs-dist', 'legacy', 'build', 'pdf.worker.mjs');
+// pdfjs expects a URL-like string; on Windows, passing a raw `C:\...` path breaks ESM loading.
+pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(workerSrcPath).href;
 
 async function fileExists(filePath) {
   try {
