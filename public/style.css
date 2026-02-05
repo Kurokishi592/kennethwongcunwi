@@ -759,6 +759,13 @@ html.show-legacy .li-item[data-era="legacy"] {
   color: var(--muted);
 }
 
+.resume-inline {
+  text-decoration: none;
+  padding: 0.55rem 0.8rem;
+  border-radius: 14px;
+  font-size: 0.95rem;
+}
+
 .hero-cache {
   margin: 0.9rem 0 0;
   color: var(--muted);
