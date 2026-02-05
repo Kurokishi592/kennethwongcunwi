@@ -1,6 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
+import { getCollection, type CollectionEntry} from 'astro:content';
 import ProjectCard from '../../components/ProjectCard.astro';
 
 const projects = (await getCollection('projects')).filter((p) => p.id.endsWith('.mdx'));
@@ -72,7 +72,7 @@ const parseRangeKeys = (raw: string | undefined): { startKey: number; endKey: nu
   };
 };
 
-const compareByEndThenStart = (a, b) => {
+const compareByEndThenStart = (a: CollectionEntry<'projects'>, b: CollectionEntry<'projects'>): number => {
   const aKeys = parseRangeKeys(a.data.date);
   const bKeys = parseRangeKeys(b.data.date);
 
