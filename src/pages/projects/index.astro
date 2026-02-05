@@ -1,12 +1,101 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
+import { getCollection, type CollectionEntry} from 'astro:content';
 import ProjectCard from '../../components/ProjectCard.astro';
 
 const projects = (await getCollection('projects')).filter((p) => p.id.endsWith('.mdx'));
-const sorted = projects
+
+const MONTHS: Record<string, number> = {
+  jan: 0,
+  january: 0,
+  feb: 1,
+  february: 1,
+  mar: 2,
+  march: 2,
+  apr: 3,
+  april: 3,
+  may: 4,
+  jun: 5,
+  june: 5,
+  jul: 6,
+  july: 6,
+  aug: 7,
+  august: 7,
+  sep: 8,
+  sept: 8,
+  september: 8,
+  oct: 9,
+  october: 9,
+  nov: 10,
+  november: 10,
+  dec: 11,
+  december: 11,
+};
+
+const toKey = (year: number, month: number) => year * 12 + month;
+
+const parseMonthYear = (raw: string): { key: number; year: number; month: number } | null => {
+  const s = raw.trim();
+  if (!s) return null;
+  const parts = s.replace(/\s+/g, ' ').split(' ');
+
+  // "Nov 2025"
+  if (parts.length >= 2) {
+    const m = MONTHS[parts[0].toLowerCase()];
+    const y = Number(parts[1]);
+    if (Number.isFinite(m) && Number.isFinite(y)) return { key: toKey(y, m), year: y, month: m };
+  }
+
+  // "2025"
+  const yearOnly = Number(s);
+  if (Number.isFinite(yearOnly)) return { key: toKey(yearOnly, 11), year: yearOnly, month: 11 };
+
+  return null;
+};
+
+const parseRangeKeys = (raw: string | undefined): { startKey: number; endKey: number } => {
+  const unknown = { startKey: Number.NEGATIVE_INFINITY, endKey: Number.NEGATIVE_INFINITY };
+  if (!raw) return unknown;
+
+  const normalized = raw.replace(/[–—]/g, '-');
+  const parts = normalized.split('-').map((p) => p.trim()).filter(Boolean);
+
+  if (parts.length === 0) return unknown;
+
+  const start = parseMonthYear(parts[0]);
+  const endRaw = parts.length >= 2 ? parts[parts.length - 1] : parts[0];
+  const end = /present/i.test(endRaw) ? { key: Number.POSITIVE_INFINITY, year: 9999, month: 11 } : parseMonthYear(endRaw);
+
+  return {
+    startKey: start?.key ?? unknown.startKey,
+    endKey: end?.key ?? unknown.endKey,
+  };
+};
+
+const compareByEndThenStart = (a: CollectionEntry<'projects'>, b: CollectionEntry<'projects'>): number => {
+  const aKeys = parseRangeKeys(a.data.date);
+  const bKeys = parseRangeKeys(b.data.date);
+
+  if (bKeys.endKey !== aKeys.endKey) return bKeys.endKey - aKeys.endKey;
+  if (bKeys.startKey !== aKeys.startKey) return bKeys.startKey - aKeys.startKey;
+  return (a.data.title ?? '').localeCompare(b.data.title ?? '');
+};
+
+const featured = projects
+  .filter((p) => p.data.featured)
   .slice()
-  .sort((a, b) => Number(b.data.featured) - Number(a.data.featured));
+  .sort((a, b) => {
+    const rank = (a.data.featuredRank ?? 9999) - (b.data.featuredRank ?? 9999);
+    if (rank !== 0) return rank;
+    return compareByEndThenStart(a, b);
+  });
+
+const remaining = projects
+  .filter((p) => !p.data.featured)
+  .slice()
+  .sort(compareByEndThenStart);
+
+const sorted = [...featured, ...remaining];
 ---
 
 <BaseLayout
@@ -19,7 +108,7 @@ const sorted = projects
     <div class="container">
       <div class="section-head">
         <h2>Projects</h2>
-        <p class="muted">Everything here is MDX-backed (easy to edit).</p>
+        <p class="muted">This is my passion and what I live for. Let me design, build, fail and retry again! Challenging projects are my adrenaline.</p>
       </div>
 
       <div class="grid cards">

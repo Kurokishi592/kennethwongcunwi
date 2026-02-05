@@ -3,10 +3,14 @@ const { entry, kicker } = Astro.props;
 
 const href = entry?.slug ? `/projects/${entry.slug}/` : entry?.href;
 const data = entry?.data ?? entry;
+const isFeatured = Boolean(data?.featured);
 ---
 
-<article class="card">
+<article class="card project-card">
   <a class="card-link" href={href}>
+    {isFeatured ? (
+      <span class="featured-badge" aria-label="Featured project" title="Featured project">★</span>
+    ) : null}
     {data?.thumbnail ? (
       <div class="card-media">
         <img src={data.thumbnail} alt={`${data.title} thumbnail`} loading="lazy" />
