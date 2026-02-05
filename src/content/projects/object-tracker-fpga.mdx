@@ -1,69 +1,171 @@
 ---
 title: "Object Tracker with FPGA"
-subtitle: "EE2026: Using a single Basys3 FPGA to make an object tracker with full GUI for user customisation."
-date: "EE2026"
-tags: ["FPGA", "Basys3", "UFDS", "GUI", "Verilog"]
+subtitle: "Using a single Basys3 FPGA to make an object tracker with full GUI for user customisation."
+date: "Oct 2025 - Nov 2025"
+tags: ["FPGA", "Digital Design", "Verilog", "Basys3", "AMD Artix 7", "UFDS", "GUI"]
 thumbnail: "/assets/ee2026-fpga-object-tracker/fpga-object-tracker-main.JPEG"
 featured: true
 featuredRank: 1
+documents:
+  - title: Poster
+    subtitle: EE2026 final poster (PDF)
+    url: /assets/ee2026-fpga-object-tracker/Poster.pdf
 ---
 
-## Draft notes (WIP)
+>[!warning] Sit back and relax, this is a long one! But I guarantee it is worth the read :)
 
-These are my working notes as I build the tracker. The goal is a single-board pipeline with a settings GUI that helps users learn how image processing and connected-components labeling work.
+>[!danger] This write up is still work-in-progress! Why not watch the demo video and read the poster in the meantime? 
+> If you have any questions, feel free to reach out to me!
 
-TODO:
-Add poster
-Add full write up for UFDS
-Add full write up for GUI
+## Introduction
+>[!quote] Shall we go all out for this project?
+>
+> *- Me and my project partner, Oct 2025* 
 
-## Variables / registers / memories
+For our final project in EE2026 (Digital Design and FPGA Programming), my partner and I decided to build an **Object Tracker** using a single Basys3 FPGA board, an OV7670 camera, VGA output, a PS/2 mouse, and a pan-tilt servo rig. The ambition was not just to “make something move”, but to implement the full perception-to-actuation loop *on FPGA fabric*: a streaming computer-vision datapath, on-screen instrumentation, and a real-time connected-components / blob detector that can drive a control loop.
 
-Variables are labeled memory spaces (registers, LUTRAM, BRAM). Treat them like global storage: you can read/write whenever the label is referenced.
+What makes this project technically interesting is that every “software-looking” feature (image filters, interactive UI widgets, and the union-find blob detector) is implemented as synchronous hardware. That means everything must be expressed in terms of raster-ordered pixels, explicit buffering, clock-domain interfaces, and finite-state machines. In particular, the blob detector is not a post-processing step running on a CPU; it is a streaming UFDS (Union-Find Disjoint Set) core that consumes one pixel at a time with backpressure, maintains label equivalence classes and statistics in on-chip memories, and emits bounding boxes in real time.
 
-```verilog
-// LUTRAM
-(* ram_style = "distributed" *) reg [x_bitsize-1:0] x;
-(* ram_style = "distributed" *) reg [y_bitsize-1:0] y;
+## Demo Video
+<div style={{ maxWidth: '900px', margin: '1rem auto' }}>
+  <div style={{ position: 'relative', paddingTop: '56.25%' }}>
+    <iframe
+      src="https://www.youtube.com/embed/kuJl6z97Nus"
+      title="Object Tracker demo"
+      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+      frameBorder="0"
+      loading="lazy"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowFullScreen
+    />
+  </div>
+</div>
 
-// registers
-reg [16:0] ua_area_new;
-reg [16:0] best_area;
-reg [label_bits-1:0] best_lbl;
-```
+## Poster
 
-## Wires
+The poster is a concise, high-level overview of the system architecture and the design decisions behind the streaming CV pipeline, CDC strategy, and UFDS blob detector.
 
-Wires connect registers/inputs/outputs. When the RHS changes, the LHS signal reflects it immediately (combinational).
+<div style={{ width: '100%', height: '900px', margin: '1rem 0' }}>
+  <iframe
+    src="/assets/ee2026-fpga-object-tracker/Poster.pdf"
+    title="EE2026 FPGA Object Tracker Poster"
+    style={{ width: '100%', height: '100%', border: 0 }}
+    loading="lazy"
+  />
+</div>
 
-```verilog
-wire [label_bits-1:0] left_label = (x == 0) ? 0 :
-                                  (toggle_line == 0) ? row1_labels[x-1] : row0_labels[x-1];
+If your browser blocks PDF embedding, open it directly here: [/assets/ee2026-fpga-object-tracker/Poster.pdf](/assets/ee2026-fpga-object-tracker/Poster.pdf).
 
-wire [label_bits-1:0] up_label = (y == 0) ? 0 :
-                                (toggle_line == 0) ? row0_labels[x] : row1_labels[x];
+## CV Pipeline
 
-output wire ready_to_read;
-assign ready_to_read = (state == S_READY);
-```
+The entire vision stack is designed as a *streaming* pipeline that never requires storing a full 640×480 RGB frame for processing. Instead, the OV7670 is captured in its own pixel clock domain and decimated into a compact 310×240 region of interest (ROI) that is explicitly addressed into BRAM. In `OV7670_Capture`, the RGB565 byte-pairs are assembled under `ov7670_href`, downsampled to RGB444, and written only when both horizontal and vertical coordinates are even (`~cam_x[0] && ~cam_y[0]`) and after a crop offset (`cam_x >= 20`). The resulting address mapping is computed directly as a 1D BRAM address of the ROI: `addr = (cam_y[8:1]) * 310 + (cam_x[9:1] - 10)`, which yields exactly 310 columns by 240 rows. This “pre-decimation + crop” is the first performance lever: the downstream CV and UFDS logic sees one quarter of the original pixel rate, with a stable and known memory footprint.
 
-## “Functions” via FSM
+On the display side, `VGA_Controller` is responsible for mapping the 640×480 VGA scan back into the 310×240 BRAM space. The design uses a simple double-scan mapping (`src_x = hCounter >> 1`, `src_y = vCounter >> 1`) so each ROI pixel is rendered as a 2×2 block on the VGA monitor. Because the BRAM ROI is cropped (the leftmost portion is discarded), the controller compensates with a crop-left adjustment before calculating `frame_addr = src_y * 310 + src_x_adj`, and it also gates `active_area` with an explicit latency offset to hide BRAM read latency. This is a recurring pattern throughout the project: whenever a memory is involved, the raster pipeline must carry the correct “time alignment” between coordinates and the pixel fetched for those coordinates.
 
-In FPGA designs, “functions” are commonly implemented as FSM states that pass control across clock cycles.
+Once the ROI stream is available, preprocessing is implemented with classical 3×3 window-based filters that operate line-by-line. A Gaussian blur is implemented in `Convolution_3x3_Improved` as a 3×3 convolution, and the median denoiser is implemented in `Median_Filter` by ordering the 3×3 neighborhood values to select the median. Both modules are structured as streaming operators with internal line delays and a window register file, which means they can process one pixel per cycle after their pipeline fill latency. This matters because the downstream thresholding and morphology stages assume a continuous raster stream with well-defined `frame_start` / `line_start` semantics.
 
-```verilog
-reg [4:0] state;
-localparam S_RESET = 0;
-localparam S_INIT_LINES = 1;
-localparam S_INIT_UFDS = 2;
-localparam S_READY = 3;
-localparam S_SAMPLE = 4;
-localparam S_ADVANCE = 26;
-```
+Segmentation is performed by an interactive threshold stage in `threshold_subsection`. The live RGB444 pixel is compared against user-selected ranges (driven by sliders and an eyedropper UX), producing a 1-bit `threshold_pixel` bitmap. Converting the image to a bitmap is what enables the next stage to be extremely cheap in hardware: morphology becomes pure boolean logic over a 3×3 neighborhood. In `Morphology_3x3`, erosion is computed as a logical AND over the window (only keep pixels that are supported by neighbors), while dilation is computed as a logical OR (grow regions into neighbors). The design instantiates up to four morphology blocks in sequence, enabling “do twice” semantics and arbitrary ordering.
 
-## UFDS for object/blob detection (high level)
+The key reason the CV pipeline is coupled to the GUI is that the pipeline is not hard-coded. In settings mode, the user can drag blocks (Gaussian, median, and four morphology blocks) into drop zones and reorder them left-to-right, and the RTL records this order as control vectors. The drag/drop manager (`cv_settings_dragdrop`) exports a `pre_order_vector` encoding whether Gaussian and/or median are active and in what order, and it exports a `morph_vector` encoding the left-to-right morphology sequence (with each step being either erode or dilate). Those vectors drive mux/control logic in `Top` so that the same physical filter instances can be “wired” into different logical pipelines without recompiling the FPGA.
 
-- Process a 1-bit bitmap stream in raster order.
-- Use reduced neighborhood (L, UL, U, UR) for 8-connectivity.
-- Maintain parent/rank + per-component statistics (area, min/max x/y, sums) online.
-- Output up to top-N bounding boxes (and optionally centroids).
+## Cross Domain Crossing (CDC) Solution for UFDS Algorithm
+
+The UFDS blob detector is intentionally clocked faster than the VGA domain because its per-pixel work is not constant-time. Even though pixels arrive in raster order at `clk25`, the union-find core runs at `clk50` and may spend multiple cycles per pixel performing find/union operations, updating statistics arrays, and handling state transitions. That mismatch creates a classic producer–consumer problem: the VGA domain can produce pixels at a fixed cadence, but the UFDS domain consumes pixels at a *variable* cadence.
+
+This is solved with a two-part CDC architecture: an asynchronous FIFO (`UFDS_FIFO`) for safe clock-domain crossing, and a “ready/valid bridge” (`UFDS_Bridge`) that adds backpressure so the UFDS FSM is never forced to accept a new pixel before it is ready. On the producer side (VGA domain), the stream is packed into a small word containing `{frame_start, line_start, frame_end, pixel}` so UFDS can reconstruct raster context without needing external counters. Writes occur whenever the pixel is valid within the ROI. The FIFO itself uses dual-clock memory with Gray-coded read/write pointers and synchronized pointer transfer, which is the standard technique to avoid metastability when checking full/empty across domains.
+
+On the consumer side (UFDS domain), `UFDS_Bridge` does not simply “read whenever FIFO is non-empty”. Instead it maintains a one-word staging buffer and only asserts `in_valid` when the UFDS core asserts `ready_to_read`. This detail is important: it transforms the asynchronous FIFO into a clean decoupled interface where the UFDS FSM can throttle input at pixel granularity, guaranteeing that union-find work is never corrupted by dropped or duplicated pixels. In other words, the FIFO handles *clock* correctness, while the bridge handles *protocol* correctness for a variable-latency algorithm.
+
+## Blob Detection using Union-Find Disjoint Set (UFDS) Algorithm in Verilog
+
+The blob detector is a streaming connected-components labeling engine implemented as a union-find data structure that operates directly on the thresholded/morphed bitmap. The core idea is to scan pixels in raster order and assign labels to foreground pixels while maintaining equivalence classes between labels that later turn out to be connected. Instead of storing the whole image, the design maintains only the minimum state required for correctness: a small neighborhood context (the reduced neighbor set for connectivity), per-label parent/rank arrays, and per-label statistics required to emit bounding boxes.
+
+In the top-level integration, UFDS does not see the full 640×480 scan; it sees the 310×240 ROI stream at a decimated rate. `Top` explicitly gates the UFDS feed with `in_roi` and a decimation condition (`decim_hv`) so that, despite double-scanned VGA output, UFDS receives exactly one sample per ROI pixel. This gating is critical because union-find assumes a consistent raster progression; if pixels are duplicated due to display scaling, the component statistics and bounding boxes would be wrong.
+
+### A fundamental understanding of UFDS
+
+Union-find (disjoint set) represents a partitioning of elements into sets using a parent-pointer forest. Each element points to a parent; roots are elements that point to themselves and represent an entire set. The two core operations are `find(x)`, which returns the root of x’s set (often with path compression), and `union(a, b)`, which merges two sets by attaching one root under the other (often by rank/size). In connected-components labeling, each provisional label corresponds to an element, and unions are performed when the current pixel is connected to already-labeled neighbors.
+
+In hardware, the “elements” are not pixels; they are labels allocated during the scan. That distinction matters because it bounds memory usage: instead of storing per-pixel labels for the full frame, we store per-label metadata and only keep enough row history to know which label is above/upper-left/upper-right of the current pixel.
+
+### Disjoint Set Representaion in FPGA Registers
+
+In `UFDS_Detector` (inside `UFDS.v`), disjoint-set state is implemented as BRAM-style register arrays for `parent[]` and `rank[]`, alongside statistics arrays that accumulate component properties as the scan proceeds. Typical statistics include area (pixel count), centroid sums (to compute `cx`/`cy`), and min/max extents (`left/right/top/bottom`) for bounding-box emission. Because union operations can merge two previously separate components, the implementation must be careful about where statistics “live”: when two roots are merged, one root becomes the canonical representative, and the statistics must be merged into that representative so future pixels update the correct component.
+
+To support a streaming scan without full-frame label storage, the detector maintains a two-row labeling buffer and a reduced neighbor set. At each pixel, it evaluates connectivity to a small set of already-visited neighbors (typically left, upper-left, up, and upper-right). This is sufficient for 8-connectivity when scanning left-to-right, top-to-bottom, and it avoids needing to look ahead into unvisited pixels.
+
+### The Full Finite State Machine (FSM)
+
+The union-find engine is explicitly written as a finite state machine because `find` and `union` are not combinationally cheap. A `find` operation is a pointer-chasing loop over `parent[]` until a root is reached, and `union` must compare ranks, attach one root to another, and merge statistics deterministically. Implementing these steps as a multi-state FSM at `clk50` keeps timing closure feasible on a Basys3-class device while still allowing the system to sustain a real-time frame rate.
+
+At a high level, the FSM alternates between (1) sampling the next pixel and its neighbor labels, (2) choosing an action (new label, reuse a neighbor label, or union two labels), (3) executing the necessary find/union steps, and (4) updating per-component statistics before advancing the raster position. The key control signal that makes this composable with the CDC bridge is `ready_to_read`: the UFDS core asserts readiness only when it is safe to accept the next packed pixel token. This makes “one pixel equals one iteration” a *protocol*, even if that iteration takes multiple cycles internally.
+
+#### Sample neighbours
+
+For each foreground pixel, the detector samples the reduced neighbor set (labels from the previous row and the current row’s left neighbor). If no neighbor is labeled, a fresh label is allocated and installed into the current position in the row buffer. If exactly one neighbor label exists, that label is propagated to the current pixel and its statistics are updated (area increments, centroid sum accumulates, bounding extents are expanded if needed). When multiple neighbor labels exist and disagree, the current pixel becomes the “witness” that those labels are equivalent, and the FSM schedules a union operation.
+
+#### Find Operation
+
+The `find` operation is implemented as iterative traversal of the `parent[]` forest until a root is found. Because this traversal can take multiple steps (especially early in a frame before unions have stabilized), it is naturally expressed as a sequence of FSM states rather than a single-cycle combinational loop. This is also where the CDC bridge becomes essential: the UFDS core must be allowed to stall input consumption while it resolves roots, otherwise the raster input stream would outrun the label resolution logic.
+
+#### Weighted Union Operation
+
+When two roots must be merged, the design performs a weighted union (by rank) so the parent tree remains shallow, reducing the average cost of subsequent finds. The chosen root becomes the canonical component, and the losing root’s statistics are folded into it. This is also the point where bounding box and centroid calculations become meaningful: by continuously merging stats into the canonical root, the detector ensures that the final output for a component is correct even if its equivalence class was discovered gradually across the scan.
+
+### Testings and Simulations
+
+Because this is a live video system, a large part of validation is performed *in situ* using the on-screen instrumentation. UFDS outputs are latched once per VGA frame (so bounding boxes do not “tear” mid-frame) and then rendered back onto the ROI using explicit coordinate comparisons. This makes correctness observable without a software debugger: if unions are wrong, components fracture; if neighbor sampling is wrong, bounding boxes drift; if CDC is wrong, the overlay becomes unstable or visibly inconsistent. In addition, the UFDS settings UI includes an educational tab system that visualizes the algorithm’s stages, which doubles as a sanity-check that the internal conceptual model matches the actual FSM behavior.
+
+## Graphical User Interface (GUI) Design in Verilog
+
+The GUI is implemented as a composited overlay in the VGA clock domain, split into two rendering mechanisms depending on the type of graphic. For crisp geometric primitives (borders, separators, toggle hitboxes), the design uses combinational pixel generators such as `cv_settings_overlay` and `ufds_settings_overlay` that compute `overlay_en`/`overlay_rgb` directly from `(px, py)` and the current UI state. For more complex artwork (icons, labels, and the educational tab bitmaps), the design uses BRAM-backed sprites via `generate_bram_overlay`, which turns on-screen coordinates into a BRAM address (`overlay_addr`) and fetches a compact indexed pixel value from `overlay_mem`.
+
+The BRAM overlay pipeline is timing-aware. `generate_bram_overlay` computes `frame_x_next`/`frame_y_next` and intentionally “looks ahead” by multiple pixels, because BRAM reads have a multi-cycle latency; the module even advances x by 3 per decision to align with the 2-cycle delay. Without this lookahead, the fetched sprite pixel would be spatially shifted relative to the raster position. This is one of those hardware-specific details that you rarely think about in software UI work: the framebuffer is not a random-access surface; it is a stream, so even drawing text is a synchronous pipeline problem.
+
+### Educational Tabs
+
+The educational tabs are primarily implemented in the UFDS settings page. `ufds_settings_overlay` maintains an internal `tab_idx` that selects which stage of the algorithm is being explained (sample/find, union, update stats, filter, draw bounding boxes). Clicking a tab is pure hit-testing in VGA coordinates on `left_edge`, and the selection is latched so the content is stable across frames. The overlay also produces an `info_dim_en` mask, which `Top` uses to dim the live camera feed under the info panel while keeping the rest of the frame readable.
+
+The tab content itself is drawn using BRAM sprites. `generate_bram_overlay` uses `info_idx` to select which educational images to place inside the panel, and it computes sprite addresses relative to an `(ufds_t_x, ufds_t_y)` origin so the entire tab block can slide/animate as a single unit. This arrangement keeps the overlay logic simple: the “what to draw” decision stays in the control plane (`tab_idx`/`info_idx`), while the “how to draw it” stays in the dataplane (BRAM lookups with correct latency alignment).
+
+### Drag and Drop
+
+Drag-and-drop is implemented as a deterministic state machine in `cv_settings_dragdrop` operating entirely in VGA coordinates. The module defines six movable boxes (Gaussian, median, and four morphology blocks), computes per-box hover flags (`hov0..hov5`), and starts a drag on a debounced press edge (`mouse_left_edge`). While dragging, the selected box’s top-left position is continuously updated so that the cursor remains centered on the box, with explicit clamping to the 640×480 screen bounds.
+
+Releasing a drag is intentionally filtered to avoid accidental drops due to noisy button transitions. Instead of relying purely on a falling edge, the design requires the left button to be continuously low for `DRAG_RELEASE_TH` cycles (2,000,000 cycles at 25 MHz, roughly 80 ms) before treating it as a drop. Once dropped, the module checks whether the *center* of the box lies within the correct drop zone, which prevents edge-cases where only a corner overlaps. If the placement is invalid, the box snaps back to its original home position and its `placed*_pre`/`placed*_morph` flag is cleared.
+
+### Bin checks for Morphology Boxes
+
+In hardware, “bin checking” is just geometry and classification, and the design makes this explicit. Each morphology box has an in-drop test (`in_m2..in_m5`) against the morphology drop zone, and placement is captured by `placed2_morph..placed5_morph`. The type of each morphology block is also dynamic: the box is not permanently “erode” or “dilate”. Instead, each box holds an `is_erodeX` flag, which can be toggled by the scroll wheel while hovering. This means the UI exposes both *structural* configuration (which boxes are placed, and in what order) and *semantic* configuration (whether each placed step behaves as erosion or dilation).
+
+The outputs of this system are purpose-built for downstream RTL consumption. The module exports a compact `morph_vector` (one bit per stage indicating dilation) and a `box_morph_vector` (the per-box type flags), and it also exports a `box_order_vector` that encodes which physical box currently occupies each left-to-right slot. That encoding makes it easy for the datapath to drive the four instantiated `Morphology_3x3` blocks without needing complex per-box metadata.
+
+### Snapping in Place
+
+Snapping is designed to be visually consistent and logically meaningful. For preprocessing, the drop zone supports up to two blocks, and `cv_settings_dragdrop` computes a centered layout: one block is centered, while two blocks are centered as a pair with fixed spacing. For morphology, snapping supports up to four blocks, and the layout is computed from a left-to-right rank (`r2..r5`) that counts how many other placed morphology blocks are strictly to the left. Based on the placed count, the module computes a left margin (`morph_left_margin_N = (morph_w - N*W_MOR)/2`) and assigns snapped positions as `morph_x + margin + W_MOR * rank`. This produces a clean “pipeline” look and ensures that the left-to-right spatial order is exactly the logical processing order.
+
+### Scroll Wheel
+
+The scroll wheel is a small interaction, but it is implemented in a way that stays faithful to synchronous design. While not dragging, scroll pulses (`scroll_up` / `scroll_down`) are interpreted only when the cursor is hovering over a morphology box, and the corresponding `is_erodeX` flag is toggled. That flag then influences both the recorded morphology order codes and the BRAM overlay sprite selection, so the UI and the underlying control vector remain consistent.
+
+## Overall Data Path
+
+At the system level, the design is a three-domain pipeline: the camera capture domain (`ov7670_pclk`) writes decimated ROI pixels into BRAM, the VGA domain (`clk25`) reads and composites the selected “final” view (raw, preprocessed, bitmap, or morphology) while servicing all GUI hit-testing and overlay drawing, and the UFDS compute domain (`clk50`) consumes the binary stream through an async FIFO and emits component statistics. `Top` acts as the integration layer that ties these domains together, including the state machine that switches between menu, CV settings, UFDS settings, and fullscreen modes.
+
+Overlay composition is intentionally layered to preserve readability. In settings modes, the camera feed is dimmed below the UI strip, then vector overlays are applied, then BRAM sprites are drawn with transparency (by ignoring encoded “transparent” pixels), and finally the cursor is rendered on top. UFDS outputs are latched once per VGA frame to avoid mid-frame inconsistencies, and bounding boxes are drawn by comparing the current raster coordinate (mapped back into ROI coordinates) against the latched `left/right/top/bottom` extents and centroids.
+
+## Servo PD Controller
+
+Tracking is closed-loop at the pixel level: the centroid produced by UFDS becomes the measurement for a PID controller, and the controller output becomes the servo command. In `Top`, the PID is enabled only when at least one component is detected (`comp_count != 0`) and the system is in UFDS/fullscreen modes, which prevents the servos from hunting on noise during UI configuration. The setpoints are chosen as the center of the ROI (`155` for x and `120` for y on a 310×240 grid), so “zero error” corresponds to the object being centered in the camera view.
+
+The pan and tilt loops are implemented as separate instances of `PID_Controller` with fixed-point scaling implemented through bit shifts (`KP_BITSHIFT_LEFT`, `KD_BITSHIFT_RIGHT`) rather than floating point. Gains are exposed as small registers (`pan_kp`, `pan_kd`, `tilt_kp`, `tilt_kd`), and an integral limit clamps windup. The PID outputs are bounded to safe servo ranges (for example, tilt is constrained to `SERVO_MIN=50_000` and `SERVO_MAX=150_000`) and then passed into `Servo_Controller`, which generates the actual PWM waveforms on `servo_x_pwm` and `servo_y_pwm`. A separate enable (`servo_user_en` from the UFDS settings UI) allows the user to toggle whether the physical rig tracks at all, which is important for safe demos.
+
+## Mechanical Design
+
+The mechanical side is intentionally aligned to the control assumptions baked into the RTL. The servo setpoints are the ROI center and the UFDS centroid is measured in the ROI coordinate frame, so the pan axis is treated as “horizontal image x” and the tilt axis as “vertical image y”. That only behaves sensibly if the camera is mounted so that its optical axes are roughly orthogonal to the servo axes and the bracket does not introduce significant coupling. In practice, the mechanical mount is designed so that the camera’s field of view sweeps cleanly with pan/tilt and does not significantly translate relative to the rotation axes, which keeps centroid-based control stable.
+
+The design also anticipates servo limits and dead zones. The RTL clamps the tilt range to avoid driving the bracket into mechanical hard-stops, and the PID enable logic prevents actuation when UFDS has no valid target. Together, the hardware control constraints and the mechanical constraints form a single system: the FPGA never assumes “infinite” actuation authority, and the rig never relies on software intervention to stay within safe motion ranges.
+
+## Conclusion
+
+This project is essentially a full embedded vision system built in synchronous logic. The CV pipeline demonstrates how classical image processing can be expressed as windowed streaming operators; the UFDS engine demonstrates how a non-trivial data structure (union-find) can be implemented as a variable-latency FSM with explicit memory-backed state; and the GUI demonstrates that even “drag and drop” can be reduced to hit-testing, state updates, and deterministic raster overlays. The most valuable outcome for me was not the demo video itself, but the experience of making disparate FPGA concepts—BRAM timing, CDC, raster pipelines, and control loops—compose into a single coherent real-time system.

@@ -1,0 +1,46 @@
+---
+const {
+  href,
+  title,
+  subtitle,
+  thumbnail,
+  target = '_blank',
+  rel = 'noopener'
+} = Astro.props;
+
+function getAutoPdfThumb(href: unknown): string | null {
+  if (typeof href !== 'string') return null;
+  if (href.includes('://')) return null;
+  if (href.startsWith('mailto:') || href.startsWith('tel:')) return null;
+
+  const cleanHref = href.split('#')[0]?.split('?')[0] ?? href;
+  const lower = cleanHref.toLowerCase();
+  if (!lower.endsWith('.pdf')) return null;
+
+  const normalized = cleanHref.startsWith('./') ? cleanHref.slice(2) : cleanHref;
+  if (!(normalized.startsWith('/docs/') || normalized.startsWith('docs/'))) return null;
+
+  const lastSlash = normalized.lastIndexOf('/');
+  if (lastSlash === -1) return null;
+
+  const dir = normalized.slice(0, lastSlash);
+  const file = normalized.slice(lastSlash + 1);
+  const base = file.replace(/\.pdf$/i, '');
+  const prefix = normalized.startsWith('/') ? '' : '/';
+
+  return `${prefix}${dir}/.thumbs/${base}.png`;
+}
+
+const autoThumb = thumbnail ? null : getAutoPdfThumb(href);
+const thumbSrc = thumbnail || autoThumb || '/assets/images/pdf-thumb.svg';
+---
+
+<a class="doc-card" href={href} target={target} rel={rel}>
+  <div class="doc-thumb" aria-hidden="true">
+    <img src={thumbSrc} alt="" loading="lazy" />
+  </div>
+  <div class="doc-text">
+    <div class="doc-title">{title}</div>
+    {subtitle ? <div class="doc-subtitle">{subtitle}</div> : null}
+  </div>
+</a>
