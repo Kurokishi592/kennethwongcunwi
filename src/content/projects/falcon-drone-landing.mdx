@@ -3,7 +3,7 @@ title: "FALCON — Dynamic Drone Landing Simulator"
 subtitle: "AprilTags + sensor fusion + PID control, packaged as a modular library with a Python GUI."
 date: "May 2025 – Jul 2025"
 tags: ["Computer Vision", "Sensor Fusion", "PID", "Python"]
-thumbnail: "/assets/falcon/thumb-falcon.svg"
+thumbnail: "/assets/falcon/Falcon GUI.png"
 featured: false
 ---
 
@@ -28,53 +28,3 @@ Building up perception for autonomous manoeuvring fascinates me. This was how I 
 >- What I learnt from AprilTag algorithm (v1 to v3 papers - recursive tag, optimisations, union find, etc)
 >- QGC, Pixhawk -> MiniAUV Project
 >- Simple UIUX
-
-
-						     +--------------------+
-					         |    QGroundControl  |
-		                     | (Mission Planning) |
-		                     +---------+----------+
-                                       |
-                                MAVLink Protocol
-                                       |
-	                +------------------▼------------------+
-                    |        Pixhawk 6X Flight Controller |
-                    | (Handles motor control, telemetry,  |
-                    |  and safety failsafes)              |
-                    +------------------▲------------------+
-                                       |
-                           Sensor Data / Flight Commands
-                                       |
-                    +--------------------+--------------------+
-                    |             Raspberry Pi 4B             |
-                    |         (Main onboard computer)         |
-	                +--------------------+--------------------+
-                                         |
-   +------------------+------------------+------------------+------------------+
-   |                  |                  |                  |                  |
-   ▼                  ▼                  ▼                  ▼                  ▼
-+----------+   +-----------+      +------------+      +-----------+    +----------+
-| OpenCV + |   | Sensor    |      |  Control   |      | Dockerized|    |Logging & |
-| AprilTag |   |(IMU)      |      |  PID +     |      | Container |    |Visual    |
-|Detection |   |           |      |  Kalman    |      | Env       |    |Matplotlib|
-|          |   |           |      |            |      |           |    |          |
-+----------+   +-----------+      +------------+      +-----------+    +----------+
-   +------------------+------------------+------------------+------------------+
-             |                 |                         |          |
-             |                 +----------+--------------+          |
-             |                            |                         |
-             ▼                            ▼                         ▼
-       AprilTag Position             IMU Data Stream            User Tuning
-         (Image Frames)             (Accel, Gyro, Mag)       (PID Gains, Logs,)
-             |                            |                         |
- +------------+    +----------+----------+       +------+-----------+
-              ▼    ▼                     ▼       ▼                  ▼
-    Sensor Fusion Layer        Trajectory Prediction      Logging & Playback
-    (Kalman Filter)             (Estimates platform        (Saves telemetry,
-                              motion from tag data)     visual graphs, etc.)
-
-          +---------------------------+       +---------------------------+
-          |     Command Output        |       |     Visualization UI      |
-          | (Sends control signals to |       | (Plots, telemetry, status |
-          | Pixhawk via ESP32 + MAVLink)      |  display via Tkinter)     |
-          +---------------------------+       +---------------------------+
