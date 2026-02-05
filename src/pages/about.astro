@@ -8,17 +8,19 @@ const highlights = [
   {
     title: 'What I do',
     body:
-      'I build across hardware and software, and I’m happiest at the integration layer: electrical → firmware → sensors → control → application.'
+      'I love engineering solutions for automation and optimisation, especially those built at the hardware–software boundary such as embedded systems.'
   },
   {
-    title: 'What I’m aiming for',
-    body:
-      'Robotics — making systems feel alive and reliable. But more broadly: if there’s a real problem to solve, I want in.'
+    title: 'What I’m excited about now',
+    bullets: [
+      'On-device AI acceleration in embedded systems, and SoC integration of AI neural-network accelerators',
+      'Developments in autonomous robotics'
+    ]
   },
   {
     title: 'How I work',
     body:
-      'Fast iteration, tight feedback loops, measurable tests, and clear documentation — the stuff that makes projects actually ship.'
+      'Conceptualise solutions from the problem statement, my research and knowledge into fast iterations and tight feedback loops to deliver a well-engineered solution.'
   }
 ];
 
@@ -44,7 +46,7 @@ const experienceTags = {
         <div class="whoami-hero-text">
           <h1 class="hero-title">Hi — I’m Kenneth.</h1>
           <p class="hero-subtitle">
-            "Shall we start by introducing ourselves?"
+            "The laughs and smiles before releasing it!"
           </p>
         </div>
       </div>
@@ -59,6 +61,7 @@ const experienceTags = {
             <a href="#work-experiences">Experience</a>
             <a href="#education">Education</a>
             <a href="#skills">Skills & Tech Stack</a>
+            <a href="#links">Email, GitHub, LinkedIn, Resume</a>
           </nav>
         </aside>
 
@@ -92,7 +95,15 @@ const experienceTags = {
           <article class="card">
             <div class="card-top">
               <h3>{h.title}</h3>
-              <p class="muted">{h.body}</p>
+              {h.bullets ? (
+                <ul class="bullets">
+                  {h.bullets.map((b) => (
+                    <li>{b}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p class="muted">{h.body}</p>
+              )}
             </div>
           </article>
         ))}
@@ -171,8 +182,8 @@ const experienceTags = {
 
         <article class="li-item" data-era="legacy">
           <div class="li-head">
-            <div class="li-logo" aria-hidden="true">
-              <span class="mono" aria-hidden="true">SPF</span>
+            <div class="li-logo dark" aria-hidden="true">
+              <img src="/assets/images/logo-spf.png" alt="" loading="lazy" />
             </div>
             <div class="li-head-text">
               <p class="li-title">Singapore Police Force</p>
@@ -207,8 +218,8 @@ const experienceTags = {
 
         <article class="li-item" data-era="legacy">
           <div class="li-head">
-            <div class="li-logo" aria-hidden="true">
-              <span class="mono" aria-hidden="true">HC</span>
+            <div class="li-logo dark" aria-hidden="true">
+              <img src="/assets/images/logo-hcrc.jpg" alt="" loading="lazy" />
             </div>
             <div class="li-head-text">
               <p class="li-title">Hwa Chong Infocomm & Robotics Society</p>
@@ -329,8 +340,8 @@ const experienceTags = {
             <p class="li-label">Relevant coursework</p>
             <ul class="bullets">
               <li>CS2040C Data Structures and Algorithms</li>
-              <li>CG2271 Real-Time Operating Systems</li>
               <li>EE2026 Digital Design</li>
+              <li>CG2271 Real-Time Operating Systems</li>
               <li>CG2027 Transistor-level Digital Circuits</li>
               <li>CG2028 Computer Organisation</li>
               <li>CG2023 Signals and Systems</li>
@@ -355,13 +366,13 @@ const experienceTags = {
             </ul>
           </details>
 
-          <p class="li-desc muted">For my transcript, please email me directly.</p>
+          <p class="li-desc muted">For my transcript, feel free to email me directly.</p>
         </article>
 
         <article class="li-item" data-era="current">
           <div class="li-head">
-            <div class="li-logo" aria-hidden="true">
-              <span class="mono" aria-hidden="true">RC4</span>
+            <div class="li-logo dark" aria-hidden="true">
+              <img src="/assets/images/logo-rc4.jpg" alt="" loading="lazy" />
             </div>
             <div class="li-head-text">
               <p class="li-title">Residential College 4 (RC4)</p>
@@ -373,8 +384,8 @@ const experienceTags = {
 
         <article class="li-item" data-era="legacy">
           <div class="li-head">
-            <div class="li-logo" aria-hidden="true">
-              <span class="mono" aria-hidden="true">HCI</span>
+            <div class="li-logo dark" aria-hidden="true">
+              <img src="/assets/images/logo-hci.png" alt="" loading="lazy" />
             </div>
             <div class="li-head-text">
               <p class="li-title">Hwa Chong Institution</p>
@@ -396,8 +407,8 @@ const experienceTags = {
 
         <article class="li-item" data-era="legacy">
           <div class="li-head">
-            <div class="li-logo" aria-hidden="true">
-              <span class="mono" aria-hidden="true">HCI</span>
+            <div class="li-logo dark" aria-hidden="true">
+              <img src="/assets/images/logo-hci.png" alt="" loading="lazy" />
             </div>
             <div class="li-head-text">
               <p class="li-title">Hwa Chong Institution</p>
@@ -418,8 +429,8 @@ const experienceTags = {
 
         <article class="li-item" data-era="legacy">
           <div class="li-head">
-            <div class="li-logo" aria-hidden="true">
-              <span class="mono" aria-hidden="true">PH</span>
+            <div class="li-logo dark" aria-hidden="true">
+              <img src="/assets/images/logo-ph.png" alt="" loading="lazy" />
             </div>
             <div class="li-head-text">
               <p class="li-title">Pei Hwa Presbyterian Primary School</p>
@@ -481,6 +492,37 @@ const experienceTags = {
             GUIs
           </li>
         </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="links">
+    <div class="container">
+      <div class="section-head">
+        <h2>Email, GitHub, LinkedIn, Resume</h2>
+        <p class="muted">Interested to know more? Reach out or explore my profiles.</p>
+      </div>
+
+      <div class="grid cards">
+        <article class="card">
+          <div class="card-top">
+            <h3>Socials</h3>
+            <p class="muted">GitHub, LinkedIn, and more.</p>
+          </div>
+          <div class="icon-row" aria-label="Social links">
+            <SocialIcons />
+          </div>
+        </article>
+        
+        <article class="card">
+          <div class="card-top">
+            <h3>Resume</h3>
+            <p class="muted">One click to the PDF.</p>
+          </div>
+          <div class="card-actions">
+            <a class="button primary" href="/docs/resume.pdf" target="_blank" rel="noopener">Open Resume (PDF) ↗</a>
+          </div>
+        </article>
       </div>
     </div>
   </section>
