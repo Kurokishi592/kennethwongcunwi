@@ -18,6 +18,16 @@ const projects = defineCollection({
     date: z.string().optional(),
     tags: z.array(z.string()).default([]),
     thumbnail: z.string().optional(),
+    documents: z
+      .array(
+        z.object({
+          title: z.string(),
+          url: z.string(),
+          subtitle: z.string().optional(),
+          thumbnail: z.string().optional()
+        })
+      )
+      .default([]),
     featured: z.boolean().default(false),
     featuredRank: z.number().int().optional()
   })

@@ -1,5 +1,6 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
+import DocumentCard from '../../components/DocumentCard.astro';
 import { getCollection, render } from 'astro:content';
 
 export async function getStaticPaths() {
@@ -12,7 +13,10 @@ const projects = (await getCollection('projects')).filter((p) => p.id.endsWith('
 const entry = projects.find((p) => p.slug === slug);
 if (!entry) throw new Error(`Missing project: ${slug}`);
 
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
+
+const tocHeadings = (headings ?? []).filter((h) => h.depth >= 2 && h.depth <= 3);
+const documents = entry.data.documents ?? [];
 ---
 
 <BaseLayout
@@ -21,16 +25,61 @@ const { Content } = await render(entry);
   canonicalPath={`/projects/${entry.slug}/`}
   activeNav="projects"
 >
-  <section class="section">
+  <section class="section project-page">
     <div class="container">
-      <div class="section-head">
-        <h2>{entry.data.title}</h2>
-        <p class="muted">{entry.data.subtitle}</p>
-      </div>
+      {entry.data.thumbnail ? (
+        <header class="project-hero" aria-label="Project header">
+          <div class="project-hero-media">
+            <img src={entry.data.thumbnail} alt={`${entry.data.title} thumbnail`} loading="lazy" />
+            <div class="project-hero-overlay" aria-hidden="true"></div>
+            <div class="project-hero-text">
+              <h1 class="project-hero-title">{entry.data.title}</h1>
+              {entry.data.subtitle ? <p class="project-hero-subtitle">{entry.data.subtitle}</p> : null}
+            </div>
+          </div>
+        </header>
+      ) : (
+        <div class="section-head">
+          <h2>{entry.data.title}</h2>
+          <p class="muted">{entry.data.subtitle}</p>
+        </div>
+      )}
 
-      <article class="panel prose">
-        <Content />
-      </article>
+      <div class="project-grid">
+        {tocHeadings.length ? (
+          <aside class="project-aside" aria-label="Project sidebar">
+            <aside class="toc-card" aria-label="Contents">
+              <div class="toc-top">
+                <p class="toc-title">Contents</p>
+              </div>
+              <nav class="toc" aria-label="On this page">
+                {tocHeadings.map((h) => (
+                  <a class={`toc-level-${h.depth}`} href={`#${h.slug}`}>
+                    {h.text}
+                  </a>
+                ))}
+              </nav>
+            </aside>
+
+            {documents.length ? (
+              <aside class="toc-card" aria-label="Documents">
+                <div class="toc-top">
+                  <p class="toc-title">Documents</p>
+                </div>
+                <div class="doc-list" aria-label="Document links">
+                  {documents.map((d) => (
+                    <DocumentCard href={d.url} title={d.title} subtitle={d.subtitle} thumbnail={d.thumbnail} />
+                  ))}
+                </div>
+              </aside>
+            ) : null}
+          </aside>
+        ) : null}
+
+        <article class="panel prose project-content">
+          <Content />
+        </article>
+      </div>
 
       <div class="section-foot">
         <a class="button" href="/projects/">← Back to projects</a>

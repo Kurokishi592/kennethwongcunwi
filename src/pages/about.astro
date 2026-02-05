@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import SocialIcons from '../components/SocialIcons.astro';
+import DocumentCard from '../components/DocumentCard.astro';
 
 // This page is intentionally easy to edit.
 // If you want, we can later move these sections into Markdown or a content collection.
@@ -519,8 +520,12 @@ const experienceTags = {
             <h3>Resume</h3>
             <p class="muted">One click to the PDF.</p>
           </div>
-          <div class="card-actions">
-            <a class="button primary" href="/docs/resume.pdf" target="_blank" rel="noopener">Open Resume (PDF) ↗</a>
+          <div class="doc-list">
+            <DocumentCard
+              href="/docs/resume.pdf"
+              title="Resume.pdf"
+              subtitle="Download my resume."
+            />
           </div>
         </article>
       </div>

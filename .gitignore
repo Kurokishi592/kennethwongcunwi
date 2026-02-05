@@ -17,5 +17,8 @@ node_modules/
 dist/
 .astro/
 
+# Generated PDF thumbnails
+public/docs/**/.thumbs/
+
 # Local env overrides
 .env.*
