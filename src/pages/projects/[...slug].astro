@@ -15,7 +15,7 @@ if (!entry) throw new Error(`Missing project: ${slug}`);
 
 const { Content, headings } = await render(entry);
 
-const tocHeadings = (headings ?? []).filter((h) => h.depth >= 2 && h.depth <= 3);
+const tocHeadings = (headings ?? []).filter((h) => h.depth >= 2 && h.depth <= 4);
 const documents = entry.data.documents ?? [];
 ---
 

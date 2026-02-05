@@ -1403,6 +1403,12 @@ html[data-theme="light"] .featured-badge {
   object-fit: cover;
 }
 
+/* Object Tracker thumbnail: show lower portion of the image */
+.project-hero-media img[src*="/assets/ee2026-fpga-object-tracker/fpga-object-tracker-main.JPEG"],
+.project-hero-media img[src*="/assets/ee2026-fpga-object-tracker/fpga-object-tracker-main.jpeg"] {
+  object-position: center 92%;
+}
+
 .project-hero-overlay {
   position: absolute;
   inset: 0;
@@ -1455,6 +1461,19 @@ html[data-theme="light"] .project-hero-overlay {
   opacity: 0.95;
 }
 
+.toc .toc-level-4 {
+  padding-left: 1.5rem;
+  opacity: 0.9;
+  font-size: 1rem;
+}
+
+/* Subtle guide line to make nesting obvious */
+.toc .toc-level-3,
+.toc .toc-level-4 {
+  border-left: 2px solid color-mix(in srgb, var(--border) 70%, transparent);
+  margin-left: 0.2rem;
+}
+
 @media (min-width: 960px) {
   .project-grid {
     grid-template-columns: 280px 1fr;
@@ -1468,6 +1487,16 @@ html[data-theme="light"] .project-hero-overlay {
 }
 
 /* Markdown/MDX content styling (used by blog/project pages) */
+.prose :is(h1, h2, h3, h4, h5, h6) {
+  margin-top: 1.6rem;
+  margin-bottom: 0.6rem;
+  scroll-margin-top: 6.5rem;
+}
+
+.prose :is(h1, h2, h3, h4, h5, h6):first-child {
+  margin-top: 0;
+}
+
 .prose a {
   color: color-mix(in srgb, var(--text) 80%, var(--brand) 55%);
   text-decoration: underline;
