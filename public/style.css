@@ -977,6 +977,33 @@ html.show-legacy .li-item[data-era="legacy"] {
   gap: 0.9rem;
 }
 
+.project-card {
+  position: relative;
+}
+
+.featured-badge {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, #fbbf24 50%, var(--border));
+  background: color-mix(in srgb, var(--bg) 55%, transparent);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.28);
+  color: #fbbf24;
+  font-size: 1.1rem;
+  line-height: 1;
+  pointer-events: none;
+}
+
+html[data-theme="light"] .featured-badge {
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+}
+
 .card:hover {
   filter: brightness(1.04);
 }
