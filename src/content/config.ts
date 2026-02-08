@@ -18,6 +18,12 @@ const projects = defineCollection({
     date: z.string().optional(),
     tags: z.array(z.string()).default([]),
     thumbnail: z.string().optional(),
+    repo: z
+      .object({
+        url: z.string().url(),
+        label: z.string().optional()
+      })
+      .optional(),
     documents: z
       .array(
         z.object({

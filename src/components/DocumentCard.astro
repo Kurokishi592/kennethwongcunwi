@@ -18,7 +18,15 @@ function getAutoPdfThumb(href: unknown): string | null {
   if (!lower.endsWith('.pdf')) return null;
 
   const normalized = cleanHref.startsWith('./') ? cleanHref.slice(2) : cleanHref;
-  if (!(normalized.startsWith('/docs/') || normalized.startsWith('docs/'))) return null;
+  if (
+    !(
+      normalized.startsWith('/docs/') ||
+      normalized.startsWith('docs/') ||
+      normalized.startsWith('/assets/') ||
+      normalized.startsWith('assets/')
+    )
+  )
+    return null;
 
   const lastSlash = normalized.lastIndexOf('/');
   if (lastSlash === -1) return null;
@@ -28,7 +36,8 @@ function getAutoPdfThumb(href: unknown): string | null {
   const base = file.replace(/\.pdf$/i, '');
   const prefix = normalized.startsWith('/') ? '' : '/';
 
-  return `${prefix}${dir}/.thumbs/${base}.png`;
+  // Encode spaces and other URL characters but keep slashes intact.
+  return encodeURI(`${prefix}${dir}/.thumbs/${base}.png`);
 }
 
 const autoThumb = thumbnail ? null : getAutoPdfThumb(href);

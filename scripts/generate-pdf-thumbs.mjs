@@ -10,6 +10,9 @@ const __dirname = path.dirname(__filename);
 
 const repoRoot = path.resolve(__dirname, '..');
 const docsRoot = path.join(repoRoot, 'public', 'docs');
+const assetsRoot = path.join(repoRoot, 'public', 'assets');
+
+const verbose = process.argv.includes('--verbose') || process.env.PDF_THUMBS_VERBOSE === '1';
 
 const workerSrcPath = path.join(repoRoot, 'node_modules', 'pdfjs-dist', 'legacy', 'build', 'pdf.worker.mjs');
 // pdfjs expects a URL-like string; on Windows, passing a raw `C:\...` path breaks ESM loading.
@@ -74,12 +77,20 @@ async function ensureThumb(pdfPath) {
 }
 
 async function main() {
-  if (!(await fileExists(docsRoot))) {
-    console.log(`[pdf-thumbs] No docs folder at ${docsRoot} (skipping)`);
+  const roots = [];
+  if (await fileExists(docsRoot)) roots.push(docsRoot);
+  if (await fileExists(assetsRoot)) roots.push(assetsRoot);
+
+  if (!roots.length) {
+    console.log(`[pdf-thumbs] No docs/assets folders found (skipping)`);
     return;
   }
 
-  const all = await walk(docsRoot);
+  const all = [];
+  for (const root of roots) {
+    all.push(...(await walk(root)));
+  }
+
   const pdfs = all.filter((f) => f.toLowerCase().endsWith('.pdf'));
 
   if (!pdfs.length) {
@@ -87,10 +98,20 @@ async function main() {
     return;
   }
 
+  if (verbose) {
+    console.log(`[pdf-thumbs] Found ${pdfs.length} PDF(s)`);
+    for (const pdf of pdfs) console.log(`[pdf-thumbs] - ${path.relative(repoRoot, pdf)}`);
+  }
+
   const results = [];
   for (const pdf of pdfs) {
     try {
-      results.push(await ensureThumb(pdf));
+      const r = await ensureThumb(pdf);
+      results.push(r);
+      if (verbose) {
+        const action = r.skipped ? 'skip' : 'make';
+        console.log(`[pdf-thumbs] ${action}: ${path.relative(repoRoot, r.outPath)}`);
+      }
     } catch (e) {
       console.warn(`[pdf-thumbs] Failed: ${path.relative(repoRoot, pdf)}`);
       console.warn(e?.message ?? e);

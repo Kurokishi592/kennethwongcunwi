@@ -552,6 +552,7 @@ html[data-theme="light"] .whoami-hero-overlay {
 }
 
 .toc a {
+  position: relative;
   display: inline-flex;
   align-items: center;
   padding: 0.35rem 0.45rem;
@@ -567,6 +568,39 @@ html[data-theme="light"] .whoami-hero-overlay {
   border-color: var(--border);
   background: var(--bg-elev);
   color: var(--text);
+}
+
+.toc a.is-active,
+.toc a[aria-current="true"] {
+  border-color: color-mix(in srgb, var(--border) 65%, var(--brand) 45%);
+  background: color-mix(in srgb, var(--brand) 12%, var(--bg-elev));
+  color: var(--text);
+}
+
+.toc a.is-active::before,
+.toc a[aria-current="true"]::before {
+  content: '';
+  position: absolute;
+  left: -0.15rem;
+  top: 0.35rem;
+  bottom: 0.35rem;
+  width: 3px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--brand) 70%, var(--brand-2) 30%);
+}
+
+/* Repo button icon */
+.doc-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-align: left;
+}
+
+.doc-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
 }
 
 @media (min-width: 960px) {
@@ -1231,6 +1265,21 @@ html[data-theme="light"] .featured-badge {
   gap: 0.65rem;
 }
 
+.doc-actions {
+  margin: 0.65rem 0 0.75rem;
+}
+
+.doc-button {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.doc-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
 .doc-card {
   display: grid;
   grid-template-columns: 96px 1fr;
@@ -1448,8 +1497,10 @@ html[data-theme="light"] .project-hero-overlay {
 }
 
 .project-aside {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
+  min-height: 0;
 }
 
 .project-content {
@@ -1483,6 +1534,125 @@ html[data-theme="light"] .project-hero-overlay {
   .project-aside {
     position: sticky;
     top: 5.4rem;
+    max-height: calc(100vh - 5.4rem - 1rem);
+    overflow: hidden;
+  }
+
+  .project-aside > .toc-card[aria-label="Contents"] {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .project-aside > .toc-card[aria-label="Contents"] .toc {
+    overflow: auto;
+    min-height: 0;
+    padding-right: 0.25rem;
+    scrollbar-gutter: stable;
+  }
+
+  .project-aside > .toc-card[aria-label="Documents"] {
+    flex: 0 0 auto;
+    max-height: 40vh;
+    overflow: auto;
+    scrollbar-gutter: stable;
+  }
+}
+
+/* Mobile/tablet: use floating TOC modal instead of in-flow sidebar */
+.project-toc-fab {
+  display: none;
+}
+
+.project-toc-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+.project-toc-backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.project-toc-sheet {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 1rem;
+  max-height: min(78vh, 620px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.project-toc-sheet-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 0.85rem 0.65rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.project-toc-sheet-body {
+  padding: 0.85rem;
+  overflow: auto;
+  min-height: 0;
+  scrollbar-gutter: stable;
+}
+
+.project-toc-docs {
+  margin-top: 1rem;
+}
+
+.project-toc-fab {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 40;
+  appearance: none;
+  border: 1px solid color-mix(in srgb, var(--border) 65%, var(--brand) 35%);
+  background: color-mix(in srgb, var(--bg) 70%, transparent);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 0.75rem 1rem;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+  font-weight: 700;
+}
+
+.project-toc-fab:hover {
+  filter: brightness(1.06);
+}
+
+html.toc-modal-open,
+html.toc-modal-open body {
+  overflow: hidden;
+}
+
+@media (max-width: 959px) {
+  .project-aside {
+    display: none;
+  }
+
+  .project-toc-fab {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 960px) {
+  .project-toc-modal {
+    display: none;
   }
 }
 
@@ -1531,7 +1701,23 @@ html[data-theme="light"] .project-hero-overlay {
   gap: 0.6rem;
 }
 
+.prose .double-media {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+
 .prose .triple-media img {
+  width: 100%;
+  height: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: calc(var(--radius) - 4px);
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+
+.prose .double-media img {
   width: 100%;
   height: 100%;
   max-height: 320px;
@@ -1544,6 +1730,10 @@ html[data-theme="light"] .project-hero-overlay {
 @media (min-width: 720px) {
   .prose .triple-media {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .prose .double-media {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
