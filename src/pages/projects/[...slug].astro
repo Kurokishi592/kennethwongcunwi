@@ -1,8 +1,8 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import DocumentCard from '../../components/DocumentCard.astro';
+import GitHubMark from '../../components/icons/GitHubMark.astro';
 import { getCollection, render } from 'astro:content';
-import { siGithub } from 'simple-icons/icons';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects')).filter((p) => p.id.endsWith('.mdx'));
@@ -82,9 +82,7 @@ const hasDocsCard = Boolean(repoUrl) || documents.length > 0;
                   {repoUrl ? (
                     <div class="doc-actions" aria-label="Repository link">
                       <a class="button doc-button" href={repoUrl} target="_blank" rel="noopener">
-                        <svg class="doc-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                          <path fill="currentColor" d={siGithub.path} />
-                        </svg>
+                        <GitHubMark className="doc-icon" />
                         <span>{repoLabel}</span>
                       </a>
                     </div>
@@ -185,9 +183,7 @@ const hasDocsCard = Boolean(repoUrl) || documents.length > 0;
                 {repoUrl ? (
                   <div class="doc-actions" aria-label="Repository link">
                     <a class="button doc-button" href={repoUrl} target="_blank" rel="noopener">
-                      <svg class="doc-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <path fill="currentColor" d={siGithub.path} />
-                      </svg>
+                      <GitHubMark className="doc-icon" />
                       <span>{repoLabel}</span>
                     </a>
                   </div>

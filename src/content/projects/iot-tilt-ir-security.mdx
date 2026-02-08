@@ -11,6 +11,8 @@ featured: true
 featuredRank: 2
 ---
 
+import MathBlock from '../../components/MathBlock.astro';
+
 ## Introduction
 In this IoT RTOS project, the FRDM board runs FreeRTOS alarm logic and actuator control, while the ESP32 provides the Wi-Fi web UI and IMU-based tilt detection.
 
@@ -187,10 +189,10 @@ static void recvTask(void *p) {
 
 Uses I2C protocol (SDA to pin35 and SCL to pin33 of ESP32 GPIO) to poll for data. The IMU provides raw accelerometer (`ax, ay, az`) and gyroscope data (`gx, gy, gz`), which are sampled on ESP32 in a periodic task. Tilt is measured on two axes: 
 
-$$
-  Roll = \arctan\left(\frac{a_y}{\sqrt{a_x^2 + a_z^2}}\right), \qquad
-  Pitch = \arctan\left(\frac{a_x}{\sqrt{a_y^2 + a_z^2}}\right)
-$$
+<MathBlock
+  latex={String.raw`Roll = \arctan\left(\frac{a_y}{\sqrt{a_x^2 + a_z^2}}\right), \qquad
+Pitch = \arctan\left(\frac{a_x}{\sqrt{a_y^2 + a_z^2}}\right)`}
+/>
 
 A Kalman filter fuses `gx, gy, gz` with the computed roll and pitch to reduce drift over time (done on the ESP32). The IMU tilt decision is derived from the Kalman outputs using a user-set threshold (`thr`), and is reported to the MCXC444 every 250 ms.
 

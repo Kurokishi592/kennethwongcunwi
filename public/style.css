@@ -589,6 +589,20 @@ html[data-theme="light"] .whoami-hero-overlay {
   background: color-mix(in srgb, var(--brand) 70%, var(--brand-2) 30%);
 }
 
+/* Repo button icon */
+.doc-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  text-align: left;
+}
+
+.doc-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
 @media (min-width: 960px) {
   .whoami-hero .toc-card {
     width: min(100%, 320px);
