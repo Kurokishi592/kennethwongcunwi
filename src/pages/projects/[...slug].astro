@@ -42,6 +42,105 @@ const hasDocsCard = Boolean(repoUrl) || documents.length > 0;
   activeNav="projects"
 >
   <section class="section project-page">
+    {tocHeadings.length ? (
+      <>
+        <button
+          class="project-toc-fab"
+          type="button"
+          aria-haspopup="dialog"
+          aria-controls="project-toc-modal"
+          aria-expanded="false"
+          data-toc-open
+        >
+          Contents
+        </button>
+
+        <div id="project-toc-modal" class="project-toc-modal" hidden>
+          <div class="project-toc-sheet" role="dialog" aria-modal="true" aria-label="Contents">
+            <div class="project-toc-sheet-top">
+              <p class="toc-title">Contents</p>
+              <button class="button project-toc-close" type="button" data-toc-close>
+                Close
+              </button>
+            </div>
+
+            <div class="project-toc-sheet-body">
+              <nav class="toc" aria-label="On this page">
+                {tocHeadings.map((h) => (
+                  <a class={`toc-level-${h.depth}`} href={`#${h.slug}`}>
+                    {h.text}
+                  </a>
+                ))}
+              </nav>
+
+              {hasDocsCard ? (
+                <div class="project-toc-docs" aria-label="Documents">
+                  <div class="toc-top">
+                    <p class="toc-title">Documents</p>
+                  </div>
+
+                  {repoUrl ? (
+                    <div class="doc-actions" aria-label="Repository link">
+                      <a class="button doc-button" href={repoUrl} target="_blank" rel="noopener">
+                        <svg class="doc-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                          <path fill="currentColor" d={siGithub.path} />
+                        </svg>
+                        <span>{repoLabel}</span>
+                      </a>
+                    </div>
+                  ) : null}
+
+                  <div class="doc-list" aria-label="Document links">
+                    {documents.map((d) => (
+                      <DocumentCard href={d.url} title={d.title} subtitle={d.subtitle} thumbnail={d.thumbnail} />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+          <button class="project-toc-backdrop" type="button" aria-label="Close contents" data-toc-close></button>
+        </div>
+
+        <script is:inline>
+          (() => {
+            const openBtn = document.querySelector('[data-toc-open]');
+            const modal = document.getElementById('project-toc-modal');
+            if (!openBtn || !modal) return;
+
+            const closeButtons = Array.from(modal.querySelectorAll('[data-toc-close]'));
+            const focusTarget = modal.querySelector('.project-toc-close');
+
+            const open = () => {
+              modal.hidden = false;
+              openBtn.setAttribute('aria-expanded', 'true');
+              document.documentElement.classList.add('toc-modal-open');
+              setTimeout(() => focusTarget?.focus(), 0);
+            };
+
+            const close = () => {
+              modal.hidden = true;
+              openBtn.setAttribute('aria-expanded', 'false');
+              document.documentElement.classList.remove('toc-modal-open');
+              setTimeout(() => openBtn.focus(), 0);
+            };
+
+            openBtn.addEventListener('click', open);
+            for (const btn of closeButtons) btn.addEventListener('click', close);
+
+            window.addEventListener('keydown', (e) => {
+              if (e.key === 'Escape' && !modal.hidden) close();
+            });
+
+            modal.addEventListener('click', (e) => {
+              const a = e.target.closest?.('a[href^="#"]');
+              if (a) close();
+            });
+          })();
+        </script>
+      </>
+    ) : null}
+
     <div class="container">
       {entry.data.thumbnail ? (
         <header class="project-hero" aria-label="Project header">
@@ -75,63 +174,6 @@ const hasDocsCard = Boolean(repoUrl) || documents.length > 0;
                   </a>
                 ))}
               </nav>
-
-              <script is:inline>
-                (() => {
-                  const toc = document.querySelector('.project-page .toc');
-                  if (!toc) return;
-
-                  const links = Array.from(toc.querySelectorAll('a[href^="#"]'));
-                  const entries = links
-                    .map((link) => {
-                      const id = decodeURIComponent(link.getAttribute('href').slice(1));
-                      const el = document.getElementById(id);
-                      return el ? { link, el, id } : null;
-                    })
-                    .filter(Boolean);
-
-                  if (!entries.length) return;
-
-                  const setActive = (activeId) => {
-                    for (const { link, id } of entries) {
-                      const isActive = id === activeId;
-                      link.classList.toggle('is-active', isActive);
-                      if (isActive) link.setAttribute('aria-current', 'true');
-                      else link.removeAttribute('aria-current');
-                    }
-                  };
-
-                  const update = () => {
-                    const offset = 140;
-                    let current = entries[0].id;
-
-                    for (const { el, id } of entries) {
-                      const top = el.getBoundingClientRect().top;
-                      if (top <= offset) current = id;
-                      else break;
-                    }
-
-                    setActive(current);
-                  };
-
-                  let ticking = false;
-                  const onScroll = () => {
-                    if (ticking) return;
-                    ticking = true;
-                    requestAnimationFrame(() => {
-                      ticking = false;
-                      update();
-                    });
-                  };
-
-                  window.addEventListener('scroll', onScroll, { passive: true });
-                  window.addEventListener('resize', onScroll, { passive: true });
-                  window.addEventListener('hashchange', () => setTimeout(update, 0));
-                  toc.addEventListener('click', () => setTimeout(update, 0));
-
-                  update();
-                })();
-              </script>
             </aside>
 
             {hasDocsCard ? (
@@ -165,6 +207,128 @@ const hasDocsCard = Boolean(repoUrl) || documents.length > 0;
           <Content />
         </article>
       </div>
+
+      <script is:inline>
+        (() => {
+          const tocs = Array.from(document.querySelectorAll('.project-page nav.toc'));
+          if (!tocs.length) return;
+
+          const getHeadingEl = (id) => {
+            if (!id) return null;
+            const direct = document.getElementById(id);
+            if (direct) return { id, el: direct };
+            try {
+              const decoded = decodeURIComponent(id);
+              const decodedEl = document.getElementById(decoded);
+              if (decodedEl) return { id: decoded, el: decodedEl };
+            } catch {
+              // ignore
+            }
+            return null;
+          };
+
+          const init = (toc) => {
+            const links = Array.from(toc.querySelectorAll('a[href^="#"]'));
+            const items = links
+              .map((link) => {
+                const href = link.getAttribute('href');
+                if (!href || href.length < 2) return null;
+                const id = href.slice(1);
+                const resolved = getHeadingEl(id);
+                if (!resolved) return null;
+                return { link, id: resolved.id, el: resolved.el };
+              })
+              .filter(Boolean);
+
+            if (!items.length) return;
+
+            const byId = new Map(items.map((i) => [i.id, i]));
+
+            const ensureActiveVisible = (activeLink) => {
+              if (!activeLink) return;
+              const prefersReduced = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+              const behavior = prefersReduced ? 'auto' : 'smooth';
+
+              // Only auto-scroll aggressively for the mobile modal; on desktop, this is typically a no-op.
+              const inModal = Boolean(activeLink.closest?.('#project-toc-modal'));
+              if (!inModal) return;
+
+              try {
+                activeLink.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior });
+              } catch {
+                // Older browsers: just jump
+                activeLink.scrollIntoView(true);
+              }
+            };
+
+            const setActive = (activeId) => {
+              for (const { link, id } of items) {
+                const isActive = id === activeId;
+                link.classList.toggle('is-active', isActive);
+                if (isActive) link.setAttribute('aria-current', 'true');
+                else link.removeAttribute('aria-current');
+              }
+
+              const activeLink = byId.get(activeId)?.link;
+              ensureActiveVisible(activeLink);
+            };
+
+            const offset = 140;
+            const inView = new Set();
+
+            const pickAndSet = () => {
+              if (!inView.size) return;
+              let bestId = null;
+              let bestTop = -Infinity;
+              for (const id of inView) {
+                const el = byId.get(id)?.el;
+                if (!el) continue;
+                const top = el.getBoundingClientRect().top;
+                if (top <= offset && top > bestTop) {
+                  bestTop = top;
+                  bestId = id;
+                }
+              }
+              if (bestId) setActive(bestId);
+            };
+
+            const observer = new IntersectionObserver(
+              (entries) => {
+                for (const entry of entries) {
+                  const id = entry.target.id;
+                  if (!byId.has(id)) continue;
+                  if (entry.isIntersecting) inView.add(id);
+                  else inView.delete(id);
+                }
+                pickAndSet();
+              },
+              {
+                root: null,
+                rootMargin: `-${offset}px 0px -70% 0px`,
+                threshold: [0, 1],
+              }
+            );
+
+            for (const { el } of items) observer.observe(el);
+
+            // Initial state
+            const hashId = location.hash?.slice(1);
+            const resolved = getHeadingEl(hashId);
+            if (resolved?.id && byId.has(resolved.id)) setActive(resolved.id);
+            else setActive(items[0].id);
+
+            toc.addEventListener('click', (e) => {
+              const a = e.target.closest?.('a[href^="#"]');
+              if (!a) return;
+              const id = a.getAttribute('href')?.slice(1);
+              const r = getHeadingEl(id);
+              if (r?.id) setTimeout(() => setActive(r.id), 0);
+            });
+          };
+
+          for (const toc of tocs) init(toc);
+        })();
+      </script>
 
       <div class="section-foot">
         <a class="button" href="/projects/">← Back to projects</a>
