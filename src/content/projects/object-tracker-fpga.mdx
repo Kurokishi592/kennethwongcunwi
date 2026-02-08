@@ -12,7 +12,7 @@ documents:
     url: /assets/ee2026-fpga-object-tracker/Poster.pdf
 ---
 
->[!warning] Sit back and relax, this is a long one! But I guarantee it is worth the read :)
+>[!warning] Grab a coffee and get comfortable, this is a long one! But I guarantee it is worth the read :)
 
 >[!danger] This write up is still work-in-progress! Why not watch the demo video and read the poster in the meantime? 
 > If you have any questions, feel free to reach out to me!
@@ -20,9 +20,15 @@ documents:
 ## Introduction
 >[!quote] Shall we go all out for this project?
 >
-> *- Me and my project partner, Oct 2025* 
+> *- Me and my project partner back in October 2025, a thought that made that October one of the most rigorous months ever.* 
 
-For our final project in EE2026 (Digital Design and FPGA Programming), my partner and I decided to build an **Object Tracker** using a single Basys3 FPGA board, an OV7670 camera, VGA output, a PS/2 mouse, and a pan-tilt servo rig. The ambition was not just to “make something move”, but to implement the full perception-to-actuation loop *on FPGA fabric*: a streaming computer-vision datapath, on-screen instrumentation, and a real-time connected-components / blob detector that can drive a control loop.
+This was the final project for [EE2026](https://nusmods.com/courses/EE2026/digital-design) Digital Design. The course introduced students to fundamental digital design theories with practical applications in Verilog and an [AMD Artix 7 FPGA](https://digilent.com/reference/programmable-logic/basys-3/start?srsltid=AfmBOorX8vjZMgFaB05IXBhhUuZNk_gnfwxLybIHzdtjR6xM0aivi79c).
+
+Of all the final projects thus far, EE2026 allowed any product idea, as long as they fall within these constraints and meet these requirements:
+1. Only a single bitstream can be used.
+2. Must be within the resource limitations of the FPGA (which was only 1800Kbits of BRAM and 90 DSP slices only!) 
+
+was  my partner and I decided to build an **Object Tracker** using a single Basys3 FPGA board, an OV7670 camera, VGA output, a PS/2 mouse, and a pan-tilt servo rig. The ambition was not just to “make something move”, but to implement the full perception-to-actuation loop *on FPGA fabric*: a streaming computer-vision datapath, on-screen instrumentation, and a real-time connected-components / blob detector that can drive a control loop.
 
 What makes this project technically interesting is that every “software-looking” feature (image filters, interactive UI widgets, and the union-find blob detector) is implemented as synchronous hardware. That means everything must be expressed in terms of raster-ordered pixels, explicit buffering, clock-domain interfaces, and finite-state machines. In particular, the blob detector is not a post-processing step running on a CPU; it is a streaming UFDS (Union-Find Disjoint Set) core that consumes one pixel at a time with backpressure, maintains label equivalence classes and statistics in on-chip memories, and emits bounding boxes in real time.
 

@@ -59,6 +59,63 @@ const documents = entry.data.documents ?? [];
                   </a>
                 ))}
               </nav>
+
+              <script is:inline>
+                (() => {
+                  const toc = document.querySelector('.project-page .toc');
+                  if (!toc) return;
+
+                  const links = Array.from(toc.querySelectorAll('a[href^="#"]'));
+                  const entries = links
+                    .map((link) => {
+                      const id = decodeURIComponent(link.getAttribute('href').slice(1));
+                      const el = document.getElementById(id);
+                      return el ? { link, el, id } : null;
+                    })
+                    .filter(Boolean);
+
+                  if (!entries.length) return;
+
+                  const setActive = (activeId) => {
+                    for (const { link, id } of entries) {
+                      const isActive = id === activeId;
+                      link.classList.toggle('is-active', isActive);
+                      if (isActive) link.setAttribute('aria-current', 'true');
+                      else link.removeAttribute('aria-current');
+                    }
+                  };
+
+                  const update = () => {
+                    const offset = 140;
+                    let current = entries[0].id;
+
+                    for (const { el, id } of entries) {
+                      const top = el.getBoundingClientRect().top;
+                      if (top <= offset) current = id;
+                      else break;
+                    }
+
+                    setActive(current);
+                  };
+
+                  let ticking = false;
+                  const onScroll = () => {
+                    if (ticking) return;
+                    ticking = true;
+                    requestAnimationFrame(() => {
+                      ticking = false;
+                      update();
+                    });
+                  };
+
+                  window.addEventListener('scroll', onScroll, { passive: true });
+                  window.addEventListener('resize', onScroll, { passive: true });
+                  window.addEventListener('hashchange', () => setTimeout(update, 0));
+                  toc.addEventListener('click', () => setTimeout(update, 0));
+
+                  update();
+                })();
+              </script>
             </aside>
 
             {documents.length ? (

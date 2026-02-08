@@ -569,6 +569,13 @@ html[data-theme="light"] .whoami-hero-overlay {
   color: var(--text);
 }
 
+.toc a.is-active,
+.toc a[aria-current="true"] {
+  border-color: color-mix(in srgb, var(--border) 65%, var(--brand) 45%);
+  background: color-mix(in srgb, var(--brand) 12%, var(--bg-elev));
+  color: var(--text);
+}
+
 @media (min-width: 960px) {
   .whoami-hero .toc-card {
     width: min(100%, 320px);
