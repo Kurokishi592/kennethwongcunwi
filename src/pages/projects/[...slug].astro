@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import DocumentCard from '../../components/DocumentCard.astro';
 import { getCollection, render } from 'astro:content';
+import { siGithub } from 'simple-icons/icons';
 
 export async function getStaticPaths() {
   const projects = (await getCollection('projects')).filter((p) => p.id.endsWith('.mdx'));
@@ -17,6 +18,21 @@ const { Content, headings } = await render(entry);
 
 const tocHeadings = (headings ?? []).filter((h) => h.depth >= 2 && h.depth <= 4);
 const documents = entry.data.documents ?? [];
+
+const repoUrl = entry.data.repo?.url;
+const repoLabel = (() => {
+  if (entry.data.repo?.label) return entry.data.repo.label;
+  if (!repoUrl) return null;
+  try {
+    const u = new URL(repoUrl);
+    const cleaned = u.pathname.replace(/^\/+/, '').replace(/\/+$/, '').replace(/\.git$/, '');
+    return cleaned || repoUrl;
+  } catch {
+    return repoUrl;
+  }
+})();
+
+const hasDocsCard = Boolean(repoUrl) || documents.length > 0;
 ---
 
 <BaseLayout
@@ -118,11 +134,23 @@ const documents = entry.data.documents ?? [];
               </script>
             </aside>
 
-            {documents.length ? (
+            {hasDocsCard ? (
               <aside class="toc-card" aria-label="Documents">
                 <div class="toc-top">
                   <p class="toc-title">Documents</p>
                 </div>
+
+                {repoUrl ? (
+                  <div class="doc-actions" aria-label="Repository link">
+                    <a class="button doc-button" href={repoUrl} target="_blank" rel="noopener">
+                      <svg class="doc-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path fill="currentColor" d={siGithub.path} />
+                      </svg>
+                      <span>{repoLabel}</span>
+                    </a>
+                  </div>
+                ) : null}
+
                 <div class="doc-list" aria-label="Document links">
                   {documents.map((d) => (
                     <DocumentCard href={d.url} title={d.title} subtitle={d.subtitle} thumbnail={d.thumbnail} />

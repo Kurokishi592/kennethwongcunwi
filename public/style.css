@@ -1238,6 +1238,21 @@ html[data-theme="light"] .featured-badge {
   gap: 0.65rem;
 }
 
+.doc-actions {
+  margin: 0.65rem 0 0.75rem;
+}
+
+.doc-button {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.doc-icon {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
 .doc-card {
   display: grid;
   grid-template-columns: 96px 1fr;
