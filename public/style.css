@@ -1701,7 +1701,23 @@ html.toc-modal-open body {
   gap: 0.6rem;
 }
 
+.prose .double-media {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.6rem;
+}
+
 .prose .triple-media img {
+  width: 100%;
+  height: 100%;
+  max-height: 320px;
+  object-fit: cover;
+  border-radius: calc(var(--radius) - 4px);
+  border: 1px solid var(--border);
+  background: var(--bg-elev);
+}
+
+.prose .double-media img {
   width: 100%;
   height: 100%;
   max-height: 320px;
@@ -1714,6 +1730,10 @@ html.toc-modal-open body {
 @media (min-width: 720px) {
   .prose .triple-media {
     grid-template-columns: repeat(3, 1fr);
+  }
+
+  .prose .double-media {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
