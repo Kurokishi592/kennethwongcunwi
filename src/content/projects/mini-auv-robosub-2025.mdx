@@ -10,7 +10,27 @@ featuredRank: 2
 
 ## Overview
 
-Co-led Mini-AUV for Robosub 2025.
+Co-Lead Developer & Engineer
+
+As part of the dual-vehicle strategy, I co-led the development of a specialised Mini-AUV in one summer, designed for movement-focused challenges such as the Gate and Slalom task. Achieved with its lighter build (13kg, a 66% reduction from the main AUV) and an optimized hydrodynamics with a 50% reduction in hull space and 8-thruster layout configuration for enhanced maneuverability.
+
+Notable Electrical Designs:
+- Designed a parallel MOSFET Design for its main power switch, with reed switch compatibility.
+- Implemented a signal-based killswitch for ESCs via SN74HC4066 Quadruple Bilateral Analog Switch
+- Developed telemetry using ESP32-S3-DEVKITC-1, displaying sensor data (pressure, battery voltage from INA219 power monitor, killswitch state) via OLED screen.
+- Designed compact PCBs to optimise hull space efficiency.
+
+Software and Sensors:
+- Integrated DVL A50 by Waterlinked, Bar30 depth sensor and DWE Explore HD 3.0 underwater camera for navigation and perception.
+- Configured Pixhawk 6X with Ardusub firmware for control and localisation.
+- Using vision and ML for perception of Gate and Slalom
+- Established MAVROS communication between Pixhawk flight controller and Jetson SBC.
+
+Final Achieved tasks for RoboSub 2025, contributing to NUS BBAS’ 1st Place in Robosub 2025:
+- Gate: Pass through and Maintain control
+- Gate: Coin Flip (start 90/180 degrees from gate)
+- Gate: Style (barrel roll 8x90 degrees at gate)
+- Channel (Slalom): Navigate through layers with correct channel at correct depth
 
 >[!danger] This write up is still work-in-progress! Why not read the [technical report](https://bumblebee.sg/pdf/Bumblebee_Robosub_Paper_2025.pdf) and visit [Bumblebee's website](https://bumblebee.sg/competitions/robosub/2025/) first? 
 > If you have any questions, feel free to reach out to me!
