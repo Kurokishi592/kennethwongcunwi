@@ -4,18 +4,27 @@ subtitle: "Teleop robot with LiDAR + SLAM, camera sensing, IMU heading, and secu
 date: "Jan 2025 – Apr 2025"
 tags: ["SLAM", "LiDAR", "Embedded", "TLS"]
 thumbnail: "/assets/cg2111a-alex/alex-main.JPEG"
+documents:
+  - title: "CG2111A Report.pdf"
+    url: "/assets/cg2111a-alex/Final Report.pdf"
+    subtitle: "Detailed report on this project."
+repo:
+    url: "https://github.com/Kurokishi592/CG2111A-Alex"
+    label: "Kurokishi592/CG2111A-Alex"
 featured: false
 ---
 
 ## Overview
 
-Built a teleoperated robot stack focused on navigability, sensing, and robust remote control.
+The robot is designed to be teleoperated by users using a keyboard in a separate room. Users are to perceive the robot's environment using sensors and real-time mapping to search for two astronauts, delivering a care package to one and bringing the other to the safe zone, as fast as possible.
+• Integrated LiDAR, SLAM, RPi Camera and HC-SR04 for autonomous mapping and obstacle detection
+• Integrated BNO-085 IMU sensor for yaw/heading estimates, to turn accurately
+• Developed low-level firmware using bare-metal programming on Arduino Mega
+• Implemented TLS encryption for secure remote operation
 
-## Highlights
+This project fulfils the requirements of the final project for CG2111A: Engineering Principle and Practice II.
 
-- LiDAR mapping/localization experiments.
-- Remote control with emphasis on stability and safety.
+>[!danger] This write up is still work-in-progress! Why not watch read the report (under Documents on this page) in the meantime? 
+> If you have any questions, feel free to reach out to me!
 
-TODO:
-Add report
-Add pictures
+
