@@ -9,19 +9,22 @@ const highlights = [
   {
     title: 'What I do',
     body:
-      'I love engineering solutions for automation and optimisation, especially those built at the hardware–software boundary such as embedded systems.'
+      'Engineering solutions for automation and optimisation is my passion. The hardware, software and their boundary such as embedded systems for intelligent robotic systems is where I belong.'
   },
   {
     title: 'What I’m excited about now',
     bullets: [
-      'On-device AI acceleration in embedded systems, and SoC integration of AI neural-network accelerators',
+      'Hardware acceleration in embedded systems such as SoC integration of AI neural-network accelerators',
       'Developments in autonomous robotics'
     ]
   },
   {
     title: 'How I work',
-    body:
-      'Conceptualise solutions from the problem statement, my research and knowledge into fast iterations and tight feedback loops to deliver a well-engineered solution.'
+    bullets: [
+      'Conceptualise solutions from the problem statement and first principles',
+      'Apply my research and knowledge into iterations',
+      'Maintain tight feedback loops to deliver a well-engineered solution.'
+    ]
   }
 ];
 
@@ -62,7 +65,7 @@ const experienceTags = {
             <a href="#work-experiences">Experience</a>
             <a href="#education">Education</a>
             <a href="#skills">Skills & Tech Stack</a>
-            <a href="#links">Email, GitHub, LinkedIn, Resume</a>
+            <a href="#links">Resume, Transcript & Socials</a>
           </nav>
         </aside>
 
@@ -500,25 +503,15 @@ const experienceTags = {
   <section class="section" id="links">
     <div class="container">
       <div class="section-head">
-        <h2>Email, GitHub, LinkedIn, Resume</h2>
+        <h2>Resume, Transcript, Email, Github, Linkedin</h2>
         <p class="muted">Interested to know more? Reach out or explore my profiles.</p>
       </div>
 
-      <div class="grid cards">
-        <article class="card">
-          <div class="card-top">
-            <h3>Socials</h3>
-            <p class="muted">GitHub, LinkedIn, and more.</p>
-          </div>
-          <div class="icon-row" aria-label="Social links">
-            <SocialIcons />
-          </div>
-        </article>
-        
+      <div class="grid cards">      
         <article class="card">
           <div class="card-top">
             <h3>Resume</h3>
-            <p class="muted">One click to the PDF.</p>
+            <p class="muted"></p>
           </div>
           <div class="doc-list">
             <DocumentCard
@@ -526,6 +519,30 @@ const experienceTags = {
               title="Resume.pdf"
               subtitle="Download my resume."
             />
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-top">
+            <h3>Academic Transcript</h3>
+            <p class="muted"></p>
+          </div>
+          <div class="doc-list">
+            <DocumentCard
+              href="/docs/transcript.pdf"
+              title="Transcript.pdf"
+              subtitle="Download my academic transcript."
+            />
+          </div>
+          
+        </article>
+                <article class="card">
+          <div class="card-top">
+            <h3>Socials</h3>
+            <p class="muted">GitHub, LinkedIn, and more.</p>
+          </div>
+          <div class="icon-row" aria-label="Social links">
+            <SocialIcons />
           </div>
         </article>
       </div>
