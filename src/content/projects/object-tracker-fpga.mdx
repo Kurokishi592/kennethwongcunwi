@@ -15,7 +15,7 @@ repo:
   label: "Kurokishi592/EE2026"
 ---
 
->[!warning] Grab a coffee and get comfortable, this is a long one! But I guarantee it is worth the read :)
+>[!warning] Grab a coffee and get comfortable; this is a long one! But I guarantee it is worth the read :) ~25min
 
 ## Introduction
 >[!quote] Shall we go all out for this project?
@@ -29,21 +29,18 @@ Project ideas are open-ended as long as they fall within these constraints and m
 2. Must be within the resource limitations of the FPGA (which was 1800Kbits of BRAM and 90 DSP slices only!) 
 A typical project would be 2D platform games (like Donkey Kong) or enhanced versions of the base graphical calculator using a Digilent PmodOLEDrgb of 96x64 pixel display. 
 
-However, fully open-ended projects are scarce, so we saw this as a golden opportunity to push the limits of what could be done with this introductory FPGA board. We had two distinct goals in mind:
+However, fully open-ended projects are scarce, so we saw this as a golden opportunity to push the limits of what could be done with this introductory FPGA board. 
 
-1. The project should exploit the features of the FPGA: *physical parallelism with low latency*. In other words, it should not be something that could be easily done with a standard microcontroller or CPU (RTOS or OS threaded operations - virtual parallelism).
-2. It must be a *product*: a cohesively designed system that has a clear function, rather than a haphazard collection of disjoint functionalities.
+>[!check] We had two distinct goals in mind:
+>1. The project should exploit the features of the FPGA: *physical parallelism with low latency*. In other words, it should not be something that could be easily done with a standard microcontroller or CPU (RTOS or OS threaded operations - virtual parallelism).
+>2. It must be a *product*: a cohesively designed system that has a clear function, rather than a haphazard collection of disjoint functionalities.
 
-## Idea Genesis and our Final Product
-Computer Vision. We decided on this theme instantly due to its computing intensity and parallelism, and developing a CV-related product using an FPGA was hardly ever done before.
+## Our Final Product and its Significance
+Computer Vision. Specifically, an **End-to-End Hardware-based Real-time Object Tracking System**.
 
-Ultimately, we settled to build an educational system to teach fundamental Computer Vision concepts. One where users can :
-- interact through an intuitive GUI to customise an image processing pipeline via drag & drop controls, dynamic sliders and scroll-wheel
-- gain insights into blob detection through our own algorithm using pop-up explanations and modifiable parameters. 
-- observe visual feedbacks on a monitor through VGA (instead of 96x64 pixels only)
-- witness real-time object tracking by mounting the camera itself on a pan-tilt servo rig (with tunable PD controllers) that follows the detected object smoothly.
+While FPGA-based vision systems exist in research, they are typically implemented on high-end boards with large memory resources. In contrast, this project was deliberately built under severe hardware constraints: a low-cost Basys3 FPGA, a teaching board with extremely limited on-chip memory and no external DRAM. We believed that this project will demonstrate the possibly unexplored capabilities of hardware-acceleration for computer vision.
 
-Our project met all of our desired outcomes: image processing and blob detection operations ran concurrently (physical parallelism) with fast, predictable memory access times to allow for real-time performance, while the GUI and pan-tilt assembly made for a fun and interactive product!
+Other than real-world applications of using FPGA for parallelised computer vision operations, we wanted the product to be interactive and fun. 
 
 <figure>
   <img src="/assets/ee2026-fpga-object-tracker/fpga-object-tracker-main.JPEG" alt="EE2026 Project Final Product" />
@@ -51,6 +48,16 @@ Our project met all of our desired outcomes: image processing and blob detection
     EE2026 FPGA Object Tracker Final Product
   </figcaption>
 </figure>
+
+Ultimately, we settled to build an educational system to teach fundamental Computer Vision concepts. One where users can :
+- interact through an intuitive GUI to customise an image processing pipeline via drag & drop controls, dynamic sliders and scroll-wheel
+- gain insights into blob detection through our own algorithm using pop-up explanations and modifiable parameters. 
+- observe visual feedbacks on a monitor through VGA (instead of 96x64 pixels only)
+- witness real-time object tracking by mounting the camera itself on a pan-tilt servo rig (with tunable PD controllers) that follows the detected object smoothly.
+
+Our project met all of our desired outcomes: image processing and blob detection operations ran concurrently (physical parallelism) with fast, predictable memory access times to allow for real-time performance even with such limited hardware, while the GUI and pan-tilt assembly made for a fun and interactive product!
+
+
 
 <figure class="triple-figure">
   <div class="double-media" aria-label="EE2026 FPGA Object Tracker Final Product">
@@ -62,7 +69,7 @@ Our project met all of our desired outcomes: image processing and blob detection
 
 The [sections after the demo video and poster](#cv-pipeline) detail the various components of the project and explains our design considerations made along the way, in a near chronological order of development.
 
-## Demo Video
+### Demo Video
 Stay until the end of the video for fun section!
 <div style={{ maxWidth: '900px', margin: '1rem auto' }}>
   <div style={{ position: 'relative', paddingTop: '56.25%' }}>
@@ -78,7 +85,7 @@ Stay until the end of the video for fun section!
   </div>
 </div>
 
-## Poster
+### Poster
 
 The poster is a concise, high-level overview of the system architecture and our design decisions.
 
@@ -98,16 +105,13 @@ The poster is a concise, high-level overview of the system architecture and our 
 >
 >Feel free to use the table of contents on the left to navigate to specific sections as well!
 
->[!danger] This write up is still work-in-progress. You may proceed but it is unrefined...watch the demo video and read the poster in the meantime!
-> If you have any questions, feel free to reach out to me :)
-
 ## CV Pipeline
 The overall architecture of the CV pipeline is shown in the diagram below. Broadly speaking, the pipeline can be divided into 5 main stages:
 
-1. Camera Interfacing (Grey): Configuring the camera’s settings, and reading the pixel data from the camera.
-2. Pre-Processing (Green): Blurring the image to reduce noise.
-3. Thresholding and Morphology (Orange): Thresholding the image based on colour ranges to create a binary bitmask, which undergo erode/dilate operations to clean up noise.
-4. Blob Detection (Yellow): Finding contiguous regions in the bitmask i.e. finding objects.
+1. Camera Interfacing (Grey): Configuring the camera’s settings and capturing pixel data from camera capture.
+2. Pre-Processing (Green): Blurring the image to reduce noise using spatial filters (*Gaussian Blur* or/and *Median Filter*) through convolusion kernel techniques.
+3. Thresholding and Morphology (Orange): Thresholding the image based on user-defined colour ranges to create a binary bitmask, which undergo *Erode/Dilate* operations to clean up noise.
+4. Blob Detection (Yellow): Searching contiguous regions in the bitmask and compute centroids/bounding boxes using *Union-Find Disjoint Set (UFDS) *i.e. finding objects.
 5. Buffering and Display (Purple): Saving the processed image into BRAM buffers and rendering them on the VGA display.
 
 In addition, user settings from the GUI (Blue) are decoded into control signals that modify the datapath accordingly, as summarised in the tables at the bottom.
@@ -119,16 +123,114 @@ In addition, user settings from the GUI (Blue) are decoded into control signals 
   </figcaption>
 </figure>
 
-The CV stack is a *streaming* raster pipeline designed around Basys3 BRAM limits: it avoids buffering a full 640×480 RGB frame. The OV7670 is first configured over SCCB (an I2C-like register-write protocol) using a small power-up FSM (including a required post-reset pause), then pixels stream in as RGB565 byte-pairs on the camera’s PCLK with `VSYNC/HREF` framing. `OV7670_Capture` reassembles each pixel, truncates to RGB444, and decimates/crops into a 310×240 ROI written into BRAM only on even coordinates (`~cam_x[0] && ~cam_y[0]`) after a crop offset. Addressing is direct and deterministic: `addr = (cam_y[8:1]) * 310 + (cam_x[9:1] - 10)`.
+## Image Processing
+**Data preparation** is the first crucial step of a computer vision workflow.
 
-All image ops run one-pixel-per-cycle using a 3×3 sliding window (two line buffers + shift registers) with padding at borders (replicate for RGB, min/max for binary). Preprocessing uses Gaussian blur (shift/add MAC on a fixed kernel) and a median denoiser (comparator network; applied per-channel on RGB444). Segmentation thresholds RGB in `threshold_subsection` into a 1-bit bitmap (GUI sliders + eyedropper), then morphology is just 3×3 boolean logic in `Morphology_3x3` (erode = AND, dilate = OR), optionally cascaded/reordered.
+This includes: 
+1. **Data collection** by gathering raw data from the camera
+2. **Data pre-processing** which formats gathered data into a suitable form and cleans up noise (or unwanted data) before piping them into our detection algorithm.
 
-On the output side, `VGA_Controller` double-scans the 310×240 ROI back to 640×480 (`src_x = hCounter >> 1`, `src_y = vCounter >> 1`) and compensates for crop and BRAM read latency so pixels stay aligned with the raster. Because BRAM is the bottleneck, the project ultimately uses a mostly single-buffer approach (tearing is rare/hidden at 30 FPS) plus an extra bitmap buffer so blob/UFDS can compute bounding boxes even when the displayed stream is RGB. The pipeline itself is runtime-configurable from the GUI: `cv_settings_dragdrop` emits `pre_order_vector` and `morph_vector`, which drive muxing in `Top` so filter order/selection can change without rebuilding the bitstream.
+### OV7670 Camera Interfacing
 
->[!info] More details
+<figure style="max-width: 200px; margin: 1rem auto;">
+  <img src="/assets/ee2026-fpga-object-tracker/proj_ee2026_ov7670.jpg" alt="ov7670" style="width: 100%; height: auto;" />
+  <figcaption>
+    OV7670 Camera Module
+  </figcaption>
+</figure>
+
+
+The *OV7670* camera is connected to the [Pmod pins](https://digilent.com/reference/basys3/refmanual?srsltid=AfmBOoo7mO95gyWZXZuXYEu5lDWpuoZE6C21LOSXx_bsreCxjG6WZFSO) of the FPGA. Its settings is first configured by setting its registers over *SCCB protocol* (*an I2C-like register-write protocol*). Camera pixel data is then streamed to the FPGA as *RGB565* byte-pairs on the camera’s PCLK with `VSYNC/HREF` framing. 
+
+Keeping Basys3 BRAM limits in mind, we have to avoid buffering a full 640×480 RGB565 frame (4,915,200 bits per frame!). Hence, our `OV7670_Capture` down samples each pixel to *RGB444* format, and decimates into a 310×240 *Region of Interest* (ROI) by writing into BRAM only on even coordinates, resulting in 892,800 bits per frame. 
+
+>[!check] Memory Optimsisation and Tradeoff with Resolution
+>This tradeoff between resolution and memory is strategic as the reduction in resolution was barely affecting performance, but it significantly reduced our memory usage for frame capture by ~80%!
+
+We have completed our data collection.
+
+### Pre-Processing (Gaussian Blur and Median Filter)
+<figure class="triple-figure" style="margin: 1rem auto;">
+  <div class="double-media" aria-label="Thresholding">
+    <img src="/assets/ee2026-fpga-object-tracker/convolution.png" alt="Convolution" />
+    <img src="/assets/ee2026-fpga-object-tracker/proj_ee2026_sliding-window.gif" alt="sliding window" />
+  </div>
+    <figcaption>
+      Convolution and Sliding Window Visualisation 
+    </figcaption>
+</figure>
+
+> TODO: insert gaussian blur and median filter visualisation, and noise from raw capture
+
+The first data pre-processing step is to eliminate noise from our raw capture. This is done through two spatial filters: 
+- **Gaussian Blur**: a linear filter using multiply-and-accumulate operation on a fixed kernel
+- **Median Filter**: a non-linear filter implemented with a 3-layer comparator network; applied per-channel on RGB444
+
+All image ops run one-pixel-per-cycle using a 3×3 sliding window.
+
+> TODO: complete this summarised writeup.
+
+### Thresholding and Morphology (Erode/Dilate)
+The idea of object detection through colour is *blob detection*. To generate the desired blobs, two additional data pre-processing steps are required: **thresholding** and **morphology filtering**.
+
+<figure class="triple-figure" style="margin: 1rem auto;">
+  <div class="double-media" aria-label="Thresholding">
+    <img src="/assets/ee2026-fpga-object-tracker/image_settings.JPG" alt="User threshold" loading="lazy" />
+    <img src="/assets/ee2026-fpga-object-tracker/bitmap.JPG" alt="Bitmap" loading="lazy" />
+  </div>
+  <figcaption>Thresholded Image: Coloured View (left), Converted Bitmap View (right)</figcaption>
+</figure>
+
+Thresholding is done in RGB colour space, which formats our data from RGB to a 1-bit bitmap for our detection algorithm. Using an eyedropper, users select a specific colour from the object. They then define the upper and lower bounds of Red, Green and Blue channels using sliders on our GUI. These bounds are piped into our thresholding module, such that if a pixel’s R, G, B channels fall within the user-defined ranges, it is assigned `1` in the converted bitmap, else `0`.
+
+>[!warning] Better representation of colour space
+>Given more time, other colour spaces such as HSV would have been a more intuitive representation of the image, especially when it comes to thresholding. The ideal thresholding step would be through a visualisation of the colour range for users to choose. However, the concept of a range in RGB space is hard to represent and visualise, as compared to a range using hue, saturation and (TODO: what is V?), either through colour histogram or HSV cylinder.
+>Due to time constraints, we carried on with RGB, but mitigated by implementing an eye dropper feature that instantly draws 3 vertical markers on the R, G, B sliders, and users may change to bitmap view to tune the range of each slider to obtain a reasonably sized blob.
+
+As seen from the previous bitmap picture, the "blob" that is supposed to represent the ball object is fragmented into many bits, and there are "noisy" or unwanted bits that fell within the user defined range. This is where Morphology Filtering is needed: to clean up the bitmap.
+
+<figure class="triple-figure" style="margin: 1rem auto;">
+  <div class="double-media" aria-label="Morphology">
+    <img src="/assets/ee2026-fpga-object-tracker/erode.JPG" alt="Erode" loading="lazy" />
+    <img src="/assets/ee2026-fpga-object-tracker/dilate.JPG" alt="Dilate" loading="lazy" />
+  </div>
+  <figcaption>Morphology: 2x Erode Operations (left), 2x Dilate Operations (right)</figcaption>
+</figure>
+
+We strategically reuse the same 3x3 convolution kernal sliding window trick used in [Gaussian Blur and Median Filter](#2.-pre-processing) for our Morphology blocks. The difference lies in the operations executed:
+- **Erode**: reduces the size of blobs, i.e., removing small noisy regions. *Logical operation*: bitwise AND of pixels in kernel.
+- **Dilate**: increases blob sizes, which restores the size of eroded blobs or covers holes in detected blobs. *Logical operation*: bitwise OR of pixels in the kernel.
+
+Users can apply up to four Erode/Dilate blocks in any order, using the scroll-wheel to switch between modes, until a bitmap with nicely unified blob(s) of little noise is achieved for [blob detection](#complete-implementation-of-union-find-disjoint-set)
+
+>[!info] More details on Image Processing
 >This section is explained in much greater detail by my teammate [here](https://tankaicong.com/projects/ee2026/#cv-pipeline).
 
-## Cross Domain Crossing (CDC) Solution for UFDS Algorithm
+>[!danger] This write up is still work-in-progress. You may proceed but it is unrefined...watch the demo video and read the poster in the meantime!
+> If you have any questions, feel free to reach out to me :)
+
+## Complete Implementation of Union-Find Disjoint Set (UFDS) Algorithm in Verilog for Blob Detection 
+This section presents the detailed implementations of every step, decisions and personal thoughts, failures, iterations and testings. Here are two pictures and a video of the blob detection at work!
+
+<figure class="triple-figure" style="margin: 1rem auto;">
+  <div class="double-media" aria-label="Blob Detection">
+    <img src="/assets/ee2026-fpga-object-tracker/object detected.JPG" alt="object detected" loading="lazy" />
+    <img src="/assets/ee2026-fpga-object-tracker/object detected alt.JPEG" alt="object detected alt" loading="lazy" />
+  </div>
+  <figcaption>Bounding boxes show thresholded blobs detected by UFDS algorithm.</figcaption>    
+</figure>
+
+> TODO: insert video?
+
+### Architecture Overview
+After processing the image, this module performs object detection using a *weighted Union-Find Disjoint Set* (UFDS) while streaming a binary image in raster order from VGA/BRAM path. It extracts object bounding boxes and centroids as the frame is processed without storing the full image. This algorithm and implementation is pivotal in achieving optimal time and space complexity given the FPGA constraints.
+
+The blob detector is a streaming connected-components labeling engine implemented as a union-find data structure that operates directly on the thresholded/morphed bitmap. The core idea is to scan pixels in raster order and assign labels to foreground pixels while maintaining equivalence classes between labels that later turn out to be connected. Instead of storing the whole image, the design maintains only the minimum state required for correctness: a small neighborhood context (the reduced neighbor set for connectivity), per-label parent/rank arrays, and per-label statistics required to emit bounding boxes.
+
+In the top-level integration, UFDS does not see the full 640×480 scan; it sees the 310×240 ROI stream at a decimated rate. `Top` explicitly gates the UFDS feed with `in_roi` and a decimation condition (`decim_hv`) so that, despite double-scanned VGA output, UFDS receives exactly one sample per ROI pixel. This gating is critical because union-find assumes a consistent raster progression; if pixels are duplicated due to display scaling, the component statistics and bounding boxes would be wrong.
+
+
+### Cross Domain Crossing (CDC) Solution for UFDS Algorithm
 <figure>
   <img src="/assets/ee2026-fpga-object-tracker/cdc.png" alt="Clock Domain Crossing" />
   <figcaption>
@@ -141,18 +243,6 @@ This is solved with a two-part CDC architecture: an asynchronous FIFO (`UFDS_FIF
 
 On the consumer side (UFDS domain), `UFDS_Bridge` does not simply “read whenever FIFO is non-empty”. Instead it maintains a one-word staging buffer and only asserts `in_valid` when the UFDS core asserts `ready_to_read`. This detail is important: it transforms the asynchronous FIFO into a clean decoupled interface where the UFDS FSM can throttle input at pixel granularity, guaranteeing that union-find work is never corrupted by dropped or duplicated pixels. In other words, the FIFO handles *clock* correctness, while the bridge handles *protocol* correctness for a variable-latency algorithm.
 
-## Blob Detection using Union-Find Disjoint Set (UFDS) Algorithm in Verilog
-
-The blob detector is a streaming connected-components labeling engine implemented as a union-find data structure that operates directly on the thresholded/morphed bitmap. The core idea is to scan pixels in raster order and assign labels to foreground pixels while maintaining equivalence classes between labels that later turn out to be connected. Instead of storing the whole image, the design maintains only the minimum state required for correctness: a small neighborhood context (the reduced neighbor set for connectivity), per-label parent/rank arrays, and per-label statistics required to emit bounding boxes.
-
-In the top-level integration, UFDS does not see the full 640×480 scan; it sees the 310×240 ROI stream at a decimated rate. `Top` explicitly gates the UFDS feed with `in_roi` and a decimation condition (`decim_hv`) so that, despite double-scanned VGA output, UFDS receives exactly one sample per ROI pixel. This gating is critical because union-find assumes a consistent raster progression; if pixels are duplicated due to display scaling, the component statistics and bounding boxes would be wrong.
-<figure class="triple-figure">
-  <div class="double-media" aria-label="Blob Detection">
-    <img src="/assets/ee2026-fpga-object-tracker/object detected.JPG" alt="object detected" loading="lazy" />
-    <img src="/assets/ee2026-fpga-object-tracker/object detected alt.JPEG" alt="object detected alt" loading="lazy" />
-  </div>
-  <figcaption>Bounding boxes show thresholded portions detected by UFDS algorithm.</figcaption>    
-</figure>
 ### A fundamental understanding of UFDS
 
 Union-find (disjoint set) represents a partitioning of elements into sets using a parent-pointer forest. Each element points to a parent; roots are elements that point to themselves and represent an entire set. The two core operations are `find(x)`, which returns the root of x’s set (often with path compression), and `union(a, b)`, which merges two sets by attaching one root under the other (often by rank/size). In connected-components labeling, each provisional label corresponds to an element, and unions are performed when the current pixel is connected to already-labeled neighbors.
@@ -212,7 +302,7 @@ When two roots must be merged, the design performs a weighted union (by rank) so
 </figure>
 After labeling/unioning a pixel, the FSM updates the relevant component statistics. For area and centroid sums, this is a simple increment/addition. For bounding boxes, the FSM compares the current pixel’s coordinates against the component’s recorded extents and updates `left`, `right`, `top`, and `bottom` as needed. At frame end, the detector iterates over all allocated labels, identifies roots, and emits bounding boxes for components that meet the minimum area threshold.
 
-### Testings and Simulations
+## Testings and Simulations
 <figure>
   <img src="/assets/ee2026-fpga-object-tracker/simulation 1.jpg" alt="Simulation using small test frame" />
   <figcaption>
