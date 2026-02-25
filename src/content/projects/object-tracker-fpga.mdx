@@ -140,7 +140,9 @@ This includes:
 </figure>
 
 
-The *OV7670* camera is connected to the [Pmod pins](https://digilent.com/reference/basys3/refmanual?srsltid=AfmBOoo7mO95gyWZXZuXYEu5lDWpuoZE6C21LOSXx_bsreCxjG6WZFSO) of the FPGA. Its settings is first configured by setting its registers over *SCCB protocol* (*an I2C-like register-write protocol*). Camera pixel data is then streamed to the FPGA as *RGB565* byte-pairs on the camera’s PCLK with `VSYNC/HREF` framing. 
+The *OV7670* camera is connected to the [Pmod pins](https://digilent.com/reference/basys3/refmanual?srsltid=AfmBOoo7mO95gyWZXZuXYEu5lDWpuoZE6C21LOSXx_bsreCxjG6WZFSO) of the FPGA. Its settings is first configured by setting its registers over *SCCB protocol* (*an I2C-like register-write protocol where master sends to slave device the target register address and target register value to configure their registers*). 
+
+Camera pixel data is then streamed to the FPGA as *RGB565* byte-pairs on the camera’s PCLK with `VSYNC/HREF` framing. 
 
 Keeping Basys3 BRAM limits in mind, we have to avoid buffering a full 640×480 RGB565 frame (4,915,200 bits per frame!). Hence, our `OV7670_Capture` down samples each pixel to *RGB444* format, and decimates into a 310×240 *Region of Interest* (ROI) by writing into BRAM only on even coordinates, resulting in 892,800 bits per frame. 
 
