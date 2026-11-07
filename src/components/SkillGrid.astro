@@ -1,0 +1,49 @@
+---
+// Tech stack as logo + name tiles, from src/data/skills.yaml.
+import * as simpleIcons from 'simple-icons';
+import { getData } from '../lib/content';
+
+type Icon = { slug: string; path: string; hex: string };
+const bySlug = new Map<string, Icon>(
+  Object.values(simpleIcons as unknown as Record<string, Icon>)
+    .filter((i) => i && typeof i === 'object' && 'slug' in i)
+    .map((i) => [i.slug, i])
+);
+
+const groups = await getData('skills');
+const initials = (name: string) =>
+  name
+    .split(/[\s/]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
+---
+
+<div class="skill-groups">
+  {groups.map((g) => (
+    <section class="skill-group">
+      <h3 class="skill-group-title mono">{g.group}</h3>
+      <ul class="skill-grid">
+        {g.items.map((item) => {
+          const icon = item.icon ? bySlug.get(item.icon) : undefined;
+          return (
+            <li class="skill">
+              {icon ? (
+                <svg class="skill-icon" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill="currentColor" d={icon.path} />
+                </svg>
+              ) : (
+                <span class="skill-icon skill-initials" aria-hidden="true">
+                  {initials(item.name)}
+                </span>
+              )}
+              <span class="skill-name">{item.name}</span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  ))}
+</div>

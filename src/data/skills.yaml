@@ -1,0 +1,46 @@
+# Tech stack, shown as logo + name tiles.
+#   icon: a slug from https://simpleicons.org (e.g. "python", "ros"). Leave it out and the tile
+#         shows the first letters of the name instead.
+# TODO(Kenneth): this list is a starting point from your old About page and projects; trim or add.
+
+- group: Languages
+  items:
+    - { name: C, icon: c }
+    - { name: C++, icon: cplusplus }
+    - { name: Python, icon: python }
+    - { name: Verilog }
+    - { name: Java, icon: openjdk }
+
+- group: Robotics & AI
+  items:
+    - { name: ROS 2, icon: ros }
+    - { name: PyTorch, icon: pytorch }
+    - { name: Hugging Face LeRobot, icon: huggingface }
+    - { name: NVIDIA Isaac GR00T, icon: nvidia }
+    - { name: OpenCV, icon: opencv }
+    - { name: MAVLink / MAVROS }
+    - { name: Foxglove }
+
+- group: Embedded & Firmware
+  items:
+    - { name: STM32, icon: stmicroelectronics }
+    - { name: ESP32, icon: espressif }
+    - { name: FreeRTOS }
+    - { name: Arduino, icon: arduino }
+    - { name: Raspberry Pi, icon: raspberrypi }
+    - { name: Jetson, icon: nvidia }
+    - { name: NXP FRDM, icon: nxp }
+    - { name: CAN / UART / I²C / SPI }
+
+- group: Hardware & CAD
+  items:
+    - { name: Altium Designer, icon: altiumdesigner }
+    - { name: SOLIDWORKS, icon: dassaultsystemes }
+    - { name: Fusion 360, icon: autodesk }
+    - { name: Basys 3 FPGA (AMD Artix-7), icon: amd }
+
+- group: Tools
+  items:
+    - { name: Linux, icon: linux }
+    - { name: Docker, icon: docker }
+    - { name: Git, icon: git }

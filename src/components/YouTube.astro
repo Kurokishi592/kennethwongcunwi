@@ -1,0 +1,29 @@
+---
+// YouTube video for project pages. Shows only the thumbnail until clicked, so pages stay fast.
+//   <YouTube id="kuJl6z97Nus" title="Demo" />          id = the part after watch?v= in the link
+//   <YouTube id="kuJl6z97Nus" start={95} />            start at 1:35
+type Props = { id: string; title?: string; start?: number };
+const { id, title = 'Video', start } = Astro.props;
+const src = `https://www.youtube-nocookie.com/embed/${id}?autoplay=1${start ? `&start=${start}` : ''}`;
+---
+
+<figure class="yt">
+  <button class="yt-poster" type="button" data-yt-src={src} data-yt-title={title} aria-label={`Play video: ${title}`}>
+    <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" />
+    <span class="yt-play" aria-hidden="true"></span>
+  </button>
+  {title !== 'Video' ? <figcaption>{title}</figcaption> : null}
+</figure>
+
+<script>
+  document.querySelectorAll<HTMLButtonElement>('[data-yt-src]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const iframe = document.createElement('iframe');
+      iframe.src = btn.dataset.ytSrc!;
+      iframe.title = btn.dataset.ytTitle!;
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+      iframe.allowFullscreen = true;
+      btn.replaceWith(iframe);
+    });
+  });
+</script>

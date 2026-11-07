@@ -2,15 +2,16 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import DocumentCard from '../../components/DocumentCard.astro';
 import GitHubMark from '../../components/icons/GitHubMark.astro';
-import { getCollection, render } from 'astro:content';
+import { render } from 'astro:content';
+import { getProjects, inPublic } from '../../lib/content';
 
 export async function getStaticPaths() {
-  const projects = (await getCollection('projects')).filter((p) => p.id.endsWith('.mdx'));
+  const projects = await getProjects();
   return projects.map((p) => ({ params: { slug: p.slug } }));
 }
 
 const { slug } = Astro.params;
-const projects = (await getCollection('projects')).filter((p) => p.id.endsWith('.mdx'));
+const projects = await getProjects();
 const entry = projects.find((p) => p.slug === slug);
 if (!entry) throw new Error(`Missing project: ${slug}`);
 
@@ -140,10 +141,10 @@ const hasDocsCard = Boolean(repoUrl) || documents.length > 0;
     ) : null}
 
     <div class="container">
-      {entry.data.thumbnail ? (
+      {inPublic(entry.data.thumbnail) ? (
         <header class="project-hero" aria-label="Project header">
           <div class="project-hero-media">
-            <img src={entry.data.thumbnail} alt={`${entry.data.title} thumbnail`} loading="lazy" />
+            <img src={entry.data.thumbnail} alt={`${entry.data.title} thumbnail`} fetchpriority="high" />
             <div class="project-hero-overlay" aria-hidden="true"></div>
             <div class="project-hero-text">
               <h1 class="project-hero-title">{entry.data.title}</h1>

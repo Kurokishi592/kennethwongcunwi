@@ -4,12 +4,15 @@
   "type": "module",
   "scripts": {
     "thumbs": "node scripts/generate-pdf-thumbs.mjs",
-    "predev": "node scripts/generate-pdf-thumbs.mjs",
+    "predev": "node scripts/generate-pdf-thumbs.mjs && node scripts/optimize-images.mjs --thumbs",
     "dev": "astro dev",
-    "prebuild": "node scripts/generate-pdf-thumbs.mjs",
+    "prebuild": "node scripts/generate-pdf-thumbs.mjs && node scripts/optimize-images.mjs",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "model": "node scripts/optimize-model.mjs",
+    "model:kinova": "node scripts/build-kinova-model.mjs",
+    "images": "node scripts/optimize-images.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
@@ -19,14 +22,23 @@
     "rehype-katex": "^7.0.1",
     "remark-callout": "^1.1.1",
     "remark-math": "^6.0.0",
-    "simple-icons": "^13.0.0"
+    "simple-icons": "^13.0.0",
+    "three": "0.170.0",
+    "yaml": "^2.9.1"
   },
   "engines": {
     "node": ">=18.17.1"
   },
   "devDependencies": {
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
     "@napi-rs/canvas": "^0.1.80",
+    "@types/node": "^22.20.5",
+    "@types/three": "^0.170.0",
+    "meshoptimizer": "^0.22.0",
     "pdfjs-dist": "^4.10.38",
+    "sharp": "^0.34.5",
     "typescript": "^5.9.3"
   }
 }

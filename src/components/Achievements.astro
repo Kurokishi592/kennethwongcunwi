@@ -1,0 +1,15 @@
+---
+// Row of awards from src/data/achievements.yaml.
+import { getData } from '../lib/content';
+const items = await getData('achievements');
+---
+
+<ul class="achievements" aria-label="Achievements">
+  {items.map((a) => (
+    <li class="achievement">
+      <span class="achievement-year mono">{a.year}</span>
+      <span class="achievement-title">{a.title}</span>
+      {a.detail ? <span class="achievement-detail muted">{a.detail}</span> : null}
+    </li>
+  ))}
+</ul>

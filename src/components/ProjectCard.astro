@@ -1,9 +1,12 @@
 ---
+import { thumb } from '../lib/content';
+
 const { entry, kicker } = Astro.props;
 
 const href = entry?.slug ? `/projects/${entry.slug}/` : entry?.href;
 const data = entry?.data ?? entry;
 const isFeatured = Boolean(data?.featured);
+const image = thumb(data?.thumbnail);
 ---
 
 <article class="card project-card">
@@ -11,9 +14,9 @@ const isFeatured = Boolean(data?.featured);
     {isFeatured ? (
       <span class="featured-badge" aria-label="Featured project" title="Featured project">★</span>
     ) : null}
-    {data?.thumbnail ? (
+    {image ? (
       <div class="card-media">
-        <img src={data.thumbnail} alt={`${data.title} thumbnail`} loading="lazy" />
+        <img src={image} alt={`${data.title} thumbnail`} loading="lazy" />
       </div>
     ) : null}
     <div class="card-top">

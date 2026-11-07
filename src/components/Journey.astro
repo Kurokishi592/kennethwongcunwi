@@ -1,0 +1,67 @@
+---
+// Landing-page scroll timeline, from src/data/journey.yaml.
+import ModelViewer from './ModelViewer.astro';
+import { getData, getProjects, thumb } from '../lib/content';
+
+const chapters = await getData('journey');
+const projects = await getProjects();
+const bySlug = new Map(projects.map((p) => [p.slug, p]));
+---
+
+<div class="journey">
+  {chapters.map((c, i) => {
+    const linked = c.projects.map((s) => bySlug.get(s)).filter(Boolean);
+    return (
+      <article class="chapter" data-scroll-track>
+        <div class="chapter-copy">
+          <p class="chapter-index mono">
+            <span>{String(i + 1).padStart(2, '0')}</span> {c.years}
+          </p>
+          <h3 class="chapter-title">{c.title}</h3>
+          <p class="chapter-text muted">{c.text}</p>
+          {linked.length ? (
+            <ul class="chapter-links">
+              {linked.map((p) => (
+                <li>
+                  <a href={`/projects/${p!.slug}/`}>
+                    <span class="chapter-link-title">{p!.data.title}</span>
+                    {p!.data.date ? <span class="chapter-link-date muted">{p!.data.date}</span> : null}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+
+        <div class="chapter-visual">
+          {c.model ? (
+            <ModelViewer src={c.model.src} label={c.model.label} explode={c.model.explode} tilt={c.model.tilt} />
+          ) : (
+            <div class="photo-stack" data-photo-stack>
+              {c.photos.slice(0, 3).map((src, k) => (
+                <img src={thumb(src)} alt="" loading="lazy" style={`--i:${k}`} />
+              ))}
+            </div>
+          )}
+        </div>
+      </article>
+    );
+  })}
+</div>
+
+<script>
+  // Photos drift apart slightly while their chapter scrolls past.
+  const stacks = Array.from(document.querySelectorAll<HTMLElement>('[data-photo-stack]'));
+  if (stacks.length && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const tick = () => {
+      for (const s of stacks) {
+        const track = s.closest<HTMLElement>('[data-scroll-track]') ?? s;
+        const r = track.getBoundingClientRect();
+        const p = Math.min(1, Math.max(0, (innerHeight - r.top) / (r.height + innerHeight)));
+        s.style.setProperty('--p', p.toFixed(3));
+      }
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }
+</script>

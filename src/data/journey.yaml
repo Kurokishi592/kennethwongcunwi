@@ -1,0 +1,39 @@
+# The scroll timeline on the landing page, oldest first.
+#
+#   years, title, text      what the chapter says
+#   projects                project file names (from src/content/projects/, without .mdx) to link
+#   model                   a .glb in public/models/ that turns as you scroll past
+#     explode: true         also pulls the parts apart (layered assemblies like PCB stacks)
+#     tilt                  camera height in degrees (default 20)
+#   photos                  used instead of a model (1–3 images); they drift slightly as you scroll
+
+- years: 2013 – 2021
+  title: Mechanical design
+  text: >-
+    LEGO MINDSTORMS for the National Robotics Competition, then VEX Robotics through secondary school
+    and junior college. Mechanisms, drivetrains and match strategy, iterated under competition pressure.
+  projects: [nrc, vex]
+  photos:
+    - /assets/vex/IMG_2075.JPEG
+    - /assets/vex/image.jpg
+
+- years: 2024 – 2026
+  title: Electrical & firmware design
+  text: >-
+    PCBs, power distribution and firmware for autonomous underwater vehicles at NUS Bumblebee,
+    and hardware-accelerated computer vision on an FPGA.
+  projects: [full-electrical-stack-auv5, object-tracker-fpga, mini-auv-robosub-2025]
+  model:
+    src: /models/auv5-electrical-stack.glb
+    label: AUV 5.0 electrical stack (SOLIDWORKS)
+    explode: true
+
+- years: 2026 – now
+  title: Robotics software & embodied AI
+  text: >-
+    Manipulation and tactile sensing for robot foundation models, on a dual-arm Kinova Gen3 rig.
+  projects: [embodied-ai-contact-rich-manipulation]
+  model:
+    src: /models/kinova-dual-arm.glb
+    label: Dual Kinova Gen3 arms with Robotiq 2F-85 grippers
+    tilt: 12

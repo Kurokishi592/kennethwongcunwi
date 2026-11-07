@@ -15,6 +15,9 @@ repo:
   label: "Kurokishi592/EE2026"
 ---
 
+import YouTube from '../../components/YouTube.astro';
+import Pdf from '../../components/Pdf.astro';
+
 >[!warning] Grab a coffee and get comfortable; this is a long one! But I guarantee it is worth the read :) ~25min
 
 ## Introduction
@@ -71,34 +74,13 @@ The [sections after the demo video and poster](#cv-pipeline) detail the various 
 
 ### Demo Video
 Stay until the end of the video for fun section!
-<div style={{ maxWidth: '900px', margin: '1rem auto' }}>
-  <div style={{ position: 'relative', paddingTop: '56.25%' }}>
-    <iframe
-      src="https://www.youtube.com/embed/kuJl6z97Nus"
-      title="Object Tracker demo"
-      style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-      frameBorder="0"
-      loading="lazy"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      allowFullScreen
-    />
-  </div>
-</div>
+<YouTube id="kuJl6z97Nus" title="Object Tracker demo" />
 
 ### Poster
 
 The poster is a concise, high-level overview of the system architecture and our design decisions.
 
-<div style={{ width: '100%', height: '900px', margin: '1rem 0' }}>
-  <iframe
-    src="/assets/ee2026-fpga-object-tracker/Poster.pdf"
-    title="EE2026 FPGA Object Tracker Poster"
-    style={{ width: '100%', height: '100%', border: 0 }}
-    loading="lazy"
-  />
-</div>
-
-*If your browser blocks PDF embedding, open it directly [here](/assets/ee2026-fpga-object-tracker/Poster.pdf).*
+<Pdf src="/assets/ee2026-fpga-object-tracker/Poster.pdf" title="EE2026 FPGA Object Tracker Poster" />
 
 >[!info] Here comes the details you have been waiting for!
 >The following sections go into much greater detail about the various components of the project, and our design considerations made along the way, in a near chronological order of development. 
@@ -117,7 +99,7 @@ The overall architecture of the CV pipeline is shown in the diagram below. Broad
 In addition, user settings from the GUI (Blue) are decoded into control signals that modify the datapath accordingly, as summarised in the tables at the bottom.
 
 <figure>
-  <img src="/assets/ee2026-fpga-object-tracker/proj_ee2026_cv-pipeline-full.png" alt="EE2026 Project CV Pipeline Diagram" />
+  <img src="/assets/ee2026-fpga-object-tracker/proj_ee2026_cv-pipeline-full.jpg" alt="EE2026 Project CV Pipeline Diagram" />
   <figcaption>
     Overall CV Pipeline Diagram
   </figcaption>
@@ -259,7 +241,7 @@ To support a streaming scan without full-frame label storage, the detector maint
 
 ### The Full Finite State Machine (FSM)
 <figure>
-  <img src="/assets/ee2026-fpga-object-tracker/UFDS FSM.png" alt="UFDS FSM" />
+  <img src="/assets/ee2026-fpga-object-tracker/UFDS FSM.jpg" alt="UFDS FSM" />
   <figcaption>
     The UFDS Finite State Machine Diagram
   </figcaption>

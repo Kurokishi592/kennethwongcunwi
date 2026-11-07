@@ -1,0 +1,59 @@
+---
+// Education list from src/data/education.yaml.
+import OrgLogo from './OrgLogo.astro';
+import { getData } from '../lib/content';
+
+const entries = await getData('education');
+---
+
+<div class="li-timeline">
+  {entries.map((e) => (
+    <article class="li-item" data-era={e.current ? 'current' : 'legacy'}>
+      <div class="li-head">
+        <OrgLogo src={e.logo} name={e.org} dark={e.logoDark} />
+        <div class="li-head-text">
+          <p class="li-title">{e.org}</p>
+          <p class="li-subtitle muted">{e.degree}</p>
+          {e.detail ? <p class="li-subtitle muted">{e.detail}</p> : null}
+          <p class="li-dates muted">{e.dates}</p>
+        </div>
+      </div>
+
+      {e.lines.length ? (
+        <div class="li-lines">
+          {e.lines.map((l) => (
+            <p>{l}</p>
+          ))}
+        </div>
+      ) : null}
+
+      {e.sections.map((s) =>
+        s.collapsed ? (
+          <details class="role">
+            <summary>
+              <span class="role-head">
+                <span class="role-title">{s.label}</span>
+              </span>
+            </summary>
+            <div class="role-body">
+              <ul class="bullets">
+                {s.points.map((p) => (
+                  <li>{p}</li>
+                ))}
+              </ul>
+            </div>
+          </details>
+        ) : (
+          <div class="li-block">
+            <p class="li-label">{s.label}</p>
+            <ul class="bullets">
+              {s.points.map((p) => (
+                <li>{p}</li>
+              ))}
+            </ul>
+          </div>
+        )
+      )}
+    </article>
+  ))}
+</div>

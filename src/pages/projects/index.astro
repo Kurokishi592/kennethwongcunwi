@@ -1,9 +1,10 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
-import { getCollection, type CollectionEntry} from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import { getProjects } from '../../lib/content';
 import ProjectCard from '../../components/ProjectCard.astro';
 
-const projects = (await getCollection('projects')).filter((p) => p.id.endsWith('.mdx'));
+const projects = await getProjects();
 
 const MONTHS: Record<string, number> = {
   jan: 0,

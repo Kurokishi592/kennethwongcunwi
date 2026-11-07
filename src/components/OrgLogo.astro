@@ -1,0 +1,20 @@
+---
+// Round organisation logo. Falls back to initials when the image file doesn't exist yet.
+import { existsSync } from 'node:fs';
+
+type Props = { src?: string; name: string; dark?: boolean };
+const { src, name, dark = false } = Astro.props;
+
+const hasImage = Boolean(src) && existsSync(`public${src}`);
+const initials = name
+  .replace(/\(.*?\)/g, '')
+  .split(/\s+/)
+  .filter((w) => /^[A-Z]/.test(w))
+  .slice(0, 3)
+  .map((w) => w[0])
+  .join('');
+---
+
+<div class:list={['li-logo', { dark: dark && hasImage, initials: !hasImage }]} aria-hidden="true">
+  {hasImage ? <img src={src} alt="" loading="lazy" /> : <span>{initials}</span>}
+</div>

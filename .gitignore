@@ -22,3 +22,12 @@ public/docs/**/.thumbs/
 
 # Local env overrides
 .env.*
+
+# Large source files (CAD exports, raw videos). Optimised copies go in public/
+raw-assets/
+
+# Generated image previews (npm run images)
+public/thumbs/
+
+# Kinova/GR00T photo + video: not cleared for publishing yet (see TODO.md)
+public/assets/embodied-ai/

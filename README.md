@@ -2,6 +2,8 @@
 
 Documenting my past and present for the future.
 
+**How to edit the site:** see [MAINTAINING.md](MAINTAINING.md). To-do list: [TODO.md](TODO.md).
+
 ## Local development
 
 Prereqs:
@@ -13,6 +15,8 @@ Commands:
 - Check: `npm run check`
 - Build: `npm run build`
 - Preview: `npm run preview`
+- Shrink images: `npm run images`
+- Shrink a SOLIDWORKS model: `npm run model -- <in.glb> <out.glb>`
 
 ### Windows: "npm is not recognized"
 

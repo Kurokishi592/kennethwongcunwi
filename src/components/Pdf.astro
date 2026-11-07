@@ -1,0 +1,13 @@
+---
+// PDF shown inside a project page, with a link in case the browser can't display it.
+//   <Pdf src="/assets/my-project/poster.pdf" title="Poster" />
+type Props = { src: string; title?: string; height?: number };
+const { src, title = 'PDF', height = 900 } = Astro.props;
+---
+
+<figure class="pdf-embed">
+  <iframe src={src} title={title} loading="lazy" style={`height:${height}px`}></iframe>
+  <figcaption class="muted">
+    {title} · <a href={src} target="_blank" rel="noopener">open in a new tab ↗</a>
+  </figcaption>
+</figure>

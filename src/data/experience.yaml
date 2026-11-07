@@ -1,0 +1,106 @@
+# Work and CCA experience, newest first. Shown on the About page; entries with
+# `current: true` are also shown on the landing page.
+#
+# Each entry:
+#   org, logo (file in public/assets/images/), logoDark (true = black circle behind logo)
+#   location, dates, current (true/false)
+#   summary: (optional) one line shown without opening anything
+#   roles: one or more positions. Each role title is a dropdown; its points show when opened.
+#     title, dates, points (list), award (optional), tags (optional)
+
+- org: HTX (Home Team Science and Technology Agency) # TODO(Kenneth): confirm how you want the company named
+  logo: /assets/images/logo-htx.png # TODO(Kenneth): add this logo file (missing logos show initials)
+  location: Singapore
+  dates: 2026 – Present # TODO(Kenneth): exact start month
+  current: true
+  roles:
+    - title: Embodied AI Research Intern (Humanoid Manipulation)
+      dates: 2026 – Present # TODO(Kenneth): exact start month
+      points:
+        - Tactile sensing for contact-rich fine manipulation with robot foundation models (vision-language-action), on a dual-arm Kinova Gen3 rig.
+        - TODO(Kenneth) - replace these with your own bullets once cleared.
+      tags: [Embodied AI, VLA, Tactile Sensing, Manipulation]
+
+- org: NUS Bumblebee Autonomous Systems
+  logo: /assets/images/logo-bbas.png
+  logoDark: true
+  location: Singapore · On-site
+  dates: May 2025 – Present
+  current: true
+  roles:
+    - title: AUV Lead
+      dates: 2026 – Present # TODO(Kenneth): exact start month
+      award: RoboSub 2026, 1st Place
+      points:
+        - Development lead for AUV 5.0, Bumblebee's newest AUV, which won RoboSub 2026.
+        - TODO(Kenneth) - add what you did as AUV Lead.
+      tags: [Leadership, Systems Integration, AUV]
+    - title: Electrical Lead
+      dates: Nov 2025 – Present
+      points:
+        - Leads the Electrical team to develop the electrical systems of every vehicle for both local and international competitions.
+        - Collaborates with the Mechanical and Software subteams (~50 members) to drive overall vehicle development.
+        - Oversees hardware design, firmware development, and systems testing and integration to a high standard of reliability and robustness.
+      tags: [Leadership, Electrical Systems, Integration, Robotics]
+    - title: Robotics Engineer
+      dates: May 2025 – Nov 2025 # TODO(Kenneth): check end date
+      award: RoboSub 2025, 1st Place
+      points:
+        - Developed the electrical stacks of the new AUV and ASV.
+        - Led the development of the Mini-AUV for RoboSub 2025 - designed its electrical stack and firmware, coordinated the mechanical, electrical and software subteams, and drove end-to-end testing and on-site operations at the competition.
+        - NUS Achievement Award for RoboSub 2025.
+      tags: [Robotics, Embedded, Electrical Architecture, Testing]
+
+- org: Singapore Police Force
+  logo: /assets/images/logo-spf.png
+  logoDark: true
+  location: Singapore
+  dates: Apr 2022 – Apr 2024
+  summary: >-
+    Police National Service Full-Time (PNSF) in the Police National Service Department at Police HQ;
+    worked with MHA, HTX, NCS and internal business process owners.
+  roles:
+    - title: SGT(NS), NS Policy & Planning Officer
+      dates: Apr 2022 – Apr 2024
+      award: SPF NSF of the Year 2024
+      points:
+        - Systems & Planning Tech, Manpower and Resource Planning.
+        - Led a dedicated systems task force during a ministry-wide system transition.
+        - Spearheaded a year-long project to automate NS officer meal allowance submissions.
+        - Oversaw organisational systems critical to business operations and HR management.
+        - Managed data, reviewed statistics, and provided analytical insights for MHA-related reports.
+      tags: [Automation, Stakeholder Management, Project Management, Analytics]
+
+- org: Hwa Chong Infocomm & Robotics Society
+  logo: /assets/images/logo-hcrc.jpg
+  logoDark: true
+  location: Hwa Chong Institution
+  dates: Jan 2016 – May 2021
+  summary: >-
+    Senior mentor for the Hwa Chong Robotics international and national VEX teams, and General Secretary
+    managing ~50 active members across 5 sections through the COVID-19 pandemic.
+  roles:
+    - title: Executive Committee (College)
+      dates: May 2020 – May 2021
+      points:
+        - Senior mentor for HC robotics teams (VEX).
+        - General Secretary - team operations, logistics accountability and finance.
+    - title: Member (College)
+      dates: Jan 2020 – May 2020
+      award: VEX Singapore National Champions 2020
+      points:
+        - Tournament Champions - Singapore VEX Robotics Competition National Championships (2020).
+        - Represented Singapore at the VEX Robotics World Championship 2020 (High School Division).
+    - title: Executive Committee (High School)
+      dates: Aug 2018 – Dec 2019
+      points:
+        - Core Team Member - Singapore VEX Robotics Competition National Championships (2018–2019).
+        - Vice-Chairperson & Committee Member - Mechanics Sabbatical (2018–2019).
+        - General Secretary / Quartermaster - reformed practices, ran AARs and pre-competition strategising, and managed inventory and claims.
+    - title: Member (High School)
+      dates: Jan 2016 – Aug 2018
+      points:
+        - Singapore VEX Robotics Championships (2017–2019).
+        - National Robotics Competition (2016–2018).
+        - First Lego League (2016–2017).
+      tags: [Mentoring, Robotics, Leadership, Operations]

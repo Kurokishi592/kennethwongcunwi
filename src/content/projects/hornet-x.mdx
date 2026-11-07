@@ -3,7 +3,7 @@ title: "Hornet X"
 subtitle: "Custom sensor PCB + sensor fusion (quaternions + Kalman) for robust yaw/roll/pitch."
 date: "Sep 2024 – Mar 2025"
 tags: ["PCB", "Robotics", "AUV", "Electrical", "Embedded", "Firmware", "Sensors", "Quaternions", "Kalman"]
-thumbnail: "/assets/hornetx/thumb-hornetx.PNG"
+thumbnail: "/assets/hornetx/thumb-hornetx.jpg"
 repo:
   url: "https://github.com/BumblebeeAS/hornetx-electrical/tree/sensors"
   label: "Hornet X Sensors Repository"
@@ -84,7 +84,7 @@ When debugging this issue, I observed several patterns:
 - That mismatch is a common sign of **soft-iron distortion / axis scaling / misalignment** (not just hard-iron offsets). In other words: even with good offsets, the sensor can still read an *ellipsoid* instead of a sphere.
 
 <figure>
-  <img src="/assets/hornetx/magcal.png" alt="magcal" />
+  <img src="/assets/hornetx/magcal.jpg" alt="magcal" />
   <figcaption>
     Using Magcal to calibrate magnetometer readings to a sphere.
   </figcaption>
@@ -105,7 +105,7 @@ When debugging this issue, I observed several patterns:
 
 ### The fix: rotate magnetometer into a level/world frame, then compute yaw
 <figure style={{ maxWidth: '520px', margin: '1rem auto' }}>
-  <img src="/assets/hornetx/whiteboard.png" alt="the whiteboard" style={{ width: '70%', height: 'auto' }} />
+  <img src="/assets/hornetx/whiteboard.jpg" alt="the whiteboard" style={{ width: '70%', height: 'auto' }} />
   <figcaption>
     The whiteboard (my favourite tool!) where I derived the quaternion-based tilt compensation method.
   </figcaption>

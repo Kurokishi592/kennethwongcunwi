@@ -1,0 +1,102 @@
+# Education, newest first. Same layout as experience.yaml.
+#   lines: short facts always shown (e.g. GPA)
+#   sections: labelled lists; set `collapsed: true` to put one behind a dropdown
+#   current: false hides the entry until "ls -a" is pressed on the About page
+
+- org: National University of Singapore
+  logo: /assets/images/logo-nus.jpg
+  degree: Bachelor of Engineering (B.Eng), Computer Engineering
+  detail: Specialisations in Robotics and Advanced Electronics, Minor in Artificial Intelligence
+  dates: 2024 – 2028
+  current: true
+  lines:
+    - "GPA: 4.88 / 5.00"
+  sections:
+    - label: Activities and societies
+      points:
+        - NUS Bumblebee Autonomous Systems (NUS BBAS)
+        - IEEE-Eta Kappa Nu (HKN) Honor Society
+    - label: Undergraduate Teaching Assistant
+      points:
+        - CG1111A Engineering Principles and Practice I (AY25/26)
+        - CG2111A Engineering Principles and Practice II (AY25/26)
+    - label: Relevant coursework
+      collapsed: true
+      points:
+        - CS2040C Data Structures and Algorithms
+        - EE2026 Digital Design
+        - CG2271 Real-Time Operating Systems
+        - CG2027 Transistor-level Digital Circuits
+        - CG2028 Computer Organisation
+        - CG2023 Signals and Systems
+        - EE2211 Introduction to Machine Learning
+        - EE2213 Introduction to Artificial Intelligence
+        - CG3201 Machine Learning and Deep Learning
+    - label: Foundational courses
+      collapsed: true
+      points:
+        - CS1010 Programming Methodology
+        - CS1231 Discrete Structures
+        - MA1511 Engineering Calculus
+        - MA1512 Differential Equations for Engineering
+        - MA1508E Linear Algebra for Engineering
+        - CG1111A Engineering Principles and Practice I
+        - CG2111A Engineering Principles and Practice II
+        - CP2106 Independent Software Development Project (Orbital)
+        - CS2113 Software Engineering & Object-Oriented Programming
+
+- org: Residential College 4 (RC4)
+  logo: /assets/images/logo-rc4.jpg
+  logoDark: true
+  degree: National University of Singapore
+  dates: 2024 – 2026
+  current: true
+
+- org: Hwa Chong Institution
+  logo: /assets/images/logo-hci.png
+  logoDark: true
+  degree: Singapore-Cambridge GCE 'A' Levels
+  dates: Jan 2020 – Nov 2021
+  lines:
+    - "Grade: 90RP (AAAA/AA)"
+  sections:
+    - label: Activities
+      points:
+        - Hwa Chong Infocomm & Robotics Society (HCIRS), General Secretary (Executive Committee)
+        - VEX Robotics World Championship 2020 - VRC High School Division
+        - Singapore VEX Robotics National Championships - Tournament Champions (2020)
+        - Organising Team - Project Ikigai (community project, 2020)
+
+- org: Hwa Chong Institution
+  logo: /assets/images/logo-hci.png
+  logoDark: true
+  degree: Integrated Programme
+  dates: Jan 2016 – Dec 2019
+  sections:
+    - label: Activities
+      points:
+        - Hwa Chong Robotics & Infocomm, Upper Secondary Executive Committee (2018–2019)
+        - Singapore VEX Robotics Championships (2017–2019)
+        - National Robotics Competition (2016–2018)
+        - First Lego League (2016–2017)
+        - Vice-Chairperson & Committee Member - Mechanics Sabbatical (2018–2019)
+        - "Projects Day: High Distinction (2017–2019), Distinction (2016)"
+
+- org: Pei Hwa Presbyterian Primary School
+  logo: /assets/images/logo-ph.png
+  logoDark: true
+  degree: Singapore
+  dates: Jan 2010 – Dec 2015
+  sections:
+    - label: Robotics
+      collapsed: true
+      points:
+        - RoboCup Singapore Open, CoSpace Rescue (2015)
+        - National Junior Robotics Competition (NJRC) (2014)
+        - 8th National RoboPreneur (NPRC) (2014)
+    - label: Student Leader (2012–2015)
+      collapsed: true
+      points:
+        - Overseas Service Learning Trip 2014 - Hangzhou, China
+        - Overseas Service Learning Trip 2013 - Ho Chi Minh City, Vietnam
+        - Student Leaders Leadership Trainings

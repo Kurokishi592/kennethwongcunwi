@@ -1,0 +1,207 @@
+---
+// A 3D model (.glb) that turns as the page scrolls past it.
+// Scroll progress is measured on the closest parent with `data-scroll-track` (or the viewer itself).
+type Props = {
+  src: string;
+  label?: string;
+  /** Pull the parts apart as you scroll (for layered assemblies such as PCB stacks). */
+  explode?: boolean;
+  /** Camera height in degrees. */
+  tilt?: number;
+  class?: string;
+};
+const { src, label, explode = false, tilt = 20, class: className } = Astro.props;
+---
+
+<figure class:list={['model-viewer', className]} data-model={src} data-explode={explode ? '1' : '0'} data-tilt={tilt}>
+  <canvas aria-hidden="true"></canvas>
+  <p class="model-status mono muted">loading 3D model…</p>
+  {label ? <figcaption class="model-caption mono">{label}</figcaption> : null}
+</figure>
+
+<script>
+  type Viewer = { el: HTMLElement; started: boolean; visible: boolean; update?: (time: number) => void };
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const viewers: Viewer[] = Array.from(document.querySelectorAll<HTMLElement>('.model-viewer')).map((el) => ({
+    el,
+    started: false,
+    visible: false
+  }));
+
+  const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+  const smooth = (a: number, b: number, v: number) => {
+    const t = clamp01((v - a) / (b - a));
+    return t * t * (3 - 2 * t);
+  };
+
+  /** 0 when the track's top enters the bottom of the screen, 1 when its bottom leaves the top. */
+  const progress = (el: HTMLElement) => {
+    const track = el.closest<HTMLElement>('[data-scroll-track]') ?? el;
+    const r = track.getBoundingClientRect();
+    const vh = window.innerHeight;
+    return clamp01((vh - r.top) / (r.height + vh));
+  };
+
+  async function start(v: Viewer) {
+    v.started = true;
+    const status = v.el.querySelector<HTMLElement>('.model-status');
+    try {
+      const THREE = await import('three');
+      const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+      const { MeshoptDecoder } = await import('three/examples/jsm/libs/meshopt_decoder.module.js');
+      const { toCreasedNormals } = await import('three/examples/jsm/utils/BufferGeometryUtils.js');
+
+      const canvas = v.el.querySelector('canvas')!;
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+      const scene = new THREE.Scene();
+      scene.add(new THREE.HemisphereLight(0xffffff, 0x3a4252, 2.4));
+      const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+      sun.position.set(1, 2, 1.5);
+      scene.add(sun);
+      const rim = new THREE.DirectionalLight(0xb9a6ff, 1.0);
+      rim.position.set(-1.5, 0.5, -1);
+      scene.add(rim);
+
+      const camera = new THREE.PerspectiveCamera(30, 1, 0.001, 100);
+
+      const loader = new GLTFLoader();
+      loader.setMeshoptDecoder(MeshoptDecoder);
+      const gltf = await loader.loadAsync(v.el.dataset.model!);
+      const model = gltf.scene;
+
+      // CAD exports have no normals (smaller files); rebuild them with sharp edges kept.
+      model.traverse((o) => {
+        const mesh = o as InstanceType<typeof THREE.Mesh>;
+        if (mesh.isMesh && !mesh.geometry.getAttribute('normal')) {
+          mesh.geometry = toCreasedNormals(mesh.geometry, Math.PI / 6);
+        }
+      });
+
+      // Turn about the model's own centre.
+      const pivot = new THREE.Group();
+      const box0 = new THREE.Box3().setFromObject(model);
+      const centre0 = box0.getCenter(new THREE.Vector3());
+      model.position.sub(centre0);
+      pivot.add(model);
+      scene.add(pivot);
+
+      // ----- Explode: layers rise in steps, outer parts slide outwards -----
+      let setExplode = (_e: number) => {};
+      if (v.el.dataset.explode === '1') {
+        model.updateMatrixWorld(true);
+        let assembly: InstanceType<typeof THREE.Object3D> = model;
+        // The parts are the children of the first node that branches out
+        // (deeper levels are a part's own meshes, one per colour).
+        while (assembly.children.length === 1) assembly = assembly.children[0];
+        const size = box0.getSize(new THREE.Vector3());
+        const parts = assembly.children.map((p) => {
+          const b = new THREE.Box3().setFromObject(p);
+          return { p, home: p.position.clone(), min: b.min.y, c: b.getCenter(new THREE.Vector3()) };
+        });
+        // Group parts whose bottoms are at about the same height into layers.
+        const gap = size.y * 0.04;
+        const bottoms = [...new Set(parts.map((x) => x.min))].sort((a, b) => a - b);
+        const layerOf = new Map<number, number>();
+        let layer = 0;
+        bottoms.forEach((y, i) => {
+          if (i > 0 && y - bottoms[i - 1] > gap) layer++;
+          layerOf.set(y, layer);
+        });
+        const centre = box0.getCenter(new THREE.Vector3());
+        const offsets = parts.map(({ min, c }) => {
+          const dx = c.x - centre.x;
+          const outer = Math.abs(dx) > size.x * 0.3;
+          return new THREE.Vector3(
+            outer ? Math.sign(dx) * size.x * 0.45 : dx * 0.3,
+            layerOf.get(min)! * size.y * 0.34,
+            (c.z - centre.z) * 0.7
+          );
+        });
+        setExplode = (e) => parts.forEach((x, i) => x.p.position.copy(x.home).addScaledVector(offsets[i], e));
+      }
+
+      // Frame the model so it fits both assembled and fully exploded.
+      const radiusAt = (e: number) => {
+        setExplode(e);
+        const s = new THREE.Box3().setFromObject(model).getBoundingSphere(new THREE.Sphere());
+        return s.radius;
+      };
+      const r0 = radiusAt(0);
+      const r1 = v.el.dataset.explode === '1' ? radiusAt(1) : r0;
+      setExplode(0);
+
+      const tilt = (Number(v.el.dataset.tilt) * Math.PI) / 180;
+      let dragYaw = 0;
+      let width = 0;
+      let height = 0;
+
+      const resize = () => {
+        width = canvas.clientWidth;
+        height = canvas.clientHeight;
+        renderer.setSize(width, height, false);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+      };
+      new ResizeObserver(resize).observe(canvas);
+      resize();
+
+      // Drag to turn (mouse only, so touch scrolling still works on phones).
+      let dragX: number | null = null;
+      canvas.addEventListener('pointerdown', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        dragX = e.clientX;
+        canvas.setPointerCapture(e.pointerId);
+      });
+      canvas.addEventListener('pointermove', (e) => {
+        if (dragX === null) return;
+        dragYaw += (e.clientX - dragX) * 0.01;
+        dragX = e.clientX;
+      });
+      canvas.addEventListener('pointerup', () => (dragX = null));
+
+      v.update = (time) => {
+        const p = reduceMotion ? 0.35 : progress(v.el);
+        const e = smooth(0.25, 0.55, p) * (1 - smooth(0.8, 0.98, p));
+        setExplode(e);
+        const idle = reduceMotion ? 0 : time * 0.00012;
+        pivot.rotation.y = -0.6 + p * Math.PI * 1.4 + idle + dragYaw;
+
+        const fov = (camera.fov * Math.PI) / 180;
+        const radius = r0 + (r1 - r0) * e;
+        let dist = (radius / Math.sin(fov / 2)) * 0.82;
+        if (camera.aspect < 1) dist /= Math.max(camera.aspect, 0.55);
+        camera.position.set(0, Math.sin(tilt) * dist, Math.cos(tilt) * dist);
+        camera.lookAt(0, (r1 - r0) * e * 0.35, 0);
+        renderer.render(scene, camera);
+      };
+
+      v.el.classList.add('is-ready');
+      status?.remove();
+    } catch (err) {
+      console.error(err);
+      if (status) status.textContent = '3D preview unavailable';
+    }
+  }
+
+  // Load each model shortly before it scrolls into view; only animate visible ones.
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        const v = viewers.find((x) => x.el === entry.target)!;
+        v.visible = entry.isIntersecting;
+        if (entry.isIntersecting && !v.started) start(v);
+      }
+    },
+    { rootMargin: '400px 0px' }
+  );
+  viewers.forEach((v) => io.observe(v.el));
+
+  const loop = (time: number) => {
+    for (const v of viewers) if (v.visible && v.update) v.update(time);
+    requestAnimationFrame(loop);
+  };
+  requestAnimationFrame(loop);
+</script>

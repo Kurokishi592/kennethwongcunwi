@@ -1,0 +1,17 @@
+# Shown as a row under the landing page intro, newest first.
+# title: what you won    year: when    detail: (optional) one short line
+
+- title: RoboSub 2026, 1st Place
+  year: 2026
+  detail: Electrical Lead and AUV Lead, NUS Bumblebee
+- title: RoboSub 2025, 1st Place
+  year: 2025
+  detail: NUS Bumblebee
+- title: NUS Achievement Award
+  year: 2025 # TODO(Kenneth): check the year the award was given
+  detail: For RoboSub 2025
+- title: SPF NSF of the Year
+  year: 2024
+- title: VEX Singapore National Champions
+  year: 2020
+  detail: Then VEX Worlds, High School Division

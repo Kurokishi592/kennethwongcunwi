@@ -1,162 +1,90 @@
 ---
+// Landing page. The words live in src/data/*.yaml; this file only arranges them.
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { getCollection } from 'astro:content';
 import SocialIcons from '../components/SocialIcons.astro';
 import ProjectCard from '../components/ProjectCard.astro';
+import Achievements from '../components/Achievements.astro';
+import Journey from '../components/Journey.astro';
+import ExperienceList from '../components/ExperienceList.astro';
+import { getProfile, getProjects, thumb } from '../lib/content';
 
-const projects = (await getCollection('projects')).filter((p) => p.id.endsWith('.mdx'));
-const currentProject = projects.find((p) => p.slug === 'full-electrical-stack-auv5');
-const featuredTop = projects
+const profile = await getProfile();
+const featured = (await getProjects())
   .filter((p) => p.data.featured)
-  .slice()
   .sort((a, b) => (a.data.featuredRank ?? 9999) - (b.data.featuredRank ?? 9999))
   .slice(0, 3);
 ---
 
 <BaseLayout
-  title="Kenneth Wong Cun Wi | Aspiring Robotics Engineer"
-  description="Kenneth Wong Cun Wi —  Embedded Systems, Robotics, and Engineering"
+  title={`${profile.name} | ${profile.headline}`}
+  description={profile.focus ?? profile.intro}
   canonicalPath="/"
   activeNav="home"
 >
-  <section class="hero">
+  <section class="hero landing-hero">
     <div class="container hero-grid">
-      <div class="hero-photo" aria-label="Portrait">
-        <img
-          src="/assets/images/profile.jpg"
-          alt="Portrait of Kenneth Wong Cun Wi"
-          loading="lazy"
-        />
+      <div class="hero-photo">
+        <img src={thumb('/assets/images/profile.jpg')} alt={`Portrait of ${profile.name}`} fetchpriority="high" />
       </div>
 
       <div class="hero-copy">
-        <p class="intro-name"><strong>Kenneth Wong Cun Wi</strong></p>
-        <p class="hero-quote">I chase the moment when first principles develop into something that finally works.</p>
+        <p class="hero-prompt mono muted">kenneth@home:~$ whoami</p>
+        <h1 class="hero-name">{profile.name}</h1>
+        <p class="hero-headline">{profile.headline}</p>
+        <p class="hero-intro muted">{profile.intro}</p>
+        {profile.focus ? <p class="hero-focus">{profile.focus}</p> : null}
+        {profile.availability ? <p class="motive-meta">{profile.availability}</p> : null}
 
-        <div class="hero-writeup">
-          <p>
-            It all started when my first robot came alive. Over 10 years later, I’m still diving deeper into the abyss of mechanical, electrical, and software domains, and the world that exists in between.
-          </p>
-          <p>Feel free to explore this brain cache of mine!</p>
-        </div>
-
-        <div class="motive-box" aria-label="Current motive">
-          <p class="motive-title">If there is a problem to solve, I want in</p>
-          <p class="motive-body">
-            I'm currently fascinated by optimisation efforts in embedded systems, such as using AI SoCs, and any autonomous robotics developments. I'm actively seeking internship opportunities in these areas!
-          </p>
-          <p class="motive-meta">Immediate Internship Availability Period: 11 May 2026 - 15 Dec 2026</p>
-        </div>
-
-        <p class="social-caption">Contact me via my socials below:</p>
-        <div class="icon-row" aria-label="Social links">
-          <SocialIcons />
-          <a class="button primary resume-inline" href="/docs/resume.pdf" target="_blank" rel="noopener">Resume (PDF) ↗</a>
-          <a class="button primary transcript-inline" href="/docs/transcript.pdf" target="_blank" rel="noopener">Transcript (PDF) ↗</a>
+        <div class="hero-actions">
+          <a class="button primary" href="/projects/">See my projects</a>
+          {profile.resume ? (
+            <a class="button" href={profile.resume} target="_blank" rel="noopener">Resume (PDF) ↗</a>
+          ) : null}
+          <div class="icon-row" aria-label="Social links">
+            <SocialIcons />
+          </div>
         </div>
       </div>
     </div>
+
+    <div class="container">
+      <Achievements />
+    </div>
   </section>
 
-  <section class="section" id="focus">
+  <section class="section" id="journey">
     <div class="container">
-      <div class="section-head center">
-        <h2>What I'm focused on right now</h2>
+      <div class="section-head">
+        <h2>Journey</h2>
+        <p class="muted">Mechanical first, then electrical and firmware, now robot learning.</p>
       </div>
+      <Journey />
+    </div>
+  </section>
 
-      <div class="grid cards focus-cards">
-        <article class="card li-card focus-role">
-          <div class="li-head">
-            <div class="li-logo dark" aria-hidden="true">
-              <img src="/assets/images/logo-bbas.png" alt="" loading="lazy" />
-            </div>
-            <div class="li-head-text">
-              <p class="li-title">Electrical Lead</p>
-              <p class="li-subtitle muted">Bumblebee Autonomous Systems</p>
-              <p class="li-dates muted">Nov 2025 – Present</p>
-            </div>
-          </div>
-          <p class="li-desc muted">Leading the Electrical team to develop the electrical systems of every autonomous vehicle for both local and international competitions.</p>
-
-          <p class="li-desc muted">
-            Collaborating with Mechanical and Software subteams (~50 members) to drive overall vehicle developments.
-          </p>
-
-          <p class="li-desc muted">
-              Overseeing developments and maintenance with high standards (in hardware design, firmware development, systems testing & integration) to ensure reliability and robustness.
-          </p>
-
-          <div class="card-actions">
-            <a class="text-link" href="/about/#work-experiences">More Details →</a>
-          </div>
-        </article>
-
-        {currentProject ? (
-          <ProjectCard entry={currentProject} kicker="Current Project" />
-        ) : (
-          <article class="card">
-            <div class="card-top">
-              <h3>Current Project</h3>
-              <p class="muted">(Add the project entry to show the full project card here.)</p>
-            </div>
-          </article>
-        )}
-
-        <article class="card li-card focus-edu">
-          <div class="li-head">
-            <div class="li-logo" aria-hidden="true">
-              <img src="/assets/images/logo-nus.jpg" alt="" loading="lazy" />
-            </div>
-            <div class="li-head-text">
-              <p class="li-title">National University of Singapore</p>
-            </div>
-          </div>
-
-          <p class="li-subtitle muted">Bachelor of Engineering - BE, Computer Engineering</p>
-
-          <p class="li-dates muted">2024 – 2028</p>
-          <div class="li-lines muted">
-            <p>Specialisation in Robotics</p>
-            <p>Specialisation in Advanced Electronics</p>
-            <p>Minor in Artificial Intelligence</p>
-          </div>
-
-          <div class="li-block">
-            <p class="li-label">Activities and societies:</p>
-            <ul class="bullets">
-              <li>NUS Bumblebee Autonomous Systems (NUS BBAS)</li>
-              <li>IEEE-Eta Kappa Nu (HKN) Honor Society</li>
-              <li>Current undergraduate assistant for CG2111A (Engineering Principles and Practices II) in AY25/26</li>
-            </ul>
-          </div>
-
-          <div class="card-actions">
-            <a class="text-link" href="/about/#education">More Details →</a>
-          </div>
-        </article>
+  <section class="section" id="now">
+    <div class="container">
+      <div class="section-head">
+        <h2>Right now</h2>
+      </div>
+      <ExperienceList currentOnly />
+      <div class="section-foot">
+        <a class="text-link" href="/about/#work-experiences">Full experience and education →</a>
       </div>
     </div>
   </section>
 
   <section class="section" id="featured-projects">
     <div class="container">
-      <div class="section-head center">
-        <h2>Featured Projects</h2>
+      <div class="section-head">
+        <h2>Featured projects</h2>
       </div>
-
       <div class="grid cards">
-        {featuredTop.length ? (
-          featuredTop.map((p) => <ProjectCard entry={p} />)
-        ) : (
-          <article class="card">
-            <div class="card-top">
-              <h3>No featured projects yet</h3>
-              <p class="muted">Set <span class="mono">featured: true</span> in any project’s frontmatter.</p>
-            </div>
-          </article>
-        )}
+        {featured.map((p) => <ProjectCard entry={p} />)}
+      </div>
+      <div class="section-foot">
+        <a class="text-link" href="/projects/">All projects →</a>
       </div>
     </div>
   </section>
-
 </BaseLayout>

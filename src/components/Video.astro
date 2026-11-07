@@ -1,0 +1,15 @@
+---
+// Short silent clip stored in public/ (keep it under ~10 MB). For anything longer, use <YouTube />.
+//   <Video src="/assets/my-project/clip.mp4" poster="/assets/my-project/clip.jpg" caption="..." />
+import { inPublic } from '../lib/content';
+
+type Props = { src: string; poster?: string; caption?: string };
+const { src, poster, caption } = Astro.props;
+---
+
+{inPublic(src) ? (
+  <figure class="clip">
+    <video src={src} poster={inPublic(poster) ? poster : undefined} muted loop playsinline controls preload="none"></video>
+    {caption ? <figcaption>{caption}</figcaption> : null}
+  </figure>
+) : null}

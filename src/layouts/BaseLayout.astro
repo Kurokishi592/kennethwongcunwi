@@ -7,13 +7,16 @@ type Props = {
   description?: string;
   canonicalPath?: string;
   activeNav?: 'home' | 'whoami' | 'projects' | 'blog' | 'contact';
+  /** Image shown when the link is shared (LinkedIn, Telegram, ...). */
+  image?: string;
 };
 
 const {
   title,
   description = 'Portfolio, projects, and robotics learning notes.',
   canonicalPath,
-  activeNav
+  activeNav,
+  image = '/assets/images/profile.jpg'
 } = Astro.props;
 
 const canonical = canonicalPath ? new URL(canonicalPath, Astro.site).toString() : undefined;
@@ -31,6 +34,12 @@ const assetVersion = import.meta.env.PUBLIC_ASSET_VERSION ?? String(Date.now());
     <title>{title}</title>
     <meta name="description" content={description} />
     {canonical ? <link rel="canonical" href={canonical} /> : null}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={new URL(image, Astro.site).toString()} />
+    {canonical ? <meta property="og:url" content={canonical} /> : null}
+    <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="#0b1220" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href={`/style.css?v=${assetVersion}`} />
