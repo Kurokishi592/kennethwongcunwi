@@ -132,7 +132,10 @@ if (basysStep) {
       pos[j + 1] = v[ay] * flip + 4.5 + (size[ay] * 1000) / 2;
       pos[j + 2] = v[az] * parity + 0.4;
     }
-    const rgb = p.color ?? [0.1, 0.22, 0.42];
+    // Digilent's STEP has a grey PCB and leaves small parts uncoloured: use the board's real blue
+    // for the PCB (the one piece over 100 mm) and black for switches, buttons and headers.
+    const isPcb = Math.max(...p.size) > 0.1;
+    const rgb = isPcb ? [0.07, 0.2, 0.46] : (p.color ?? [0.08, 0.08, 0.09]);
     add(board, `basys3_${i}`, { pos, idx: p.idx }, mat(`basys3_${rgb.join('_')}`, rgb, 0.5));
   }
 } else {
@@ -167,12 +170,23 @@ add(tilt, 'ov7670_lens_holder', [box(14, 14, 4.5, [164, 60, -65.5]), lens(6.8, 3
 add(tilt, 'ov7670_lens', lens(5.6, 9, [164, 60, -70.7]), M.lens);
 add(tilt, 'ov7670_glass', lens(4.2, 0.4, [164, 60, -79.7]), M.glass);
 
-// Pan and tilt stages turn together about the turntable axis; face the camera outwards (+x).
+// Pan and tilt stages turn together about the turntable axis; the camera faces forward (+z), like the board.
 const TURNTABLE = [164, 13.3, -24.4];
-const panTilt = doc.createNode('Pan-tilt camera').setTranslation(TURNTABLE).setRotation([0, -Math.SQRT1_2, 0, Math.SQRT1_2]);
+const panTilt = doc.createNode('Pan-tilt camera').setTranslation(TURNTABLE).setRotation([0, 1, 0, 0]);
 const panTiltInner = group('', TURNTABLE.map((v) => -v));
 panTilt.addChild(panTiltInner);
 panTiltInner.addChild(pan).addChild(tilt);
+
+// The red frame and the board sit on the stand's slanted top edges (30 degrees, running from 58 mm up at
+// the back to the front lip), facing forward and up. In the print files they are exported lying flat
+// at the bottom, so tilt them about x and lift the frame's bottom centre onto the middle of the slope.
+const SLOPE_DEG = 30.3;
+const t = (SLOPE_DEG * Math.PI) / 180;
+const rot = [Math.sin(t / 2), 0, 0, Math.cos(t / 2)];
+const from = [0, -5.8, 0.4]; // frame bottom centre (print files)
+const to = [0, 58.1 - Math.tan(t) * 46, -20]; // on the slope, 46 mm in front of its top
+const rotated = [from[0], from[1] * Math.cos(t) - from[2] * Math.sin(t), from[1] * Math.sin(t) + from[2] * Math.cos(t)];
+for (const g of [frame, board]) g.setRotation(rot).setTranslation(to.map((v, i) => v - rotated[i]));
 
 for (const g of [stand, frame, board, platform, panTilt]) root.addChild(g);
 doc.createScene('scene').addChild(root);

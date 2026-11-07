@@ -27,8 +27,8 @@ Search the repo for `TODO(Kenneth)` to find every placeholder in the data files.
 - [ ] Merge `redesign` into `main` and push
 
 ## CAD files to download (yours; the sites block automated downloads)
-- [ ] Basys 3 STEP from Digilent's Basys 3 Resource Center (Additional Resources) -> save as `raw-assets/fpga/basys3.step`, then `npm run model:fpga`
-- [ ] LUCID Helios2 and Triton 3.2MP STEP from thinklucid.com Downloads Hub (needs a free account) -> `raw-assets/kinova/lucid/`, then tell Claude to fit them onto the mount
+- [x] Basys 3 STEP (in `raw-assets/fpga/basys3.step`)
+- [ ] Mini-AUV: export the real assembly (the `Downloads\CAD` folders were empty) to replace the stand-in built from the render
 
 ## Content (yours)
 ### New

@@ -21,7 +21,7 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
 
   <ol class="sc-timeline" aria-label="Timeline">
     {eras.map((era, e) => (
-      <li class="sc-era">
+      <li class="sc-era" style={`flex-grow:${era.models.length}`}>
         <span class="sc-era-head">
           <span class="sc-era-years mono">{era.years}</span>
           <span class="sc-era-title">{era.title}</span>
@@ -86,7 +86,7 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
 </div>
 
 <script>
-  type ModelSpec = { src: string; label?: string; explode: boolean; tilt: number; era: number };
+  type ModelSpec = { src: string; label?: string; explode: boolean; tilt: number; spin?: string; era: number };
 
   const ADVANCE_MS = 9000; // time on each model
   const RESUME_MS = 8000; // pause after the visitor interacts
@@ -257,6 +257,36 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
         return name.charAt(0).toUpperCase() + name.slice(1);
       });
     };
+    // Direction of least spread of a point cloud (smallest eigenvector of the covariance, by Jacobi).
+    const thinnestAxis = (p: ArrayLike<number>) => {
+      const n = p.length / 3;
+      const m = [0, 0, 0];
+      for (let i = 0; i < p.length; i += 3) for (let k = 0; k < 3; k++) m[k] += p[i + k] / n;
+      const A = [[0, 0, 0], [0, 0, 0], [0, 0, 0]];
+      for (let i = 0; i < p.length; i += 3)
+        for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) A[r][c] += (p[i + r] - m[r]) * (p[i + c] - m[c]);
+      const V = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+      for (let sweep = 0; sweep < 12; sweep++)
+        for (const [a, b] of [[0, 1], [0, 2], [1, 2]]) {
+          if (Math.abs(A[a][b]) < 1e-12) continue;
+          const t = 0.5 * Math.atan2(2 * A[a][b], A[b][b] - A[a][a]);
+          const [cs, sn] = [Math.cos(t), Math.sin(t)];
+          for (let k = 0; k < 3; k++) {
+            const [x, y] = [A[k][a], A[k][b]];
+            (A[k][a] = cs * x - sn * y), (A[k][b] = sn * x + cs * y);
+          }
+          for (let k = 0; k < 3; k++) {
+            const [x, y] = [A[a][k], A[b][k]];
+            (A[a][k] = cs * x - sn * y), (A[b][k] = sn * x + cs * y);
+          }
+          for (let k = 0; k < 3; k++) {
+            const [x, y] = [V[k][a], V[k][b]];
+            (V[k][a] = cs * x - sn * y), (V[k][b] = sn * x + cs * y);
+          }
+        }
+      const i = [0, 1, 2].reduce((best, k) => (A[k][k] < A[best][best] ? k : best), 0);
+      return new THREE.Vector3(V[0][i], V[1][i], V[2][i]).normalize();
+    };
     const boxGap = (a: Box3, b: Box3) =>
       Math.hypot(
         Math.max(0, a.min.x - b.max.x, b.min.x - a.max.x),
@@ -272,6 +302,9 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
       names: string[];
       triangles: number;
       grow: number; // radius of the fully exploded model, relative to assembled
+      height: number; // model height (radius = 1)
+      lift: number; // how far the centre rises when fully exploded
+      rotors: { node: Object3D; base: InstanceType<typeof THREE.Quaternion>; axis: Vector3 }[];
       focus: number; // 1 = active (front, full size), 0 = background
       ghost: number;
       yaw: number;
@@ -352,10 +385,29 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
         parts.push({ name: owner?.name ?? labelOf(s.node), node: s.node, home: s.home, offset: host?.offset.clone() ?? s.offset, meshes: s.meshes });
       }
       let grow = 1;
+      let lift = 0;
       if (spec.explode) {
         parts.forEach((p) => p.node.position.copy(p.home).add(p.offset));
-        grow = new THREE.Box3().setFromObject(model).getBoundingSphere(new THREE.Sphere()).radius / radius;
+        const sphere = new THREE.Box3().setFromObject(model).getBoundingSphere(new THREE.Sphere());
+        grow = sphere.radius / radius;
+        lift = sphere.center.y / radius;
         parts.forEach((p) => p.node.position.copy(p.home));
+      }
+
+      // Spinning parts (e.g. thruster rotors): nodes whose name starts with spec.spin. Each turns
+      // about its own centre, around the axis its geometry is thinnest along (a propeller's axle).
+      const rotors: Slot['rotors'] = [];
+      if (spec.spin) {
+        model.traverse((o: Object3D) => {
+          const mesh = o as Mesh;
+          if (!mesh.isMesh || !mesh.name.startsWith(spec.spin!)) return;
+          mesh.geometry = mesh.geometry.clone();
+          mesh.geometry.computeBoundingBox();
+          const c = mesh.geometry.boundingBox!.getCenter(new THREE.Vector3());
+          mesh.geometry.translate(-c.x, -c.y, -c.z);
+          mesh.position.add(c.applyQuaternion(mesh.quaternion).multiply(mesh.scale));
+          rotors.push({ node: mesh, base: mesh.quaternion.clone(), axis: thinnestAxis(mesh.geometry.getAttribute('position').array as ArrayLike<number>) });
+        });
       }
       const names = [...new Set(parts.map((p) => p.name))];
       const count = (n: string) => parts.filter((p) => p.name === n && boards.some((b) => b.node === p.node)).length;
@@ -372,6 +424,9 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
         names: names.map((n) => (count(n) > 1 ? `${n} ×${count(n)}` : n)),
         triangles,
         grow,
+        height: size.y / radius,
+        lift,
+        rotors,
         focus: isActive ? 1 : 0,
         ghost: isActive ? 0 : 1,
         yaw: -0.6
@@ -380,6 +435,8 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
     }
 
     let camX = 0;
+    let lookY = 0;
+    let spinAngle = 0;
     let explodeTarget = 0;
     let explode = 0;
     let highlighted: string | null = null;
@@ -443,6 +500,9 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
           s.holder.position.set(i * SPACING, FLOOR * (1 - sc), BACK.z * (1 - s.focus)); // stays on the floor while scaling
           if (isActive && !dragging && !reduceMotion && !highlighted) s.yaw += dt * 0.2;
           s.spinner.rotation.y = s.yaw;
+          if (isActive && !reduceMotion) spinAngle += dt * 9;
+          for (const r of s.rotors)
+            r.node.quaternion.copy(r.base).multiply(new THREE.Quaternion().setFromAxisAngle(r.axis, isActive ? spinAngle : 0));
           // Explode and part highlight only apply to the active model.
           const e = isActive ? explode : 0;
           for (const p of s.parts) {
@@ -456,14 +516,17 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
             }
           }
         }
+        // Frame the active model's bounding sphere (radius 1, more when exploded) so nothing is cut off,
+        // whichever way it is turned and whatever the viewport's shape.
         const a = slots[activeIndex];
-        const grow = a ? 1 + (a.grow - 1) * explode : 1;
-        const fov = (camera.fov * Math.PI) / 180;
-        let dist = (grow / Math.sin(fov / 2)) * 1.05;
-        if (camera.aspect < 1.2) dist /= Math.max(camera.aspect / 1.2, 0.5);
-        const lookY = FLOOR + 0.85 * grow;
+        const radius = a ? 1 + (a.grow - 1) * explode : 1;
+        const targetY = a ? FLOOR + a.height / 2 + a.lift * explode : 0;
+        lookY += (targetY - lookY) * k;
+        const vfov = (camera.fov * Math.PI) / 180;
+        const hfov = 2 * Math.atan(Math.tan(vfov / 2) * camera.aspect);
+        const dist = (radius / Math.sin(Math.min(vfov, hfov) / 2)) * 0.88; // the sphere is generous; fill more of the frame
         camera.position.set(camX, lookY + Math.sin(tilt) * dist, Math.cos(tilt) * dist);
-        camera.lookAt(camX, lookY, -0.15);
+        camera.lookAt(camX, lookY, 0);
         renderer.render(scene, camera);
       }
       requestAnimationFrame(frame);

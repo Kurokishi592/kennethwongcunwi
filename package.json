@@ -14,7 +14,10 @@
     "model:kinova": "node scripts/build-kinova-model.mjs",
     "images": "node scripts/optimize-images.mjs",
     "model:vex": "node scripts/build-vex-model.mjs",
-    "model:fpga": "node scripts/build-fpga-model.mjs"
+    "model:fpga": "node scripts/build-fpga-model.mjs",
+    "model:import": "node scripts/import-glb.mjs",
+    "model:lego": "node scripts/build-lego-model.mjs",
+    "model:miniauv": "node scripts/build-miniauv-model.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",
@@ -38,6 +41,7 @@
     "@napi-rs/canvas": "^0.1.80",
     "@types/node": "^22.20.5",
     "@types/three": "^0.170.0",
+    "draco3dgltf": "^1.5.7",
     "meshoptimizer": "^0.22.0",
     "occt-import-js": "^0.0.23",
     "pdfjs-dist": "^4.10.38",

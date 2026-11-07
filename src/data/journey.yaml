@@ -5,9 +5,10 @@
 #   focus                   what you mostly did then (highlighted chips)
 #   also                    what else you did (plain chips), so no era reads as "only X"
 #   projects                project file names (from src/content/projects/, without .mdx) to link
-#   models                  3D models (.glb in public/models/) for this era
+#   models                  3D models (.glb in public/models/) for this era, in order
 #     label                 caption shown in the viewer and on the timeline
 #     explode: true         adds an "explode" slider that pulls the parts apart
+#     spin                  parts whose name starts with this keep spinning (e.g. thruster rotors)
 #     tilt                  starting camera height in degrees (default 20)
 
 - years: 2013 – 2021
@@ -19,6 +20,8 @@
     pressure.
   projects: [nrc, vex]
   models:
+    - src: /models/lego-ev3-robot.glb
+      label: LEGO MINDSTORMS EV3 robot, National Robotics Competition
     - src: /models/vex-tower-takeover.glb
       label: VEX Tower Takeover robot, 2020 national champions
 
@@ -31,11 +34,18 @@
     and hardware-accelerated computer vision on an FPGA.
   projects: [full-electrical-stack-auv5, object-tracker-fpga, mini-auv-robosub-2025]
   models:
+    # Stand-in built from the render (npm run model:miniauv); swap for the real CAD export later.
+    - src: /models/mini-auv.glb
+      label: Mini-AUV, RoboSub 2025
+      spin: rotor_
+    - src: /models/fpga-object-tracker.glb
+      label: FPGA object tracker with pan-tilt camera
     - src: /models/auv5-electrical-stack.glb
       label: AUV 5.0 electrical stack
       explode: true
-    - src: /models/fpga-object-tracker.glb
-      label: FPGA object tracker with pan-tilt camera
+    - src: /models/auv5.glb
+      label: AUV 5.0, RoboSub 2026 champions (model by NUS Bumblebee)
+      spin: rotor_
 
 - years: 2026 – now
   title: Embodied AI

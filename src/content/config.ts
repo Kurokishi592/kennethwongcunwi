@@ -152,7 +152,9 @@ const journey = defineCollection({
           src: z.string(),
           label: z.string().optional(),
           explode: z.boolean().default(false),
-          tilt: z.number().default(20)
+          tilt: z.number().default(20),
+          // node-name prefix of parts that spin while the model is shown (e.g. "rotor_")
+          spin: z.string().optional()
         })
       )
       .default([])

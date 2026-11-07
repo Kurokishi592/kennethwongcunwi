@@ -197,20 +197,31 @@ for (const x of [0.105, -0.105]) for (const z of [0.08, -0.08]) place(drive, MOT
 // Steel rails sticking out of the back along the floor.
 for (const z of [0.12, -0.12]) place(drive, await STEEL(0.3), [-0.37, 0.013, z], q(Math.PI / 2, 0, 0));
 
-// Lift: 84T gears on the ladder pivot, driven by 12T pinions on two motors, between two uprights.
+// Lift: two arms on the 84T gear shafts mid-robot, driven by 12T pinions on two motors. Each arm
+// ends in a roller that pushes the ladder up from underneath; it leans back when the ladder is
+// down and swings forward and up as the ladder tips upright.
+const HINGE = [0.12, 0.105];
+const PIVOT = [0.0, 0.125];
+const ARM = 0.24;
+const theta = (LADDER_DEG * Math.PI) / 180;
+const dir = [-Math.cos(theta), Math.sin(theta)]; // along the ladder, back and up from the hinge
+const w = [HINGE[0] - PIVOT[0], HINGE[1] - PIVOT[1]];
+const wd = w[0] * dir[0] + w[1] * dir[1];
+const along = -wd + Math.sqrt(wd * wd - (w[0] ** 2 + w[1] ** 2) + ARM * ARM); // where the arm meets the ladder
+const tip = [HINGE[0] + along * dir[0], HINGE[1] + along * dir[1]];
+const armAngle = Math.atan2(tip[1] - PIVOT[1], tip[0] - PIVOT[0]);
 const lift = group(root, 'Lift gear train');
-for (const z of [0.07, -0.07]) {
+for (const z of [0.085, -0.085]) {
   const s = Math.sign(z);
-  place(lift, GEAR84, [0.1, 0.105, z]);
-  place(lift, GEAR12, [0.1 - 0.0525, 0.105, z + s * 0.008]);
-  place(lift, MOTOR, [0.1 - 0.0525, 0.105, z + s * 0.03], AXLE_Z);
-  place(lift, await CH(0.2), [0.1, 0.1, z + s * 0.018], UPRIGHT);
+  place(lift, await CH(0.1), [PIVOT[0], 0.085, z + s * 0.02], UPRIGHT);
+  place(lift, GEAR84, [PIVOT[0], PIVOT[1], z], q(0, 0, armAngle));
+  place(lift, GEAR12, [PIVOT[0] - 0.0525, PIVOT[1], z + s * 0.002]);
+  place(lift, MOTOR, [PIVOT[0] - 0.0525, PIVOT[1], z + s * 0.03], AXLE_Z);
+  const arm = group(lift, '', [PIVOT[0], PIVOT[1], z - s * 0.014], q(0, 0, armAngle));
+  place(arm, await CH(ARM), [ARM / 2, 0, 0], s > 0 ? ALONG_X_FLIP : ALONG_X);
 }
-
-// Ladder rest: two short uprights mid-robot and a cross bar the ladder leans on.
-const rest = group(root, 'Ladder rest');
-for (const z of [0.1, -0.1]) place(rest, await CH(0.19), [-0.02, 0.13, z], UPRIGHT);
-place(rest, await CH(0.22), [-0.02, 0.23, 0], ALONG_Z);
+const tipRoller = shapeMesh('lift_roller', cylData(0.011, 0.15), C.nylon, { rough: 0.6 });
+put(lift, tipRoller, [tip[0], tip[1] - 0.012, 0]);
 
 // Ladder: two telescoping sections hinged at the front, zip-tie rungs, rollers and bands at the joint.
 const ladder = group(root, 'Ladder', [0.12, 0.105, 0], q(0, 0, Math.PI - (LADDER_DEG * Math.PI) / 180));
@@ -231,11 +242,12 @@ const cubes = group(ladder, 'Game cubes');
   put(cubes, cubeMesh(rgb), [0.17 + i * 0.143, -0.073, 0])
 );
 
-// Intakes: a horizontal tank-tread loop at each front corner, motor standing on the rear sprocket.
+// Intakes: a tank-tread loop at each front corner, motor standing on the rear sprocket.
 const R = 0.0254; // sprocket pitch radius
 const LOOP = 0.17;
 for (const [side, z] of [['left', 0.098], ['right', -0.098]]) {
-  const intake = group(root, `Intake (${side})`, [0.2, 0.085, z]);
+  // Parallel to the ladder: the loop runs forward and down from beside the hinge to the floor.
+  const intake = group(root, `Intake (${side})`, [0.13, 0.15, z], q(0, 0, -theta));
   for (const x of [0, LOOP]) place(intake, SPROCKET, [x, 0, 0], q(Math.PI / 2, 0, 0));
   // Links around the loop (in the horizontal x-z plane), every third one with traction bumps.
   const per = 2 * LOOP + 2 * Math.PI * R;

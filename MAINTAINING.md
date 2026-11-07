@@ -122,6 +122,12 @@ Three models are built by scripts instead of exported:
 - `npm run model:vex`: the 2020 VEX robot, assembled from VEX's official STEP parts in
   `raw-assets/vex/`. Ladder angle: `LADDER_DEG` (about 85 = tipped up to score).
 
+- `npm run model:lego`: the EV3 robot, placed part by part from the LDraw LEGO library
+  (`raw-assets/lego/ldraw`, from library.ldraw.org) in `scripts/build-lego-model.mjs`.
+- `npm run model:miniauv`: a stand-in Mini-AUV modelled from its render, until the CAD is exported.
+- `npm run model:import -- in.glb out.glb`: re-pack a ready-made .glb (e.g. Bumblebee's AUV 5.0)
+  for the site. Add `spin: rotor_` in `journey.yaml` to spin parts whose names start with `rotor_`.
+
 Manufacturer CAD usually comes as STEP (.step/.stp). `scripts/lib/step.mjs` turns STEP into
 lightweight meshes (with a triangle budget) for the build scripts above. The FPGA script picks up
 `raw-assets/fpga/basys3.step` automatically when it is there.
