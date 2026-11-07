@@ -1,0 +1,89 @@
+---
+// The row of tiles under the landing-page intro: background, projects, documents, contacts.
+// Everything shown here comes from src/data/*.yaml and the project files.
+import { siGithub, siLinkedin } from 'simple-icons';
+import { getData, getProfile, getProjects, thumb } from '../lib/content';
+
+const profile = await getProfile();
+const experience = await getData('experience');
+const [school] = await getData('education');
+const projects = await getProjects();
+
+const shortOrg = (org: string) => org.replace(/\s*\(.*?\)\s*/g, '').trim();
+const background = [
+  ...experience.filter((e) => e.current && e.roles.length).map((e) => `${e.roles[0].title} · ${shortOrg(e.org)}`),
+  ...(school ? [`${school.degree} · ${shortOrg(school.org)}`] : [])
+];
+
+const previews = projects
+  .filter((p) => p.data.featured)
+  .sort((a, b) => (a.data.featuredRank ?? 9999) - (b.data.featuredRank ?? 9999))
+  .map((p) => thumb(p.data.thumbnail))
+  .filter(Boolean)
+  .slice(0, 3);
+
+const handle = (url: string) => url.replace(/\/+$/, '').split('/').pop();
+const docIcon = 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6Zm0 2.5L17.5 8H14V4.5ZM8 12h8v1.6H8V12Zm0 3.5h8v1.6H8v-1.6Z';
+const mailIcon = 'M20 6H4c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2Zm0 2-8 5L4 8h16Zm0 8H4V10l8 5 8-5v6Z';
+
+const docs = [
+  { label: 'Resume', href: profile.resume },
+  { label: 'Transcript', href: profile.transcript }
+].filter((d) => d.href);
+const contacts = [
+  { label: 'Email', detail: profile.email, href: `mailto:${profile.email}`, icon: mailIcon },
+  { label: 'GitHub', detail: handle(profile.github), href: profile.github, icon: siGithub.path },
+  { label: 'LinkedIn', detail: handle(profile.linkedin), href: profile.linkedin, icon: siLinkedin.path }
+];
+---
+
+<nav class="home-tiles" aria-label="Explore">
+  <a class="tile tile-about" href="/about/">
+    <span class="tile-label mono">~/whoami</span>
+    <span class="tile-title">Skills, Experience & Background</span>
+    <ul class="tile-lines muted">
+      {background.map((line) => (
+        <li>{line}</li>
+      ))}
+    </ul>
+    <span class="tile-arrow" aria-hidden="true">→</span>
+  </a>
+
+  <a class="tile tile-projects" href="/projects/">
+    <span class="tile-label mono">~/projects</span>
+    <span class="tile-title">My projects</span>
+    <span class="tile-lines muted">{projects.length} projects</span>
+    {previews.length ? (
+      <span class="tile-previews" aria-hidden="true">
+        {previews.map((src) => (
+          <img src={src} alt="" loading="lazy" />
+        ))}
+      </span>
+    ) : null}
+    <span class="tile-arrow" aria-hidden="true">→</span>
+  </a>
+
+  <div class="tile-stack tile-docs">
+    {docs.map((d) => (
+      <a class="tile tile-small" href={d.href} target="_blank" rel="noopener">
+        <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d={docIcon} /></svg>
+        <span class="tile-small-text">
+          <span class="tile-title">{d.label}</span>
+          <span class="muted">PDF ↗</span>
+        </span>
+      </a>
+    ))}
+  </div>
+
+  <div class="tile-stack tile-contacts">
+    {contacts.map((c) => (
+      <a class="tile tile-small" href={c.href} target={c.href.startsWith('http') ? '_blank' : undefined} rel="noopener">
+        <svg class="tile-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d={c.icon} /></svg>
+        <span class="tile-small-text">
+          <span class="tile-title">{c.label}</span>
+          <span class="muted tile-detail">{c.detail}</span>
+        </span>
+      </a>
+    ))}
+  </div>
+</nav>

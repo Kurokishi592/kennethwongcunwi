@@ -97,30 +97,57 @@ const { src, label, explode = false, tilt = 20, class: className } = Astro.props
         // (deeper levels are a part's own meshes, one per colour).
         while (assembly.children.length === 1) assembly = assembly.children[0];
         const size = box0.getSize(new THREE.Vector3());
+        const modelVolume = size.x * size.y * size.z;
         const parts = assembly.children.map((p) => {
-          const b = new THREE.Box3().setFromObject(p);
-          return { p, home: p.position.clone(), min: b.min.y, c: b.getCenter(new THREE.Vector3()) };
+          const box = new THREE.Box3().setFromObject(p);
+          const s = box.getSize(new THREE.Vector3());
+          // Hardware (standoffs, nuts, brackets) is tiny next to a board; it moves with its board.
+          const small = s.x * s.y * s.z < modelVolume * 0.002;
+          return { p, home: p.position.clone(), box, small, offset: new THREE.Vector3() };
         });
-        // Group parts whose bottoms are at about the same height into layers.
+        const boards = parts.filter((x) => !x.small);
+
+        // Group boards whose bottoms are at about the same height into layers.
         const gap = size.y * 0.04;
-        const bottoms = [...new Set(parts.map((x) => x.min))].sort((a, b) => a - b);
+        const bottoms = [...new Set(boards.map((x) => x.box.min.y))].sort((a, b) => a - b);
         const layerOf = new Map<number, number>();
         let layer = 0;
         bottoms.forEach((y, i) => {
           if (i > 0 && y - bottoms[i - 1] > gap) layer++;
           layerOf.set(y, layer);
         });
+
+        // Layers rise in steps; boards at the sides slide outwards, and the ones standing on the
+        // big base plates (large footprint, bottom layer) also lift off them.
         const centre = box0.getCenter(new THREE.Vector3());
-        const offsets = parts.map(({ min, c }) => {
+        const step = size.y * 0.34;
+        for (const b of boards) {
+          const c = b.box.getCenter(new THREE.Vector3());
+          const s = b.box.getSize(new THREE.Vector3());
+          const layerIndex = layerOf.get(b.box.min.y)!;
+          const isBasePlate = layerIndex === 0 && s.x * s.z > size.x * size.z * 0.08;
           const dx = c.x - centre.x;
           const outer = Math.abs(dx) > size.x * 0.3;
-          return new THREE.Vector3(
-            outer ? Math.sign(dx) * size.x * 0.45 : dx * 0.3,
-            layerOf.get(min)! * size.y * 0.34,
+          b.offset.set(
+            outer ? Math.sign(dx) * size.x * 0.4 : dx * 0.3,
+            layerIndex * step + (outer && !isBasePlate ? step * 0.6 : 0),
             (c.z - centre.z) * 0.7
           );
-        });
-        setExplode = (e) => parts.forEach((x, i) => x.p.position.copy(x.home).addScaledVector(offsets[i], e));
+        }
+
+        // Each small part follows the board it is closest to (touching counts as distance 0).
+        const gapBetween = (a: InstanceType<typeof THREE.Box3>, b: InstanceType<typeof THREE.Box3>) =>
+          Math.hypot(
+            Math.max(0, a.min.x - b.max.x, b.min.x - a.max.x),
+            Math.max(0, a.min.y - b.max.y, b.min.y - a.max.y),
+            Math.max(0, a.min.z - b.max.z, b.min.z - a.max.z)
+          );
+        for (const s of parts.filter((x) => x.small)) {
+          const host = boards.reduce((best, b) => (gapBetween(s.box, b.box) < gapBetween(s.box, best.box) ? b : best));
+          s.offset.copy(host.offset);
+        }
+
+        setExplode = (e) => parts.forEach((x) => x.p.position.copy(x.home).addScaledVector(x.offset, e));
       }
 
       // Frame the model so it fits both assembled and fully exploded.

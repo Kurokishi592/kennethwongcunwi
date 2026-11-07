@@ -6,6 +6,7 @@ import DocumentCard from '../components/DocumentCard.astro';
 import ExperienceList from '../components/ExperienceList.astro';
 import EducationList from '../components/EducationList.astro';
 import SkillGrid from '../components/SkillGrid.astro';
+import Achievements from '../components/Achievements.astro';
 import { getProfile, thumb } from '../lib/content';
 
 const profile = await getProfile();
@@ -35,6 +36,7 @@ const profile = await getProfile();
           </div>
           <nav class="toc" aria-label="On this page">
             <a href="#nutshell">A short intro</a>
+            <a href="#achievements">Achievements</a>
             <a href="#work-experiences">Experience</a>
             <a href="#education">Education</a>
             <a href="#skills">Tech stack</a>
@@ -83,6 +85,15 @@ const profile = await getProfile();
           </article>
         ))}
       </div>
+    </div>
+  </section>
+
+  <section class="section" id="achievements">
+    <div class="container">
+      <div class="section-head">
+        <h2>Achievements</h2>
+      </div>
+      <Achievements />
     </div>
   </section>
 

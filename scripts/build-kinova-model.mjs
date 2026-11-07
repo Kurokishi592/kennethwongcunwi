@@ -1,10 +1,12 @@
 // Builds public/models/kinova-dual-arm.glb: two Kinova Gen3 7-DoF arms (with vision module) and
-// Robotiq 2F-85 grippers on a centre mount with two cameras on top.
+// Robotiq 2F-85 grippers on a centre mount with a LUCID Helios2 + Triton camera on a 90-degree mount.
 //
 //   npm run model:kinova
 //
 // Arm and gripper meshes come from Kinova's ros_kortex repository (BSD-3-Clause) and are downloaded
 // into raw-assets/kinova/ on first run. The pose is set by JOINT_DEG below (Kinova zero = arm straight).
+// The camera mount comes from the rig's own SOLIDWORKS assembly: its STL exports go in
+// raw-assets/kinova/lucid/ (plate.stl, mount.stl, camera.stl).
 
 import { Document, NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
@@ -91,20 +93,6 @@ const box = (sx, sy, sz) => {
   const f = [0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 2, 3, 7, 2, 7, 6, 1, 2, 6, 1, 6, 5, 3, 0, 4, 3, 4, 7];
   return { pos: new Float32Array(c.flat()), idx: new Uint32Array(f) };
 };
-const cylinder = (r, h, n = 24) => {
-  // Axis along +z, from z=0 to z=h.
-  const pos = [0, 0, 0, 0, 0, h];
-  for (let i = 0; i < n; i++) {
-    const a = (i / n) * Math.PI * 2;
-    pos.push(r * Math.cos(a), r * Math.sin(a), 0, r * Math.cos(a), r * Math.sin(a), h);
-  }
-  const idx = [];
-  for (let i = 0; i < n; i++) {
-    const a = 2 + i * 2, b = 2 + ((i + 1) % n) * 2;
-    idx.push(0, b, a, 1, a + 1, b + 1, a, b, b + 1, a, b + 1, a + 1);
-  }
-  return { pos: new Float32Array(pos), idx: new Uint32Array(idx) };
-};
 
 // ---------- document ----------
 const doc = new Document();
@@ -117,7 +105,7 @@ const M = {
   gripper: mat('gripper', [0.07, 0.07, 0.08], 0.6),
   alu: mat('aluminium', [0.72, 0.74, 0.76], 0.35, 0.6),
   camera: mat('camera', [0.05, 0.05, 0.06], 0.5),
-  lens: mat('lens', [0.15, 0.15, 0.17], 0.2, 0.3)
+  bracket: mat('bracket', [0.16, 0.16, 0.18], 0.45, 0.4)
 };
 
 const meshCache = new Map();
@@ -184,24 +172,26 @@ const buildArm = (root, prefix) => {
 };
 
 // ---------- rig (ROS frame: x forward, y left, z up) ----------
-const MOUNT = { x: 0.12, y: 0.16, z: 0.1 };
+// Centre block sized to the shoulder base plate (150 x 110 mm) that sits on top of it.
+const MOUNT = { x: 0.15, y: 0.11, z: 0.12 };
 const rig = doc.createNode('rig');
 
 const mount = doc.createNode('mount').setMesh(makeMesh('mount', box(MOUNT.x, MOUNT.y, MOUNT.z), M.alu));
 rig.addChild(mount);
 
-// Two cameras on a bracket above the mount, tilted down towards the table.
-const camBracket = doc.createNode('camera_bracket')
-  .setTranslation([0.03, 0, MOUNT.z / 2 + 0.035])
-  .setRotation(rpyQuat(0, 0.6, 0));
-rig.addChild(camBracket);
-for (const [i, y] of [[0, 0.024], [1, -0.024]]) {
-  const cam = doc.createNode(`camera_${i}`).setTranslation([0, y, 0]).setMesh(makeMesh('camera_body', box(0.045, 0.04, 0.04), M.camera));
-  const lens = doc.createNode(`lens_${i}`).setTranslation([0.0225, 0, 0]).setRotation(rpyQuat(0, Math.PI / 2, 0))
-    .setMesh(makeMesh('camera_lens', cylinder(0.014, 0.03), M.lens));
-  cam.addChild(lens);
-  camBracket.addChild(cam);
+// Shoulder base plate, 90-degree mount and LUCID Helios2 + Triton mock-up, exported from the
+// SOLIDWORKS assembly (raw-assets/kinova/lucid/, mm, x forward / y up / z sideways).
+// Offset puts the plate's bottom centre on top of the block; rotation turns y-up into z-up.
+const lucid = doc.createNode('lucid_camera_mount')
+  .setTranslation([0, 0, MOUNT.z / 2])
+  .setRotation(rpyQuat(Math.PI / 2, 0, 0))
+  .setScale([0.001, 0.001, 0.001]);
+const lucidParts = doc.createNode('lucid_parts').setTranslation([-75.75, -13.604, -55.55]);
+lucid.addChild(lucidParts);
+for (const [name, material] of [['plate', M.alu], ['mount', M.bracket], ['camera', M.camera]]) {
+  lucidParts.addChild(doc.createNode(`lucid_${name}`).setMesh(makeMesh(`lucid_${name}`, parseStl(`${CACHE}/lucid/${name}.stl`), material)));
 }
+rig.addChild(lucid);
 
 // Left arm on the +y face, base pointing +y. Right arm is its mirror image.
 const left = doc.createNode('left_arm').setTranslation([0, MOUNT.y / 2, 0]).setRotation(rpyQuat(-Math.PI / 2, 0, 0));

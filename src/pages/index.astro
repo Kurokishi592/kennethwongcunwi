@@ -1,9 +1,8 @@
 ---
 // Landing page. The words live in src/data/*.yaml; this file only arranges them.
 import BaseLayout from '../layouts/BaseLayout.astro';
-import SocialIcons from '../components/SocialIcons.astro';
 import ProjectCard from '../components/ProjectCard.astro';
-import Achievements from '../components/Achievements.astro';
+import HomeTiles from '../components/HomeTiles.astro';
 import Journey from '../components/Journey.astro';
 import ExperienceList from '../components/ExperienceList.astro';
 import { getProfile, getProjects, thumb } from '../lib/content';
@@ -34,21 +33,11 @@ const featured = (await getProjects())
         <p class="hero-intro muted">{profile.intro}</p>
         {profile.focus ? <p class="hero-focus">{profile.focus}</p> : null}
         {profile.availability ? <p class="motive-meta">{profile.availability}</p> : null}
-
-        <div class="hero-actions">
-          <a class="button primary" href="/projects/">See my projects</a>
-          {profile.resume ? (
-            <a class="button" href={profile.resume} target="_blank" rel="noopener">Resume (PDF) ↗</a>
-          ) : null}
-          <div class="icon-row" aria-label="Social links">
-            <SocialIcons />
-          </div>
-        </div>
       </div>
     </div>
 
     <div class="container">
-      <Achievements />
+      <HomeTiles />
     </div>
   </section>
 
