@@ -2329,8 +2329,13 @@ html[data-theme="light"] .sc-viewport {
 
 @media (max-width: 719px) {
   .sc-timeline { gap: 0.5rem; }
+  .sc-era { flex-grow: 1 !important; } /* equal widths so every era's years fit */
   .sc-tick-label { display: none; }
   .sc-era-years { font-size: 0.7rem; }
+  /* Phones: no hover, so the hover-to-isolate parts list is left out; the era panel stays short
+     so the intro and links come up quickly. */
+  .wb-parts { display: none; }
+  .sc-panel .chapter-links { display: none; }
 }
 
 @media (min-width: 960px) {

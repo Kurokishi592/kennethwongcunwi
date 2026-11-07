@@ -124,7 +124,10 @@ Three models are built by scripts instead of exported:
 
 - `npm run model:lego`: the EV3 robot, placed part by part from the LDraw LEGO library
   (`raw-assets/lego/ldraw`, from library.ldraw.org) in `scripts/build-lego-model.mjs`.
-- `npm run model:miniauv`: a stand-in Mini-AUV modelled from its render, until the CAD is exported.
+- Mini-AUV: the SOLIDWORKS export (`raw-assets/mini-auv/miniauv.glb`) came out with its sub-assemblies
+  out of place, so it is re-assembled first:
+  `node scripts/fix-miniauv.mjs && npm run model -- raw-assets/mini-auv/miniauv-fixed.glb public/models/mini-auv.glb --ratio 0.06 --error 0.01`.
+  (`npm run model:miniauv` builds the older hand-made stand-in.)
 - `npm run model:import -- in.glb out.glb`: re-pack a ready-made .glb (e.g. Bumblebee's AUV 5.0)
   for the site. Add `spin: rotor_` in `journey.yaml` to spin parts whose names start with `rotor_`.
 

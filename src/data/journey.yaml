@@ -34,10 +34,9 @@
     and hardware-accelerated computer vision on an FPGA.
   projects: [full-electrical-stack-auv5, object-tracker-fpga, mini-auv-robosub-2025]
   models:
-    # Stand-in built from the render (npm run model:miniauv); swap for the real CAD export later.
+    # From the SOLIDWORKS export, re-assembled by scripts/fix-miniauv.mjs (see MAINTAINING.md).
     - src: /models/mini-auv.glb
       label: Mini-AUV, RoboSub 2025
-      spin: rotor_
     - src: /models/fpga-object-tracker.glb
       label: FPGA object tracker with pan-tilt camera
     - src: /models/auv5-electrical-stack.glb

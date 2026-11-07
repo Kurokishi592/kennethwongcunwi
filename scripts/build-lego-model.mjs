@@ -57,17 +57,22 @@ const ACROSS = ry(90);
 // axles ending in black feet, two more feet at the front, and grey axles across the towers with
 // yellow bushes, black 24T gears on the outer ends and yellow rubber bands.
 
-// Drive (mostly hidden underneath): two large motors and wheels towards the back.
-const AXLE_Y = 54; // wheel radius
+// Four-wheeled base: two large motors drive the rear wheels (56908 rims with 41897 tyres);
+// the front wheels are small 56145 rims without tyres.
+const REAR_Y = 70; // tyre radius
+const FRONT_Y = 38; // rim radius
 for (const s of [-1, 1]) {
-  place('Drive', '95658.dat', WHITE, [s * 60, AXLE_Y, -60]);
-  place('Drive', '56145c01.dat', WHITE, [s * 150, AXLE_Y, -60], ry(90));
+  place('Drive', '95658.dat', WHITE, [s * 60, REAR_Y, -80]);
+  place('Drive', '56908.dat', LBGREY, [s * 150, REAR_Y, -80], ry(90));
+  place('Drive', '41897.dat', BLACK, [s * 150, REAR_Y, -80], ry(90));
+  place('Drive', '56145.dat', WHITE, [s * 95, FRONT_Y, 185], ry(90));
+  place('Drive', '3706.dat', LBGREY, [s * 95, FRONT_Y, 185]);
   place('Drive', '32278.dat', BLACK, [s * 115, 175, 60]);
 }
 place('Drive', '32524.dat', BLACK, [0, 175, 200], ACROSS);
 
 // EV3 brick, lying back about 60 degrees so the screen faces mostly up and a little forward.
-place('EV3 brick', '95646c01.dat', WHITE, [0, 250, 40], rx(30));
+place('EV3 brick', '95646c01.dat', WHITE, [0, 270, -20], rx(30));
 place('EV3 brick', '32524.dat', RED, [0, 180, 175], ACROSS);
 place('EV3 brick', '32524.dat', RED, [0, 365, -45], ACROSS);
 
@@ -85,21 +90,30 @@ for (const s of [-1, 1]) {
   place('Front feet', '32184.dat', BLACK, [s * 118, 45, 255], rz(90));
 }
 
+// The towers are the lifting mechanisms; they lean back a little (side view sketch).
+const LEAN = 12;
+const PIVOT = [0, 240, 130];
+const lean = ([x, y, z]) => {
+  const c = Math.cos(deg(-LEAN)), sn = Math.sin(deg(-LEAN));
+  const [dy, dz] = [y - PIVOT[1], z - PIVOT[2]];
+  return [x, PIVOT[1] + dy * c - dz * sn, PIVOT[2] + dy * sn + dz * c];
+};
+const placeLean = (g, part, colour, p, R = I) => place(g, part, colour, lean(p), rot(rx(-LEAN), R));
 // Towers: 13L uprights at the four corners, 7L beams across top and bottom, a medium motor and
 // grey gears inside, grey axles across the front with yellow bushes, rubber bands and black gears.
 for (const [side, s] of [['left', -1], ['right', 1]]) {
   const g = `Tower (${side})`;
-  for (const x of [s * 140, s * 240]) for (const z of [70, 190]) place(g, '41239.dat', BLACK, [x, 360, z], UP_X);
-  for (const y of [240, 490]) for (const z of [70, 200]) place(g, '32524.dat', BLACK, [s * 190, y, z], ACROSS);
-  place(g, '99455.dat', WHITE, [s * 190, 380, 160], rx(-90));
-  place(g, '3648b.dat', LBGREY, [s * 190, 300, 200]);
-  place(g, '3648b.dat', LBGREY, [s * 190, 420, 200]);
+  for (const x of [s * 140, s * 240]) for (const z of [70, 190]) placeLean(g, '41239.dat', BLACK, [x, 360, z], UP_X);
+  for (const y of [240, 490]) for (const z of [70, 200]) placeLean(g, '32524.dat', BLACK, [s * 190, y, z], ACROSS);
+  placeLean(g, '99455.dat', WHITE, [s * 190, 380, 160], rx(-90));
+  placeLean(g, '3648b.dat', LBGREY, [s * 190, 300, 200]);
+  placeLean(g, '3648b.dat', LBGREY, [s * 190, 420, 200]);
   for (const [y, z] of [[460, 214], [280, 214], [470, 80]]) {
-    place(g, '3708.dat', LBGREY, [s * 205, y, z]);
-    place(g, '3648b.dat', BLACK, [s * 310, y, z], ry(90));
-    for (const x of [150, 235]) place(g, '32123a.dat', YELLOW, [s * x, y, z + 4], ry(90));
+    placeLean(g, '3708.dat', LBGREY, [s * 205, y, z]);
+    placeLean(g, '3648b.dat', BLACK, [s * 310, y, z], ry(90));
+    for (const x of [150, 235]) placeLean(g, '32123a.dat', YELLOW, [s * x, y, z + 4], ry(90));
   }
-  for (const y of [360, 420]) place(g, '6558.dat', YELLOW, [s * 245, y, 205]);
+  for (const y of [360, 420]) placeLean(g, '6558.dat', YELLOW, [s * 245, y, 205]);
 }
 
 // Side arms: two black 9L beams reaching out from each tower, a red axle down to a black foot,
@@ -121,7 +135,7 @@ for (const s of [-1, 1]) place('Rear', '32140.dat', BLACK, [s * 40, 10, -160], r
 // Rubber bands and cables are not LEGO parts: thin tubes added after the LDraw meshes.
 // Points are in the same frame (LDU).
 const BANDS = [];
-for (const s of [-1, 1]) for (const x of [150, 235]) BANDS.push([[s * x, 460, 220], [s * x, 280, 220]]);
+for (const s of [-1, 1]) for (const x of [150, 235]) BANDS.push([lean([s * x, 460, 220]), lean([s * x, 280, 220])]);
 const CABLES = [];
 for (const s of [-1, 1]) {
   CABLES.push([[s * 300, 115, 215], [s * 340, 420, 170], [s * 230, 560, 120], [s * 40, 375, -10]]); // outer sensors
