@@ -1,28 +1,33 @@
-# The "workbench" on the landing page: one tab per era, oldest first.
+# The 3D showcase on the landing page, oldest era first. All models stand in one row in this
+# order; the showcase moves along them by itself, and the timeline underneath jumps between them.
 #
-#   years, title, text      what the tab says
+#   years, title, text      what is shown under the timeline for this era
+#   focus                   what you mostly did then (highlighted chips)
+#   also                    what else you did (plain chips), so no era reads as "only X"
 #   projects                project file names (from src/content/projects/, without .mdx) to link
-#   models                  3D models (.glb in public/models/) shown in the viewport. With more than
-#                           one, small buttons let visitors switch between them.
-#     label                 caption shown in the viewport
+#   models                  3D models (.glb in public/models/) for this era
+#     label                 caption shown in the viewer and on the timeline
 #     explode: true         adds an "explode" slider that pulls the parts apart
 #     tilt                  starting camera height in degrees (default 20)
 
 - years: 2013 – 2021
-  title: Hardware & robot design
+  title: Competition robotics
+  focus: [Mechanical, Electrical, Software]
   text: >-
     LEGO MINDSTORMS for the National Robotics Competition, then VEX Robotics through secondary school
-    and junior college. Mechanisms, drivetrains and match strategy, iterated under competition pressure.
+    and junior college: designing, wiring and programming whole robots, iterated under competition
+    pressure.
   projects: [nrc, vex]
   models:
     - src: /models/vex-tower-takeover.glb
-      label: VEX Tower Takeover robot, 2020 national champions (rough rebuild)
-      explode: true
+      label: VEX Tower Takeover robot, 2020 national champions
 
 - years: 2024 – 2026
-  title: Electrical & firmware design
+  title: Autonomous underwater vehicles
+  focus: [Electrical, System design]
+  also: [Software]
   text: >-
-    PCBs, power distribution and firmware for autonomous underwater vehicles at NUS Bumblebee,
+    Electrical stacks, PCBs and firmware for NUS Bumblebee's AUVs, system-level design as AUV Lead,
     and hardware-accelerated computer vision on an FPGA.
   projects: [full-electrical-stack-auv5, object-tracker-fpga, mini-auv-robosub-2025]
   models:
@@ -31,10 +36,11 @@
       explode: true
     - src: /models/fpga-object-tracker.glb
       label: FPGA object tracker with pan-tilt camera
-      explode: true
 
 - years: 2026 – now
-  title: Robotics software & embodied AI
+  title: Embodied AI
+  focus: [Robot learning]
+  also: [Software, Electrical]
   text: >-
     Manipulation and tactile sensing for robot foundation models, on a dual-arm Kinova Gen3 rig.
   projects: [embodied-ai-contact-rich-manipulation]

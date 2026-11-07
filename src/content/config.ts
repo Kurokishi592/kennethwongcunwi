@@ -142,6 +142,8 @@ const journey = defineCollection({
   schema: z.object({
     years: z.string(),
     title: z.string(),
+    focus: z.array(z.string()).default([]),
+    also: z.array(z.string()).default([]),
     text: z.string(),
     projects: z.array(z.string()).default([]),
     models: z

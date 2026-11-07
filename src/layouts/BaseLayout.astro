@@ -9,6 +9,8 @@ type Props = {
   activeNav?: 'home' | 'whoami' | 'projects' | 'blog' | 'contact';
   /** Image shown when the link is shared (LinkedIn, Telegram, ...). */
   image?: string;
+  /** Use the wider page width for the header (landing page). */
+  wide?: boolean;
 };
 
 const {
@@ -16,7 +18,8 @@ const {
   description = 'Portfolio, projects, and robotics learning notes.',
   canonicalPath,
   activeNav,
-  image = '/assets/images/profile.jpg'
+  image = '/assets/images/profile.jpg',
+  wide = false
 } = Astro.props;
 
 const canonical = canonicalPath ? new URL(canonicalPath, Astro.site).toString() : undefined;
@@ -47,7 +50,7 @@ const assetVersion = import.meta.env.PUBLIC_ASSET_VERSION ?? String(Date.now());
   </head>
   <body>
     <a class="skip-link" href="#content">Skip to content</a>
-    <Header active={activeNav} />
+    <Header active={activeNav} wide={wide} />
     <main id="content">
       <slot />
     </main>

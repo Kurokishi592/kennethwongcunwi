@@ -1,63 +1,124 @@
-// Builds public/models/vex-tower-takeover.glb: a rough, low-poly rebuild of the 2020 VEX Tower
-// Takeover robot (photos in public/assets/vex/IMG_2015.JPEG and IMG_2075.JPEG), made from simple
-// shapes. Dimensions are approximate (18 in starting size limit).
+// Builds public/models/vex-tower-takeover.glb: the 2020 VEX Tower Takeover robot (national champions),
+// assembled from VEX's official STEP parts (C-channels, omni wheels, V5 motors/brain/battery, gears,
+// tank tread). Part positions are estimated from photos, so the layout is approximate.
 //
 //   npm run model:vex
 //
-// A cube stacker: tread intakes at the front feed cubes onto a long ladder hinged at the front,
-// which tips upright to score the stack. Each top-level group is one part in the viewer.
-// TRAY_DEG sets the ladder angle: ~38 = carrying cubes (default), ~85 = tipped up to score.
+// STEP files go in raw-assets/vex/ (from github.com/TlorschCode/VEX-V5-Parts-Solidworks-Download,
+// which mirrors VEX's CAD downloads). LADDER_DEG sets the ladder angle: ~40 carrying cubes,
+// ~85 tipped up to score.
 
 import { Document, NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
-import { meshopt, prune } from '@gltf-transform/functions';
+import { meshopt, prune, weld } from '@gltf-transform/functions';
 import { MeshoptEncoder } from 'meshoptimizer';
-import { Euler, Quaternion } from 'three';
+import { Euler, Matrix4, Quaternion, Vector3 } from 'three';
 import { mkdirSync, statSync } from 'node:fs';
 import path from 'node:path';
+import { loadStep } from './lib/step.mjs';
 
 const OUT = process.env.OUT ?? 'public/models/vex-tower-takeover.glb';
-const TRAY_DEG = Number(process.env.TRAY_DEG ?? 40);
+const SRC = 'raw-assets/vex';
+const LADDER_DEG = Number(process.env.LADDER_DEG ?? 40);
 
 // glTF frame: x forward (intake side), y up, z to the robot's left. Units: metres.
 const doc = new Document();
 const buffer = doc.createBuffer();
-const mat = (name, rgb, { rough = 0.5, metal = 0.1, alpha = 1 } = {}) => {
-  const m = doc.createMaterial(name).setBaseColorFactor([...rgb, alpha]).setRoughnessFactor(rough).setMetallicFactor(metal);
-  if (alpha < 1) m.setAlphaMode('BLEND').setDoubleSided(true);
-  return m;
+
+// ---------- materials ----------
+const materials = new Map();
+const mat = (rgb, { rough = 0.5, metal = 0.1, alpha = 1 } = {}) => {
+  const key = `${rgb.map((c) => c.toFixed(2))}|${rough}|${metal}|${alpha}`;
+  if (!materials.has(key)) {
+    const m = doc.createMaterial(key).setBaseColorFactor([...rgb, alpha]).setRoughnessFactor(rough).setMetallicFactor(metal);
+    if (alpha < 1) m.setAlphaMode('BLEND').setDoubleSided(true);
+    materials.set(key, m);
+  }
+  return materials.get(key);
 };
-const M = {
-  alu: mat('aluminium', [0.8, 0.81, 0.83], { rough: 0.35, metal: 0.55 }),
-  hole: mat('hole', [0.12, 0.12, 0.14]),
-  motor: mat('motor', [0.07, 0.07, 0.08], { rough: 0.6 }),
-  logo: mat('vex_red', [0.8, 0.1, 0.12], { rough: 0.5 }),
-  green: mat('omni_green', [0.1, 0.24, 0.16], { rough: 0.7 }),
-  hub: mat('hub', [0.15, 0.15, 0.16], { rough: 0.5 }),
-  sprocket: mat('sprocket_green', [0.08, 0.38, 0.24], { rough: 0.6 }),
-  tread: mat('tread_grey', [0.42, 0.43, 0.45], { rough: 0.7 }),
-  rung: mat('zip_tie', [0.04, 0.04, 0.05], { rough: 0.6 }),
-  nylon: mat('nylon', [0.93, 0.91, 0.85], { rough: 0.6 }),
-  band: mat('rubber_band', [0.72, 0.55, 0.32], { rough: 0.8 }),
-  steel: mat('steel', [0.6, 0.66, 0.74], { rough: 0.35, metal: 0.6 }),
-  cover: mat('clear_cover', [0.85, 0.9, 0.95], { rough: 0.15, alpha: 0.3 }),
-  cubeGreen: mat('cube_green', [0.2, 0.68, 0.3], { rough: 0.45 }),
-  cubeOrange: mat('cube_orange', [0.95, 0.42, 0.1], { rough: 0.45 }),
-  cubePurple: mat('cube_purple', [0.45, 0.22, 0.68], { rough: 0.45 }),
-  brain: mat('brain', [0.08, 0.08, 0.09], { rough: 0.5 }),
-  screen: mat('screen', [0.1, 0.35, 0.75], { rough: 0.2 }),
-  battery: mat('battery', [0.18, 0.18, 0.2], { rough: 0.6 })
+const C = {
+  alu: [0.8, 0.82, 0.85],
+  steel: [0.6, 0.66, 0.74],
+  green: [0.09, 0.33, 0.2],
+  rollerGreen: [0.13, 0.26, 0.18],
+  hub: [0.12, 0.12, 0.13],
+  tread: [0.36, 0.37, 0.39],
+  black: [0.04, 0.04, 0.05],
+  nylon: [0.93, 0.91, 0.85],
+  band: [0.72, 0.55, 0.32],
+  cover: [0.85, 0.9, 0.95],
+  cubeGreen: [0.18, 0.66, 0.3],
+  cubeOrange: [0.95, 0.42, 0.1],
+  cubePurple: [0.45, 0.22, 0.68]
 };
 
-// ---------- shapes ----------
-const box = (sx, sy, sz) => {
+// ---------- parts from STEP ----------
+// Each part becomes one glTF mesh (one primitive per colour), shared by every copy of the part.
+const meshCache = new Map();
+async function part(name, { triangles, error, color, colorOf, clip, alpha = 1 } = {}) {
+  const key = `${name}|${clip ?? ''}|${color ?? ''}|${triangles}`;
+  if (meshCache.has(key)) return meshCache.get(key);
+  let pieces = await loadStep(path.join(SRC, `${name}.step`), { triangles, error });
+  // Shorten a channel by keeping only triangles within +-clip/2 along its length (x).
+  if (clip) {
+    pieces = pieces.map((p) => {
+      const keep = [];
+      for (let i = 0; i < p.idx.length; i += 3) {
+        const xs = [0, 1, 2].map((k) => p.pos[p.idx[i + k] * 3]);
+        if (xs.every((x) => Math.abs(x) <= clip / 2 + 1e-4)) keep.push(p.idx[i], p.idx[i + 1], p.idx[i + 2]);
+      }
+      return { ...p, idx: new Uint32Array(keep) };
+    });
+  }
+  const mn = new Vector3(Infinity, Infinity, Infinity);
+  const mx = new Vector3(-Infinity, -Infinity, -Infinity);
+  const v = new Vector3();
+  const mesh = doc.createMesh(name);
+  for (const p of pieces) {
+    if (!p.idx.length) continue;
+    for (const i of p.idx) v.set(p.pos[i * 3], p.pos[i * 3 + 1], p.pos[i * 3 + 2]), mn.min(v), mx.max(v);
+    const rgb = colorOf?.(p) ?? color ?? p.color ?? [0.6, 0.6, 0.62];
+    const metal = rgb === C.alu || rgb === C.steel;
+    const prim = doc
+      .createPrimitive()
+      .setMaterial(mat(rgb, metal ? { rough: 0.35, metal: 0.55 } : { rough: 0.55, alpha }))
+      .setAttribute('POSITION', doc.createAccessor().setType('VEC3').setArray(new Float32Array(p.pos)).setBuffer(buffer))
+      .setIndices(doc.createAccessor().setType('SCALAR').setArray(new Uint32Array(p.idx)).setBuffer(buffer));
+    mesh.addPrimitive(prim);
+  }
+  const result = { mesh, center: mn.clone().add(mx).multiplyScalar(0.5).toArray(), size: mx.clone().sub(mn).toArray() };
+  meshCache.set(key, result);
+  return result;
+}
+
+// ---------- placement helpers ----------
+const q = (rx = 0, ry = 0, rz = 0) => new Quaternion().setFromEuler(new Euler(rx, ry, rz, 'XYZ')).toArray();
+const group = (parent, name, t = [0, 0, 0], r = [0, 0, 0, 1]) => {
+  const n = doc.createNode(name).setTranslation(t).setRotation(r);
+  parent.addChild(n);
+  return n;
+};
+// Place a part so its bounding-box centre lands on `t`, rotated by `r` about that centre.
+const place = (parent, p, t, r = [0, 0, 0, 1]) => {
+  const outer = group(parent, '', t, r);
+  outer.addChild(doc.createNode('').setTranslation(p.center.map((c) => -c)).setMesh(p.mesh));
+  return outer;
+};
+
+// ---------- simple shapes (zip ties, rollers, bands, game cubes) ----------
+const primitive = (pos, idx, rgb, opts) =>
+  doc
+    .createPrimitive()
+    .setMaterial(mat(rgb, opts))
+    .setAttribute('POSITION', doc.createAccessor().setType('VEC3').setArray(new Float32Array(pos)).setBuffer(buffer))
+    .setIndices(doc.createAccessor().setType('SCALAR').setArray(new Uint32Array(idx)).setBuffer(buffer));
+const shapeMesh = (name, [pos, idx], rgb, opts) => doc.createMesh(name).addPrimitive(primitive(pos, idx, rgb, opts));
+const boxData = (sx, sy, sz) => {
   const [x, y, z] = [sx / 2, sy / 2, sz / 2];
   const c = [[-x, -y, -z], [x, -y, -z], [x, y, -z], [-x, y, -z], [-x, -y, z], [x, -y, z], [x, y, z], [-x, y, z]];
-  const f = [0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 2, 3, 7, 2, 7, 6, 1, 2, 6, 1, 6, 5, 3, 0, 4, 3, 4, 7];
-  return { pos: c.flat(), idx: f };
+  return [c.flat(), [0, 2, 1, 0, 3, 2, 4, 5, 6, 4, 6, 7, 0, 1, 5, 0, 5, 4, 2, 3, 7, 2, 7, 6, 1, 2, 6, 1, 6, 5, 3, 0, 4, 3, 4, 7]];
 };
-// Cylinder along z, centred.
-const cyl = (r, h, n = 20) => {
+const cylData = (r, h, n = 16) => {
   const pos = [0, 0, -h / 2, 0, 0, h / 2];
   for (let i = 0; i < n; i++) {
     const a = (i / n) * Math.PI * 2;
@@ -68,163 +129,152 @@ const cyl = (r, h, n = 20) => {
     const a = 2 + i * 2, b = 2 + ((i + 1) % n) * 2;
     idx.push(0, b, a, 1, a + 1, b + 1, a, b, b + 1, a, b + 1, a + 1);
   }
-  return { pos, idx };
+  return [pos, idx];
 };
+const put = (parent, mesh, t, r) => parent.addChild(doc.createNode('').setTranslation(t).setRotation(r ?? [0, 0, 0, 1]).setMesh(mesh));
 
-const meshCache = new Map();
-const mesh = (key, shape, material) => {
-  const k = `${key}|${material.getName()}`;
-  if (meshCache.has(k)) return meshCache.get(k);
-  const s = shape();
-  const prim = doc.createPrimitive().setMaterial(material);
-  prim.setAttribute('POSITION', doc.createAccessor().setType('VEC3').setArray(new Float32Array(s.pos)).setBuffer(buffer));
-  prim.setIndices(doc.createAccessor().setType('SCALAR').setArray(new Uint32Array(s.idx)).setBuffer(buffer));
-  const m = doc.createMesh(key).addPrimitive(prim);
-  meshCache.set(k, m);
+// Tower Takeover cube: 5.5 in, with a raised X on every face.
+const cubeMesh = (rgb) => {
+  const S = 0.14;
+  const m = shapeMesh('cube', boxData(S * 0.97, S * 0.97, S * 0.97), rgb, { rough: 0.45 });
+  const [bp, bi] = boxData(S * 1.18, 0.012, 0.004);
+  const pos = [];
+  const idx = [];
+  const faces = [[0, 0, 0], [0, Math.PI / 2, 0], [0, Math.PI, 0], [0, -Math.PI / 2, 0], [Math.PI / 2, 0, 0], [-Math.PI / 2, 0, 0]];
+  for (const f of faces) {
+    for (const d of [Math.PI / 4, -Math.PI / 4]) {
+      const mtx = new Matrix4()
+        .makeRotationFromEuler(new Euler(...f))
+        .multiply(new Matrix4().makeTranslation(0, 0, S * 0.485))
+        .multiply(new Matrix4().makeRotationZ(d));
+      const base = pos.length / 3;
+      for (let i = 0; i < bp.length; i += 3) pos.push(...new Vector3(bp[i], bp[i + 1], bp[i + 2]).applyMatrix4(mtx).toArray());
+      idx.push(...bi.map((k) => k + base));
+    }
+  }
+  m.addPrimitive(primitive(pos, idx, rgb.map((c) => c * 0.62), { rough: 0.5 }));
   return m;
 };
-const q = (rx = 0, ry = 0, rz = 0) => new Quaternion().setFromEuler(new Euler(rx, ry, rz, 'XYZ')).toArray();
-const node = (name, t = [0, 0, 0], r = [0, 0, 0, 1]) => doc.createNode(name).setTranslation(t).setRotation(r);
-const put = (parent, m, t, r) => {
-  const n = node('', t, r).setMesh(m);
-  parent.addChild(n);
-  return n;
-};
 
-// VEX C-channel (1x2x1 style) along local x: a web with a row of square holes plus two flanges.
-// `up` = which way the flanges point (+1 / -1 along local z).
-const PITCH = 0.0127; // 1/2 inch hole spacing
-const cChannel = (parent, length, t, r, up = 1, material = M.alu) => {
-  const g = node('', t, r);
-  parent.addChild(g);
-  put(g, mesh(`web_${length}`, () => box(length, 0.0254, 0.0016), material), [0, 0, 0]);
-  for (const y of [0.0127, -0.0127]) put(g, mesh(`flange_${length}`, () => box(length, 0.0016, 0.0127), material), [0, y, up * 0.0063]);
-  const hole = mesh('hole', () => box(0.0045, 0.0045, 0.0006), M.hole);
-  for (let x = -length / 2 + PITCH / 2; x < length / 2; x += PITCH) put(g, hole, [x, 0, -up * 0.0011]);
-  return g;
-};
-
-const motor = (parent, t, r) => {
-  const g = node('', t, r);
-  parent.addChild(g);
-  put(g, mesh('v5_motor', () => box(0.07, 0.046, 0.033), M.motor), [0, 0, 0]);
-  put(g, mesh('v5_logo', () => box(0.03, 0.012, 0.001), M.logo), [0.005, 0, 0.0171]);
-  return g;
-};
-
-// 4-inch omni wheel: hub plus two staggered rows of green rollers.
-const omni = (parent, t) => {
-  const r = 0.0508;
-  const g = node('', t);
-  parent.addChild(g);
-  put(g, mesh('omni_hub', () => cyl(r * 0.78, 0.026, 24), M.hub), [0, 0, 0]);
-  const roller = mesh('omni_roller', () => cyl(0.0085, 0.017, 10), M.green);
-  for (const [row, phase] of [[-0.007, 0], [0.007, Math.PI / 10]]) {
-    for (let i = 0; i < 10; i++) {
-      const a = phase + (i / 10) * Math.PI * 2;
-      // Roller axis is tangent to the rim (perpendicular to the radius, in the wheel plane).
-      put(g, roller, [(r - 0.0085) * Math.cos(a), (r - 0.0085) * Math.sin(a), row], q(Math.PI / 2, 0, a));
-    }
-  }
-  return g;
-};
-
-// Tank-tread intake: a loop of links around two sprockets, along local x from 0 to `length`.
-const tread = (parent, length, t, r) => {
-  const R = 0.022;
-  const g = node('', t, r);
-  parent.addChild(g);
-  const link = mesh('tread_link', () => box(0.011, 0.007, 0.03), M.tread);
-  const flap = mesh('tread_flap', () => box(0.003, 0.016, 0.026), M.tread);
-  const perimeter = 2 * length + 2 * Math.PI * R;
-  const n = Math.round(perimeter / 0.0125);
-  const arc = Math.PI * R;
-  for (let i = 0; i < n; i++) {
-    const s = (i / n) * perimeter;
-    let x, y, a;
-    if (s < length) [x, y, a] = [s, R, 0]; // top run
-    else if (s < length + arc) {
-      const t = (s - length) / R; // around the far sprocket
-      [x, y, a] = [length + R * Math.sin(t), R * Math.cos(t), -t];
-    } else if (s < 2 * length + arc) [x, y, a] = [2 * length + arc - s, -R, Math.PI]; // bottom run
-    else {
-      const t = (s - 2 * length - arc) / R; // around the near sprocket
-      [x, y, a] = [-R * Math.sin(t), -R * Math.cos(t), Math.PI - t];
-    }
-    const l = put(g, link, [x, y, 0], q(0, 0, a));
-    if (i % 3 === 0) put(l, flap, [0, 0.011, 0]); // flaps stick out of the loop to grab cubes
-  }
-  for (const x of [0, length]) put(g, mesh('sprocket', () => cyl(R * 0.9, 0.024, 16), M.sprocket), [x, 0, 0]);
-  return g;
-};
+// ---------- parts ----------
+const CH = (len) => part('cchannel_35', { triangles: 5000, color: C.alu, clip: len });
+const STEEL = (len) => part('cchannel_35', { triangles: 5000, color: C.steel, clip: len });
+const OMNI = await part('omni4', {
+  triangles: 6000,
+  // The omni wheel STEP has no colours: small pieces are the rollers, the rest is the hub.
+  colorOf: (p) => (Math.max(...p.size) < 0.03 ? C.rollerGreen : C.hub)
+});
+const MOTOR = await part('motor', { triangles: 2000, error: 0.15 });
+const BRAIN = await part('brain', { triangles: 4000 });
+const COVER = await part('brain_cover', { triangles: 1500, color: C.cover, alpha: 0.3 });
+const BATTERY = await part('battery', { triangles: 3000, error: 0.06 });
+const SPROCKET = await part('tread_wheel', { triangles: 3000, color: C.green });
+const LINK = await part('tread_link', { triangles: 150, error: 0.05, color: C.tread });
+const TRACTION = await part('tread_traction', { triangles: 180, error: 0.05, color: C.tread });
+const GEAR84 = await part('gear84', { triangles: 6000, color: C.green });
+const GEAR12 = await part('gear12', { triangles: 600, color: C.black });
+const STANDOFF = await part('standoff2', { triangles: 200 });
 
 // ---------- robot ----------
-const robot = node('VEX Tower Takeover robot');
-const W = 0.19; // half-width to the outer frame rails
+const root = doc.createNode('VEX Tower Takeover robot');
+doc.createScene('scene').addChild(root);
 
-// Drivetrain: outer frame rails, front/back cross members, 4 omni wheels inside the rails, 4 motors.
-const drive = node('Drivetrain');
-robot.addChild(drive);
-for (const z of [W, -W]) cChannel(drive, 0.45, [0, 0.055, z], q(0, 0, 0), z > 0 ? -1 : 1);
-for (const x of [0.21, -0.21]) cChannel(drive, 0.4, [x, 0.04, 0], q(0, Math.PI / 2, 0));
-for (const x of [0.14, -0.14]) for (const z of [W - 0.035, -W + 0.035]) omni(drive, [x, 0.0508, z]);
-for (const x of [0.06, -0.06]) for (const z of [W - 0.09, -W + 0.09]) motor(drive, [x, 0.05, z], q(0, x > 0 ? 0 : Math.PI, 0));
+// STEP frames: C-channel runs along x with flanges towards -z; omni axle and motor shaft are y;
+// sprockets and gears turn about z; the brain lies in x-y.
+const ALONG_X = q();
+const ALONG_X_FLIP = q(Math.PI, 0, 0); // flanges towards +z
+const ALONG_Z = q(0, Math.PI / 2, 0);
+const UPRIGHT = q(0, 0, Math.PI / 2);
+const AXLE_Z = q(Math.PI / 2, 0, 0);
 
-// Ladder rest: two uprights mid-robot with a cross bar the ladder leans on.
-const rest = node('Ladder rest');
-robot.addChild(rest);
-for (const z of [0.12, -0.12]) cChannel(rest, 0.18, [0, 0.145, z], q(0, 0, Math.PI / 2), z > 0 ? -1 : 1);
-cChannel(rest, 0.26, [0, 0.235, 0], q(0, Math.PI / 2, 0));
+// Drivetrain: outer and inner rails, omni wheels between them, drive motors inside.
+const drive = group(root, 'Drivetrain');
+for (const z of [0.2, -0.2]) place(drive, await CH(0.445), [0, 0.045, z], z > 0 ? ALONG_X : ALONG_X_FLIP);
+for (const z of [0.115, -0.115]) place(drive, await CH(0.445), [0, 0.045, z], z > 0 ? ALONG_X_FLIP : ALONG_X);
+for (const x of [0.215, -0.215]) place(drive, await CH(0.42), [x, 0.03, 0], ALONG_Z);
+for (const x of [0.155, -0.155]) for (const z of [0.1575, -0.1575]) place(drive, OMNI, [x, 0.0508, z], AXLE_Z);
+for (const x of [0.105, -0.105]) for (const z of [0.08, -0.08]) place(drive, MOTOR, [x, 0.05, z], AXLE_Z);
+// Steel rails sticking out of the back along the floor.
+for (const z of [0.12, -0.12]) place(drive, await STEEL(0.3), [-0.37, 0.013, z], q(Math.PI / 2, 0, 0));
 
-// Ladder: two long rails with cross bars, hinged at the front and leaning back over the robot.
-// Cubes stack along it; tipping it upright (TRAY_DEG ~ 85) scores the stack.
-const ladder = node('Ladder', [0.17, 0.11, 0], q(0, 0, Math.PI - (TRAY_DEG * Math.PI) / 180));
-robot.addChild(ladder);
-const LL = 0.95;
-for (const z of [0.06, -0.06]) cChannel(ladder, LL, [LL / 2, 0, z], q(0, 0, 0), z > 0 ? 1 : -1);
-for (const x of [0.08, 0.33, 0.6, 0.88]) cChannel(ladder, 0.14, [x, 0.006, 0], q(0, Math.PI / 2, 0));
-// Zip-tie rungs the cubes slide on, and at each telescoping joint white rollers and crossed bands.
-const rung = mesh('rung', () => box(0.007, 0.005, 0.135), M.rung);
-for (let x = 0.03; x < LL; x += 0.035) put(ladder, rung, [x, -0.016, 0]);
-for (const x of [0.33, 0.64]) {
-  for (const dx of [-0.02, 0.02]) for (const z of [0.08, -0.08]) put(ladder, mesh('roller', () => cyl(0.01, 0.03, 12), M.nylon), [x + dx, 0, z]);
-  for (const a of [0.6, -0.6]) put(ladder, mesh('band', () => box(0.16, 0.003, 0.008), M.band), [x, -0.022, 0], q(0, a, 0));
+// Lift: 84T gears on the ladder pivot, driven by 12T pinions on two motors, between two uprights.
+const lift = group(root, 'Lift gear train');
+for (const z of [0.07, -0.07]) {
+  const s = Math.sign(z);
+  place(lift, GEAR84, [0.1, 0.105, z]);
+  place(lift, GEAR12, [0.1 - 0.0525, 0.105, z + s * 0.008]);
+  place(lift, MOTOR, [0.1 - 0.0525, 0.105, z + s * 0.03], AXLE_Z);
+  place(lift, await CH(0.2), [0.1, 0.1, z + s * 0.018], UPRIGHT);
 }
 
-// A few game cubes resting on the ladder (local -y is the upper face after the hinge rotation).
-const cubes = node('Game cubes');
-ladder.addChild(cubes);
-const CUBE = 0.14;
-[M.cubeGreen, M.cubeOrange, M.cubePurple, M.cubeOrange, M.cubeGreen].forEach((m, i) =>
-  put(cubes, mesh(`cube_${m.getName()}`, () => box(CUBE, CUBE, CUBE), m), [0.17 + i * (CUBE + 0.004), -CUBE / 2 - 0.004, 0])
+// Ladder rest: two short uprights mid-robot and a cross bar the ladder leans on.
+const rest = group(root, 'Ladder rest');
+for (const z of [0.1, -0.1]) place(rest, await CH(0.19), [-0.02, 0.13, z], UPRIGHT);
+place(rest, await CH(0.22), [-0.02, 0.23, 0], ALONG_Z);
+
+// Ladder: two telescoping sections hinged at the front, zip-tie rungs, rollers and bands at the joint.
+const ladder = group(root, 'Ladder', [0.12, 0.105, 0], q(0, 0, Math.PI - (LADDER_DEG * Math.PI) / 180));
+const L1 = 0.445;
+for (const z of [0.06, -0.06]) place(ladder, await CH(L1), [L1 / 2, 0, z], z > 0 ? ALONG_X_FLIP : ALONG_X);
+for (const z of [0.046, -0.046]) place(ladder, await CH(L1), [0.38 + L1 / 2, 0.004, z], z > 0 ? ALONG_X_FLIP : ALONG_X);
+const rung = shapeMesh('zip_tie', boxData(0.006, 0.004, 0.135), C.black, { rough: 0.6 });
+for (let x = 0.04; x < 0.8; x += 0.034) put(ladder, rung, [x, -0.016, 0]);
+const roller = shapeMesh('nylon_roller', cylData(0.009, 0.028), C.nylon, { rough: 0.6 });
+const band = shapeMesh('band', boxData(0.16, 0.003, 0.008), C.band, { rough: 0.8 });
+for (const x of [0.4, 0.62]) {
+  for (const dx of [-0.018, 0.018]) for (const z of [0.083, -0.083]) put(ladder, roller, [x + dx, 0, z]);
+  for (const a of [0.55, -0.55]) put(ladder, band, [x, -0.02, 0], q(0, a, 0));
+}
+place(ladder, await CH(0.13), [0.81, 0, 0], ALONG_Z);
+const cubes = group(ladder, 'Game cubes');
+[C.cubeGreen, C.cubeOrange, C.cubePurple].forEach((rgb, i) =>
+  put(cubes, cubeMesh(rgb), [0.17 + i * 0.143, -0.073, 0])
 );
 
-// Intakes: horizontal tread loops at the front corners grip cubes from the sides; motor on top.
-for (const [side, z] of [['left', 0.1], ['right', -0.1]]) {
-  const intake = node(`Intake (${side})`, [0.2, 0.09, z]);
-  robot.addChild(intake);
-  tread(intake, 0.18, [0, 0, 0], q(Math.PI / 2, 0, 0));
-  cChannel(intake, 0.22, [0.09, -0.025, 0], q(Math.PI / 2, 0, 0));
-  motor(intake, [0, 0.05, 0], q(0, 0, Math.PI / 2));
+// Intakes: a horizontal tank-tread loop at each front corner, motor standing on the rear sprocket.
+const R = 0.0254; // sprocket pitch radius
+const LOOP = 0.17;
+for (const [side, z] of [['left', 0.098], ['right', -0.098]]) {
+  const intake = group(root, `Intake (${side})`, [0.2, 0.085, z]);
+  for (const x of [0, LOOP]) place(intake, SPROCKET, [x, 0, 0], q(Math.PI / 2, 0, 0));
+  // Links around the loop (in the horizontal x-z plane), every third one with traction bumps.
+  const per = 2 * LOOP + 2 * Math.PI * R;
+  const n = Math.round(per / 0.0135);
+  for (let i = 0; i < n; i++) {
+    const s = (i / n) * per;
+    let pos, tan;
+    if (s < LOOP) (pos = [s, 0, R]), (tan = [1, 0, 0]);
+    else if (s < LOOP + Math.PI * R) {
+      const a = (s - LOOP) / R;
+      (pos = [LOOP + R * Math.sin(a), 0, R * Math.cos(a)]), (tan = [Math.cos(a), 0, -Math.sin(a)]);
+    } else if (s < 2 * LOOP + Math.PI * R) (pos = [2 * LOOP + Math.PI * R - s, 0, -R]), (tan = [-1, 0, 0]);
+    else {
+      const a = (s - 2 * LOOP - Math.PI * R) / R;
+      (pos = [-R * Math.sin(a), 0, -R * Math.cos(a)]), (tan = [-Math.cos(a), 0, Math.sin(a)]);
+    }
+    const t = new Vector3(...tan);
+    const up = new Vector3(0, 1, 0);
+    const out = new Vector3().crossVectors(up, t); // link thickness points out of the loop
+    const rot = new Quaternion().setFromRotationMatrix(new Matrix4().makeBasis(t, out, up)).toArray();
+    place(intake, i % 3 === 0 ? TRACTION : LINK, pos, rot);
+  }
+  place(intake, await CH(0.22), [LOOP / 2, -0.03, 0], q(Math.PI / 2, 0, 0));
+  place(intake, MOTOR, [0, 0.055, 0]);
 }
 
-// V5 brain lying flat under a clear cover, battery beside it.
-const brain = node('V5 brain & battery', [-0.13, 0.085, 0]);
-robot.addChild(brain);
-put(brain, mesh('brain', () => box(0.075, 0.02, 0.11), M.brain), [0, 0, 0]);
-put(brain, mesh('screen', () => box(0.05, 0.002, 0.075), M.screen), [0, 0.011, 0]);
-put(brain, mesh('brain_cover', () => box(0.09, 0.032, 0.125), M.cover), [0, 0.004, 0]);
-put(brain, mesh('battery', () => box(0.06, 0.03, 0.12), M.battery), [0.09, -0.01, 0.06]);
-
-// Steel rails sticking out of the back along the floor.
-for (const z of [0.12, -0.12]) cChannel(drive, 0.3, [-0.36, 0.013, z], q(Math.PI / 2, 0, 0), 1, M.steel);
-
-doc.createScene('scene').addChild(robot);
+// V5 brain lying flat under its clear cover, battery beside it; standoffs hold the cover.
+const brainGroup = group(root, 'V5 brain & battery', [-0.11, 0.08, 0.04]);
+place(brainGroup, BRAIN, [0, 0, 0], q(-Math.PI / 2, 0, 0));
+place(brainGroup, COVER, [0, 0.022, 0]);
+place(brainGroup, BATTERY, [0, -0.01, -0.13]);
+for (const [x, z] of [[0.06, 0.045], [-0.06, 0.045], [0.06, -0.045], [-0.06, -0.045]]) place(brainGroup, STANDOFF, [x, -0.015, z]);
 
 // ---------- write ----------
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder });
 await MeshoptEncoder.ready;
-await doc.transform(prune(), meshopt({ encoder: MeshoptEncoder, level: 'medium' }));
+await doc.transform(weld(), prune(), meshopt({ encoder: MeshoptEncoder, level: 'medium' }));
 mkdirSync(path.dirname(OUT), { recursive: true });
 await io.write(OUT, doc);
-console.log(`${OUT}: ${(statSync(OUT).size / 1024).toFixed(0)} KB`);
+let tris = 0;
+root.traverse((n) => n.getMesh()?.listPrimitives().forEach((p) => (tris += p.getIndices().getCount() / 3)));
+console.log(`${OUT}: ${(statSync(OUT).size / 1024).toFixed(0)} KB, ${Math.round(tris / 1000)}k triangles drawn`);

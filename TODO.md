@@ -4,9 +4,11 @@ Work happens on the `redesign` branch. Nothing here is live until it is merged i
 Search the repo for `TODO(Kenneth)` to find every placeholder in the data files.
 
 ## Done (redesign branch)
-- [x] Landing page: intro, tiles (background, projects, resume, transcript, contacts), journey workbench (era tabs + 3D viewport with explode slider and part isolation)
+- [x] Landing page: intro + compact tiles, and a full-width 3D showcase above the fold (all models in a row, auto-advancing timeline, explode slider for the PCB stack, part isolation)
+- [x] Eras named by setting (Competition robotics / Autonomous underwater vehicles / Embodied AI) with focus + also domain chips
 - [x] AUV 5.0 stack model (288 MB -> 0.9 MB) with layered explode
-- [x] FPGA tracker model from the EE2026 print STLs; rough VEX Tower Takeover robot rebuilt from photos
+- [x] FPGA tracker model from the EE2026 print STLs with SG90 / OV7670 detail
+- [x] VEX Tower Takeover robot assembled from VEX's official STEP parts (channels, omni wheels, V5 motors/brain/battery, 84T lift gears, tank tread)
 - [x] Dual Kinova Gen3 + Robotiq 2F-85 model with the real LUCID camera mount (0.16 MB)
 - [x] Achievements moved to About; "Right now" and featured projects removed from the landing page
 - [x] All About/landing content moved into `src/data/*.yaml`; LinkedIn-style role dropdowns; tech stack as logo grid
@@ -23,6 +25,10 @@ Search the repo for `TODO(Kenneth)` to find every placeholder in the data files.
 - [ ] Look through the branch with `npm run dev`
 - [ ] Check Cloudflare's build command is `npm run build` (not `astro build`), so image previews get made
 - [ ] Merge `redesign` into `main` and push
+
+## CAD files to download (yours; the sites block automated downloads)
+- [ ] Basys 3 STEP from Digilent's Basys 3 Resource Center (Additional Resources) -> save as `raw-assets/fpga/basys3.step`, then `npm run model:fpga`
+- [ ] LUCID Helios2 and Triton 3.2MP STEP from thinklucid.com Downloads Hub (needs a free account) -> `raw-assets/kinova/lucid/`, then tell Claude to fit them onto the mount
 
 ## Content (yours)
 ### New

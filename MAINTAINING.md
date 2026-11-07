@@ -33,7 +33,7 @@ git add -A && git commit -m "..." && git push    # publish
 | Jobs and roles (dropdowns)                | `src/data/experience.yaml`            |
 | Education                                 | `src/data/education.yaml`             |
 | Tech stack logos                          | `src/data/skills.yaml`                |
-| Landing page journey (tabs + 3D models)   | `src/data/journey.yaml`               |
+| Landing page 3D showcase + timeline       | `src/data/journey.yaml`               |
 | A project                                 | `src/content/projects/<name>.mdx`     |
 | Resume / transcript                       | replace `public/docs/resume.pdf` / `transcript.pdf` |
 
@@ -63,7 +63,7 @@ draft: true           # hide from the live site until it's ready
 
 4. Write the rest in Markdown. `## Headings` appear in the page's Contents menu automatically.
 
-To link it from the landing-page journey, add its file name (without `.mdx`) to an era's
+To link it from the landing-page showcase, add its file name (without `.mdx`) to an era's
 `projects:` list in `src/data/journey.yaml`.
 
 ## Images, videos, PDFs
@@ -87,8 +87,10 @@ To link it from the landing-page journey, add its file name (without `.mdx`) to 
 
 ## 3D models
 
-The landing page's journey section is a small CAD-style viewport: visitors pick an era, drag to
-rotate, pull the explode slider, and hover a part name to isolate it. To add or replace a model:
+The landing page's showcase lines up every model from `journey.yaml` in one 3D scene, in timeline
+order. It moves to the next model every few seconds; visitors can click the timeline, drag to rotate,
+pull the explode slider (where enabled) and hover a part name to isolate it. Each era also lists
+`focus:` and `also:` domains as chips. To add or replace a model:
 
 1. In SOLIDWORKS: File → Save As → `.glb`. Save it in `raw-assets/` (not uploaded; files there are
    too big for the web).
@@ -100,7 +102,7 @@ rotate, pull the explode slider, and hover a part name to isolate it. To add or 
 
    A 300 MB export usually comes out under 1 MB. If small parts look broken, add
    `--ratio 0.2` (more detail, bigger file). Parts smaller than 2.5 mm are dropped (`--min-size`).
-3. Add it to an era in `src/data/journey.yaml` (an era can have several; buttons switch between them):
+3. Add it to an era in `src/data/journey.yaml` (an era can have several):
 
    ```yaml
    models:
@@ -117,8 +119,12 @@ Three models are built by scripts instead of exported:
   in `raw-assets/kinova/lucid/`. Arm pose: `JOINT_DEG` in `scripts/build-kinova-model.mjs`.
 - `npm run model:fpga`: the FPGA tracker from the EE2026 print STLs in `raw-assets/fpga/`, with
   simple stand-ins for the Basys 3, servos and camera.
-- `npm run model:vex`: the 2020 VEX robot, rebuilt from simple shapes in `scripts/build-vex-model.mjs`.
-  Ladder angle: `TRAY_DEG` (about 85 = tipped up to score).
+- `npm run model:vex`: the 2020 VEX robot, assembled from VEX's official STEP parts in
+  `raw-assets/vex/`. Ladder angle: `LADDER_DEG` (about 85 = tipped up to score).
+
+Manufacturer CAD usually comes as STEP (.step/.stp). `scripts/lib/step.mjs` turns STEP into
+lightweight meshes (with a triangle budget) for the build scripts above. The FPGA script picks up
+`raw-assets/fpga/basys3.step` automatically when it is there.
 
 ## Commands
 

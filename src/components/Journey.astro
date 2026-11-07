@@ -1,38 +1,65 @@
 ---
-// Landing-page "workbench": era tabs on one side, a 3D viewport on the other.
-// Content comes from src/data/journey.yaml. Nothing here is tied to page scrolling.
+// Landing-page showcase: one wide 3D stage with every model from src/data/journey.yaml lined up in
+// timeline order. The active model sits in front in full colour; the others wait in the background,
+// smaller and greyed out. It advances on its own; the timeline underneath jumps between models.
 import { getData, getProjects } from '../lib/content';
 
-const chapters = await getData('journey');
+const eras = await getData('journey');
 const projects = await getProjects();
 const bySlug = new Map(projects.map((p) => [p.slug, p]));
-const eras = chapters.map((c) => c.models);
+const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })));
 ---
 
-<div class="workbench" data-workbench data-eras={JSON.stringify(eras)}>
-  <div class="wb-side">
-    <div class="wb-tabs" role="tablist" aria-label="Journey">
-      {chapters.map((c, i) => (
-        <button
-          class="wb-tab"
-          type="button"
-          role="tab"
-          id={`wb-tab-${i}`}
-          aria-controls={`wb-panel-${i}`}
-          aria-selected={i === 0 ? 'true' : 'false'}
-          tabindex={i === 0 ? 0 : -1}
-        >
-          <span class="wb-tab-years mono">{c.years}</span>
-          <span class="wb-tab-title">{c.title}</span>
-        </button>
-      ))}
-    </div>
+<div class="showcase" data-showcase data-models={JSON.stringify(models)}>
+  <div class="sc-viewport">
+    <canvas aria-label="3D models of my projects. Drag to rotate."></canvas>
+    <p class="wb-hud wb-hud-label mono" data-sc-label></p>
+    <p class="wb-hud wb-hud-stats mono" data-sc-stats></p>
+    <p class="wb-hud wb-hud-hint mono">drag to rotate</p>
+    <p class="wb-status mono muted" data-sc-status>loading 3D models…</p>
+  </div>
 
-    {chapters.map((c, i) => {
-      const linked = c.projects.map((s) => bySlug.get(s)).filter(Boolean);
+  <ol class="sc-timeline" aria-label="Timeline">
+    {eras.map((era, e) => (
+      <li class="sc-era">
+        <span class="sc-era-head">
+          <span class="sc-era-years mono">{era.years}</span>
+          <span class="sc-era-title">{era.title}</span>
+        </span>
+        <div class="sc-ticks">
+          {models.map((m, i) =>
+            m.era === e ? (
+              <button class="sc-tick" type="button" data-sc-tick={i} aria-pressed={i === 0 ? 'true' : 'false'}>
+                <span class="sc-tick-bar"><span class="sc-tick-fill"></span></span>
+                <span class="sc-tick-label">{m.label ?? era.title}</span>
+              </button>
+            ) : null
+          )}
+        </div>
+      </li>
+    ))}
+  </ol>
+
+  <div class="sc-details">
+    {eras.map((era, e) => {
+      const linked = era.projects.map((s) => bySlug.get(s)).filter(Boolean);
       return (
-        <div class="wb-panel" role="tabpanel" id={`wb-panel-${i}`} aria-labelledby={`wb-tab-${i}`} hidden={i !== 0}>
-          <p class="muted">{c.text}</p>
+        <div class="sc-panel" data-sc-panel={e} hidden={e !== 0}>
+          <div>
+            <p class="wb-tab-years mono">{era.years}</p>
+            <h2 class="sc-title">{era.title}</h2>
+            {era.focus.length || era.also.length ? (
+              <ul class="sc-domains" aria-label="Domains">
+                {era.focus.map((d) => (
+                  <li class="sc-domain is-focus">{d}</li>
+                ))}
+                {era.also.map((d) => (
+                  <li class="sc-domain">{d}</li>
+                ))}
+              </ul>
+            ) : null}
+            <p class="muted">{era.text}</p>
+          </div>
           {linked.length ? (
             <ul class="chapter-links">
               {linked.map((p) => (
@@ -48,149 +75,125 @@ const eras = chapters.map((c) => c.models);
         </div>
       );
     })}
-  </div>
-
-  <div class="wb-stage">
-    <div class="wb-viewport">
-      <canvas aria-label="3D model viewer. Drag to rotate."></canvas>
-      <p class="wb-hud wb-hud-label mono" data-wb-label></p>
-      <p class="wb-hud wb-hud-stats mono" data-wb-stats></p>
-      <p class="wb-hud wb-hud-hint mono">drag to rotate</p>
-      <p class="wb-status mono muted" data-wb-status>loading 3D model…</p>
-    </div>
-
     <div class="wb-tools">
-      <div class="wb-models" data-wb-models></div>
-      <label class="wb-explode" data-wb-explode hidden>
+      <label class="wb-explode" data-sc-explode hidden>
         <span class="mono">explode</span>
         <input type="range" min="0" max="100" value="0" />
       </label>
-      <ul class="wb-parts" data-wb-parts aria-label="Parts (hover to isolate)"></ul>
+      <ul class="wb-parts" data-sc-parts aria-label="Parts (hover to isolate)"></ul>
     </div>
   </div>
 </div>
 
 <script>
-  type ModelSpec = { src: string; label?: string; explode: boolean; tilt: number };
+  type ModelSpec = { src: string; label?: string; explode: boolean; tilt: number; era: number };
 
-  const wb = document.querySelector<HTMLElement>('[data-workbench]');
-  if (wb) setup(wb);
+  const ADVANCE_MS = 9000; // time on each model
+  const RESUME_MS = 8000; // pause after the visitor interacts
 
-  function setup(wb: HTMLElement) {
-    const eras: ModelSpec[][] = JSON.parse(wb.dataset.eras ?? '[]');
-    const tabs = Array.from(wb.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
-    const panels = Array.from(wb.querySelectorAll<HTMLElement>('[role="tabpanel"]'));
-    const modelsEl = wb.querySelector<HTMLElement>('[data-wb-models]')!;
-    const explodeEl = wb.querySelector<HTMLElement>('[data-wb-explode]')!;
+  const root = document.querySelector<HTMLElement>('[data-showcase]');
+  if (root) setup(root);
+
+  function setup(root: HTMLElement) {
+    const specs: ModelSpec[] = JSON.parse(root.dataset.models ?? '[]');
+    const canvas = root.querySelector('canvas')!;
+    const ticks = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-sc-tick]'));
+    const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-sc-panel]'));
+    const labelEl = root.querySelector<HTMLElement>('[data-sc-label]')!;
+    const statsEl = root.querySelector<HTMLElement>('[data-sc-stats]')!;
+    const statusEl = root.querySelector<HTMLElement>('[data-sc-status]')!;
+    const explodeEl = root.querySelector<HTMLElement>('[data-sc-explode]')!;
     const slider = explodeEl.querySelector('input')!;
-    const partsEl = wb.querySelector<HTMLElement>('[data-wb-parts]')!;
-    const labelEl = wb.querySelector<HTMLElement>('[data-wb-label]')!;
-    const statsEl = wb.querySelector<HTMLElement>('[data-wb-stats]')!;
-    const statusEl = wb.querySelector<HTMLElement>('[data-wb-status]')!;
-    const canvas = wb.querySelector('canvas')!;
+    const partsEl = root.querySelector<HTMLElement>('[data-sc-parts]')!;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    let active = 0;
     let engine: Awaited<ReturnType<typeof createEngine>> | null = null;
-    let current: ModelSpec | null = null;
+    let visible = false;
+    let elapsed = 0; // ms spent on the current model
+    let pausedUntil = 0;
+    let hovering = false;
 
-    const show = async (spec: ModelSpec | undefined) => {
-      current = spec ?? null;
-      labelEl.textContent = spec?.label ?? '';
-      explodeEl.hidden = !spec?.explode;
-      slider.value = '0';
+    const pause = () => (pausedUntil = performance.now() + RESUME_MS);
+
+    const renderParts = () => {
       partsEl.replaceChildren();
-      statsEl.textContent = '';
-      if (!spec || !engine) return;
-      statusEl.hidden = false;
-      statusEl.textContent = 'loading 3D model…';
-      try {
-        const info = await engine.show(spec);
-        if (current !== spec) return;
-        statusEl.hidden = true;
-        statsEl.textContent = `${Math.round(info.triangles / 1000)}k tris · ${info.parts.length} parts`;
-        for (const name of info.parts) {
-          const li = document.createElement('li');
-          const btn = document.createElement('button');
-          btn.type = 'button';
-          btn.textContent = name;
-          const on = () => engine?.highlight(name);
-          const off = () => engine?.highlight(null);
-          btn.addEventListener('mouseenter', on);
-          btn.addEventListener('focus', on);
-          btn.addEventListener('mouseleave', off);
-          btn.addEventListener('blur', off);
-          li.append(btn);
-          partsEl.append(li);
-        }
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = '3D preview unavailable';
+      for (const name of engine?.partNames(active) ?? []) {
+        const li = document.createElement('li');
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = name;
+        const on = () => (pause(), engine?.highlight(name));
+        const off = () => engine?.highlight(null);
+        b.addEventListener('mouseenter', on);
+        b.addEventListener('focus', on);
+        b.addEventListener('mouseleave', off);
+        b.addEventListener('blur', off);
+        li.append(b);
+        partsEl.append(li);
       }
+      statsEl.textContent = engine?.stats(active) ?? '';
     };
 
-    const selectModel = (era: number, index: number) => {
-      const list = eras[era] ?? [];
-      modelsEl.replaceChildren(
-        ...(list.length > 1
-          ? list.map((m, k) => {
-              const b = document.createElement('button');
-              b.type = 'button';
-              b.className = 'wb-chip mono';
-              b.textContent = m.label ?? m.src;
-              b.setAttribute('aria-pressed', String(k === index));
-              b.addEventListener('click', () => selectModel(era, k));
-              return b;
-            })
-          : [])
+    const select = (i: number) => {
+      active = (i + specs.length) % specs.length;
+      elapsed = 0;
+      ticks.forEach((t, k) => t.setAttribute('aria-pressed', String(k === active)));
+      panels.forEach((p) => (p.hidden = Number(p.dataset.scPanel) !== specs[active].era));
+      labelEl.textContent = specs[active].label ?? '';
+      explodeEl.hidden = !specs[active].explode;
+      slider.value = '0';
+      engine?.focus(active);
+      renderParts();
+    };
+
+    ticks.forEach((t) => t.addEventListener('click', () => (select(Number(t.dataset.scTick)), pause())));
+    slider.addEventListener('input', () => (pause(), engine?.setExplode(Number(slider.value) / 100)));
+    canvas.addEventListener('pointerenter', () => (hovering = true));
+    canvas.addEventListener('pointerleave', () => ((hovering = false), pause()));
+    canvas.addEventListener('pointerdown', pause);
+
+    // Advance on a timer while the stage is on screen and nobody is interacting with it.
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = now - last;
+      last = now;
+      const running = visible && engine && !reduceMotion && !hovering && now > pausedUntil;
+      if (running) {
+        elapsed += dt;
+        if (elapsed >= ADVANCE_MS) select(active + 1);
+      }
+      ticks.forEach((t, k) =>
+        t.querySelector<HTMLElement>('.sc-tick-fill')!.style.setProperty('--p', k === active ? String(Math.min(1, elapsed / ADVANCE_MS)) : '0')
       );
-      show(list[index]);
+      requestAnimationFrame(tick);
     };
+    requestAnimationFrame(tick);
 
-    const selectEra = (i: number, focus = false) => {
-      tabs.forEach((t, k) => {
-        t.setAttribute('aria-selected', String(k === i));
-        t.tabIndex = k === i ? 0 : -1;
-      });
-      panels.forEach((p, k) => (p.hidden = k !== i));
-      if (focus) tabs[i].focus();
-      selectModel(i, 0);
-    };
-
-    tabs.forEach((t, i) => {
-      t.addEventListener('click', () => selectEra(i));
-      t.addEventListener('keydown', (e) => {
-        const step = ['ArrowDown', 'ArrowRight'].includes(e.key) ? 1 : ['ArrowUp', 'ArrowLeft'].includes(e.key) ? -1 : 0;
-        if (!step) return;
-        e.preventDefault();
-        selectEra((i + step + tabs.length) % tabs.length, true);
-      });
-    });
-
-    slider.addEventListener('input', () => engine?.setExplode(Number(slider.value) / 100));
-
-    // Only download three.js and the first model when the workbench is about to be seen.
     const io = new IntersectionObserver(
-      async (entries) => {
-        for (const entry of entries) {
-          engine?.setVisible(entry.isIntersecting);
-          if (entry.isIntersecting && !engine) {
-            try {
-              engine = await createEngine(canvas);
-              engine.setVisible(true);
-              const era = Math.max(0, tabs.findIndex((t) => t.getAttribute('aria-selected') === 'true'));
-              selectModel(era, 0);
-            } catch (err) {
-              console.error(err);
-              statusEl.textContent = '3D preview unavailable';
-            }
+      async ([entry]) => {
+        visible = entry.isIntersecting;
+        engine?.setVisible(visible);
+        if (visible && !engine) {
+          try {
+            engine = await createEngine(canvas, specs, (i) => {
+              if (i === active) renderParts();
+            });
+            engine.setVisible(true);
+            statusEl.hidden = true;
+            select(active);
+          } catch (err) {
+            console.error(err);
+            statusEl.textContent = '3D preview unavailable';
           }
         }
       },
-      { rootMargin: '300px 0px' }
+      { rootMargin: '200px 0px' }
     );
-    io.observe(wb);
+    io.observe(root);
   }
 
-  async function createEngine(canvas: HTMLCanvasElement) {
+  async function createEngine(canvas: HTMLCanvasElement, specs: ModelSpec[], onLoaded: (i: number) => void) {
     const THREE = await import('three');
     const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
     const { MeshoptDecoder } = await import('three/examples/jsm/libs/meshopt_decoder.module.js');
@@ -204,7 +207,6 @@ const eras = chapters.map((c) => c.models);
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
     const scene = new THREE.Scene();
     scene.add(new THREE.HemisphereLight(0xffffff, 0x3a4252, 2.4));
     const sun = new THREE.DirectionalLight(0xffffff, 2.2);
@@ -213,26 +215,29 @@ const eras = chapters.map((c) => c.models);
     const rim = new THREE.DirectionalLight(0xb9a6ff, 1.0);
     rim.position.set(-1.5, 0.5, -1);
     scene.add(rim);
-    const camera = new THREE.PerspectiveCamera(30, 1, 0.001, 100);
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.01, 100);
 
-    const loader = new GLTFLoader();
-    loader.setMeshoptDecoder(MeshoptDecoder);
+    // Every model is scaled to the same size (radius 1) and placed in a row, SPACING apart.
+    const SPACING = 2.4;
+    const FLOOR = -0.85;
+    const BACK = { scale: 0.55, z: -1.3 };
 
-    type Part = { name: string; node: Object3D; home: Vector3; offset: Vector3; meshes: Mesh[] };
-    type Loaded = {
-      pivot: Object3D;
-      grid: Object3D;
-      parts: Part[];
-      names: string[];
-      size: Vector3;
-      r0: number;
-      r1: number;
-      triangles: number;
-      explodable: boolean;
-    };
+    // Floor grid: a strip under the row of models (not a huge square, which gets busy at the back).
+    const CELL = 0.4;
+    const x0 = -SPACING * 1.5;
+    const x1 = SPACING * (specs.length + 0.5);
+    const z0 = -3.2;
+    const z1 = 1.6;
+    const lines: number[] = [];
+    for (let x = x0; x <= x1 + 1e-6; x += CELL) lines.push(x, 0, z0, x, 0, z1);
+    for (let z = z0; z <= z1 + 1e-6; z += CELL) lines.push(x0, 0, z, x1, 0, z);
+    const gridGeo = new THREE.BufferGeometry();
+    gridGeo.setAttribute('position', new THREE.Float32BufferAttribute(lines, 3));
+    const grid = new THREE.LineSegments(gridGeo, new THREE.LineBasicMaterial({ color: 0x8892a6, transparent: true, opacity: 0.14 }));
+    grid.position.y = FLOOR;
+    scene.add(grid);
 
-    // CAD node names -> readable labels, e.g. "AUV5_0-1_Sensors_Board" -> "Sensors Board" and
-    // "AUV5_ESC_Adaptor_Boardstep-3" -> "ESC Adaptor Board" (three.js strips the dot from ".step").
+    // CAD node names -> readable labels ("AUV5_0-1_Sensors_Board" -> "Sensors Board").
     const words = (raw: string) =>
       raw
         .replace(/\.?(step|stp|sldprt|sldasm)([-_ ]?\d+)?$/i, '')
@@ -242,7 +247,6 @@ const eras = chapters.map((c) => c.models);
         .split(/\s+/);
     const prettyNames = (raws: string[]) => {
       const split = raws.map(words);
-      // A project prefix shared by most parts (like "AUV5") is dropped, as are part numbers like "0-1".
       const first = split.map((w) => w[0]);
       const prefix = first.find((f) => /\d/.test(f) && first.filter((x) => x === f).length >= raws.length / 2);
       return split.map((w) => {
@@ -253,7 +257,6 @@ const eras = chapters.map((c) => c.models);
         return name.charAt(0).toUpperCase() + name.slice(1);
       });
     };
-
     const boxGap = (a: Box3, b: Box3) =>
       Math.hypot(
         Math.max(0, a.min.x - b.max.x, b.min.x - a.max.x),
@@ -261,7 +264,25 @@ const eras = chapters.map((c) => c.models);
         Math.max(0, a.min.z - b.max.z, b.min.z - a.max.z)
       );
 
-    async function load(spec: ModelSpec): Promise<Loaded> {
+    type Part = { name: string; node: Object3D; home: Vector3; offset: Vector3; meshes: Mesh[] };
+    type Slot = {
+      holder: Object3D; // position and scale in the row
+      spinner: Object3D; // turns about the model's centre
+      parts: Part[];
+      names: string[];
+      triangles: number;
+      grow: number; // radius of the fully exploded model, relative to assembled
+      focus: number; // 1 = active (front, full size), 0 = background
+      ghost: number;
+      yaw: number;
+    };
+    const slots: (Slot | null)[] = specs.map(() => null);
+    const loader = new GLTFLoader();
+    loader.setMeshoptDecoder(MeshoptDecoder);
+    let activeIndex = 0;
+
+    async function load(i: number) {
+      const spec = specs[i];
       const gltf = await loader.loadAsync(spec.src);
       const model = gltf.scene;
       let triangles = 0;
@@ -270,20 +291,23 @@ const eras = chapters.map((c) => c.models);
         if (!mesh.isMesh) return;
         // CAD exports have no normals (smaller files); rebuild them with sharp edges kept.
         if (!mesh.geometry.getAttribute('normal')) mesh.geometry = toCreasedNormals(mesh.geometry, Math.PI / 6);
-        // Own material per mesh so one part can be faded without fading the others.
+        // Own material per mesh so models and parts can be greyed out independently.
         mesh.material = (mesh.material as Material).clone();
-        const mat = mesh.material as Material;
-        mat.userData.color = mat.color.clone();
+        (mesh.material as Material).userData.color = (mesh.material as Material).color.clone();
         triangles += mesh.geometry.getAttribute('position').count / 3;
       });
 
+      // Centre the model and scale it to radius 1.
       const box0 = new THREE.Box3().setFromObject(model);
       const centre = box0.getCenter(new THREE.Vector3());
+      const radius = box0.getBoundingSphere(new THREE.Sphere()).radius;
       const size = box0.getSize(new THREE.Vector3());
       model.position.sub(centre);
-      const pivot = new THREE.Group();
-      pivot.add(model);
       model.updateMatrixWorld(true);
+      const spinner = new THREE.Group();
+      spinner.add(model);
+      spinner.scale.setScalar(1 / radius);
+      spinner.position.y = FLOOR + size.y / 2 / radius; // stand on the floor
 
       // Parts are the children of the first node that branches out.
       let assembly: Object3D = model;
@@ -297,89 +321,78 @@ const eras = chapters.map((c) => c.models);
         return { node, box, small: s.x * s.y * s.z < volume * 0.002, meshes, offset: new THREE.Vector3(), home: node.position.clone() };
       });
       const boards = raw.filter((x) => !x.small);
-      const lowest = box0.min.y - centre.y;
-
       if (spec.explode) {
-        // Boards whose bottoms are at about the same height form a layer; layers rise in steps.
+        // Boards with bottoms at about the same height form a layer; layers rise in steps.
+        // Boards at the sides slide out, and lift off the big base plates they stand on.
         const gap = size.y * 0.04;
         const bottoms = [...new Set(boards.map((x) => x.box.min.y))].sort((a, b) => a - b);
         const layerOf = new Map<number, number>();
         let layer = 0;
-        bottoms.forEach((y, i) => {
-          if (i > 0 && y - bottoms[i - 1] > gap) layer++;
+        bottoms.forEach((y, k) => {
+          if (k > 0 && y - bottoms[k - 1] > gap) layer++;
           layerOf.set(y, layer);
         });
-        const mid = new THREE.Vector3(0, 0, 0);
         const step = size.y * 0.34;
         for (const b of boards) {
           const c = b.box.getCenter(new THREE.Vector3());
           const s = b.box.getSize(new THREE.Vector3());
-          const layerIndex = layerOf.get(b.box.min.y)!;
-          // Big plates in the bottom layer stay down; boards standing on them at the sides lift off.
-          const isBasePlate = layerIndex === 0 && s.x * s.z > size.x * size.z * 0.08;
-          const dx = c.x - mid.x;
-          const outer = Math.abs(dx) > size.x * 0.3;
-          b.offset.set(
-            outer ? Math.sign(dx) * size.x * 0.4 : dx * 0.3,
-            layerIndex * step + (outer && !isBasePlate ? step * 0.6 : 0),
-            (c.z - mid.z) * 0.7
-          );
+          const li = layerOf.get(b.box.min.y)!;
+          const isBasePlate = li === 0 && s.x * s.z > size.x * size.z * 0.08;
+          const outer = Math.abs(c.x) > size.x * 0.3;
+          b.offset.set(outer ? Math.sign(c.x) * size.x * 0.4 : c.x * 0.3, li * step + (outer && !isBasePlate ? step * 0.6 : 0), c.z * 0.7);
         }
       }
       // Small hardware (standoffs, nuts, brackets) belongs to the nearest board.
       const labels = prettyNames(raw.map((x) => x.node.name));
       const labelOf = (node: Object3D) => labels[raw.findIndex((x) => x.node === node)];
-      const parts: Part[] = [];
-      for (const b of boards) parts.push({ name: labelOf(b.node), node: b.node, home: b.home, offset: b.offset, meshes: b.meshes });
+      const parts: Part[] = boards.map((b) => ({ name: labelOf(b.node), node: b.node, home: b.home, offset: b.offset, meshes: b.meshes }));
       for (const s of raw.filter((x) => x.small)) {
         const host = boards.reduce((best, b) => (boxGap(s.box, b.box) < boxGap(s.box, best.box) ? b : best), boards[0]);
         const owner = parts.find((p) => p.node === host?.node);
         parts.push({ name: owner?.name ?? labelOf(s.node), node: s.node, home: s.home, offset: host?.offset.clone() ?? s.offset, meshes: s.meshes });
       }
-
-      const sphereAt = (e: number) => {
-        parts.forEach((p) => p.node.position.copy(p.home).addScaledVector(p.offset, e));
-        return new THREE.Box3().setFromObject(model).getBoundingSphere(new THREE.Sphere()).radius;
-      };
-      const r0 = sphereAt(0);
-      const r1 = spec.explode ? sphereAt(1) : r0;
-      sphereAt(0);
-
-      // A faint floor grid under the model, like a CAD viewport.
-      const span = Math.max(size.x, size.z) * 2.2;
-      const grid = new THREE.GridHelper(span, 16, 0x8892a6, 0x8892a6);
-      const gridMat = grid.material as InstanceType<typeof THREE.LineBasicMaterial>;
-      gridMat.transparent = true;
-      gridMat.opacity = 0.18;
-      grid.position.y = lowest - size.y * 0.02;
-      pivot.add(grid);
-
+      let grow = 1;
+      if (spec.explode) {
+        parts.forEach((p) => p.node.position.copy(p.home).add(p.offset));
+        grow = new THREE.Box3().setFromObject(model).getBoundingSphere(new THREE.Sphere()).radius / radius;
+        parts.forEach((p) => p.node.position.copy(p.home));
+      }
       const names = [...new Set(parts.map((p) => p.name))];
-      const counts = new Map(names.map((n) => [n, new Set(parts.filter((p) => p.name === n && boards.some((b) => b.node === p.node)).map((p) => p.node)).size]));
-      return {
-        pivot,
-        grid,
+      const count = (n: string) => parts.filter((p) => p.name === n && boards.some((b) => b.node === p.node)).length;
+
+      const holder = new THREE.Group();
+      holder.add(spinner);
+      holder.position.x = i * SPACING;
+      scene.add(holder);
+      const isActive = i === activeIndex;
+      slots[i] = {
+        holder,
+        spinner,
         parts,
-        names: names.map((n) => (counts.get(n)! > 1 ? `${n} ×${counts.get(n)}` : n)),
-        size,
-        r0,
-        r1,
+        names: names.map((n) => (count(n) > 1 ? `${n} ×${count(n)}` : n)),
         triangles,
-        explodable: spec.explode
+        grow,
+        focus: isActive ? 1 : 0,
+        ghost: isActive ? 0 : 1,
+        yaw: -0.6
       };
+      onLoaded(i);
     }
 
-    const cache = new Map<string, Promise<Loaded>>();
-    let active: Loaded | null = null;
-    let tilt = 0.35;
+    let camX = 0;
     let explodeTarget = 0;
     let explode = 0;
     let highlighted: string | null = null;
     let lift = 0;
-    let yaw = -0.6;
-    let visible = false;
+    let tilt = 0.32;
     let dragging = false;
+    let visible = false;
     let last = performance.now();
+    let ghostColor = new THREE.Color();
+    const refreshGhost = () =>
+      (ghostColor = new THREE.Color(getComputedStyle(document.body).backgroundColor).lerp(new THREE.Color(0x8892a6), 0.3));
+    refreshGhost();
+    new MutationObserver(refreshGhost).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
     const resize = () => {
       const w = canvas.clientWidth;
@@ -391,7 +404,7 @@ const eras = chapters.map((c) => c.models);
     new ResizeObserver(resize).observe(canvas);
     resize();
 
-    // Drag to rotate. Touch only turns left/right so the page still scrolls vertically.
+    // Drag turns the active model. Touch only turns left/right so the page still scrolls.
     let px: number | null = null;
     let py = 0;
     canvas.addEventListener('pointerdown', (e) => {
@@ -402,79 +415,90 @@ const eras = chapters.map((c) => c.models);
     });
     canvas.addEventListener('pointermove', (e) => {
       if (px === null) return;
-      yaw += (e.clientX - px) * 0.01;
-      if (e.pointerType === 'mouse') tilt = Math.min(1.2, Math.max(0.05, tilt + (e.clientY - py) * 0.006));
+      const s = slots[activeIndex];
+      if (s) s.yaw += (e.clientX - px) * 0.01;
+      if (e.pointerType === 'mouse') tilt = Math.min(1.1, Math.max(0.05, tilt + (e.clientY - py) * 0.005));
       px = e.clientX;
       py = e.clientY;
     });
-    const release = () => {
-      px = null;
-      dragging = false;
-    };
+    const release = () => ((px = null), (dragging = false));
     canvas.addEventListener('pointerup', release);
     canvas.addEventListener('pointercancel', release);
-
-    // Parts not being hovered turn into solid "ghosts" close to the page background.
-    // (Fading with transparency doesn't work here: dense assemblies stack up the faded layers.)
-    const applyHighlight = () => {
-      if (!active) return;
-      const ghost = new THREE.Color(getComputedStyle(document.body).backgroundColor).lerp(new THREE.Color(0x8892a6), 0.3);
-      for (const p of active.parts) {
-        const dim = highlighted !== null && p.name !== highlighted;
-        for (const m of p.meshes) {
-          const mat = m.material as Material;
-          mat.color.copy(mat.userData.color);
-          if (dim) mat.color.lerp(ghost, 0.85);
-        }
-      }
-    };
 
     const frame = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      if (active && visible) {
+      if (visible) {
+        const k = Math.min(1, dt * 4);
+        camX += (activeIndex * SPACING - camX) * k;
         explode += (explodeTarget - explode) * Math.min(1, dt * 8);
         lift += ((highlighted ? 1 : 0) - lift) * Math.min(1, dt * 8);
-        const up = active.size.y * 0.18 * lift;
-        for (const p of active.parts) {
-          p.node.position.copy(p.home).addScaledVector(p.offset, explode);
-          if (highlighted && p.name === highlighted) p.node.position.y += up;
+        for (const [i, s] of slots.entries()) {
+          if (!s) continue;
+          const isActive = i === activeIndex;
+          s.focus += ((isActive ? 1 : 0) - s.focus) * k;
+          s.ghost += ((isActive ? 0 : 1) - s.ghost) * k;
+          const sc = BACK.scale + (1 - BACK.scale) * s.focus;
+          s.holder.scale.setScalar(sc);
+          s.holder.position.set(i * SPACING, FLOOR * (1 - sc), BACK.z * (1 - s.focus)); // stays on the floor while scaling
+          if (isActive && !dragging && !reduceMotion && !highlighted) s.yaw += dt * 0.2;
+          s.spinner.rotation.y = s.yaw;
+          // Explode and part highlight only apply to the active model.
+          const e = isActive ? explode : 0;
+          for (const p of s.parts) {
+            p.node.position.copy(p.home).addScaledVector(p.offset, e);
+            const lifted = isActive && highlighted !== null && p.name === highlighted;
+            if (lifted) p.node.position.y += lift * 0.15 / s.spinner.scale.x;
+            const g = Math.max(s.ghost, isActive && highlighted !== null && !lifted ? 1 : 0) * 0.9;
+            for (const m of p.meshes) {
+              const mat = m.material as Material;
+              mat.color.copy(mat.userData.color).lerp(ghostColor, g);
+            }
+          }
         }
-        if (!dragging && !reduceMotion && !highlighted) yaw += dt * 0.18;
-        active.pivot.rotation.y = yaw;
-
-        const radius = active.r0 + (active.r1 - active.r0) * explode;
+        const a = slots[activeIndex];
+        const grow = a ? 1 + (a.grow - 1) * explode : 1;
         const fov = (camera.fov * Math.PI) / 180;
-        let dist = (radius / Math.sin(fov / 2)) * 0.9;
-        if (camera.aspect < 1) dist /= Math.max(camera.aspect, 0.55);
-        const lookY = (active.r1 - active.r0) * explode * 0.35;
-        camera.position.set(0, lookY + Math.sin(tilt) * dist, Math.cos(tilt) * dist);
-        camera.lookAt(0, lookY, 0);
+        let dist = (grow / Math.sin(fov / 2)) * 1.05;
+        if (camera.aspect < 1.2) dist /= Math.max(camera.aspect / 1.2, 0.5);
+        const lookY = FLOOR + 0.85 * grow;
+        camera.position.set(camX, lookY + Math.sin(tilt) * dist, Math.cos(tilt) * dist);
+        camera.lookAt(camX, lookY, -0.15);
         renderer.render(scene, camera);
       }
       requestAnimationFrame(frame);
     };
     requestAnimationFrame(frame);
 
+    // The first model loads straight away, the rest one by one behind it.
+    await load(0);
+    (async () => {
+      for (let i = 1; i < specs.length; i++) {
+        try {
+          await load(i);
+        } catch (err) {
+          console.error(err);
+        }
+      }
+    })();
+
     return {
-      async show(spec: ModelSpec) {
-        if (!cache.has(spec.src)) cache.set(spec.src, load(spec));
-        const next = await cache.get(spec.src)!;
-        if (active) scene.remove(active.pivot);
-        active = next;
-        scene.add(next.pivot);
-        tilt = (spec.tilt * Math.PI) / 180;
-        explodeTarget = explode = 0;
+      focus(i: number) {
+        activeIndex = i;
+        explodeTarget = 0;
         highlighted = null;
-        applyHighlight();
-        return { triangles: next.triangles, parts: next.names };
+        tilt = ((specs[i].tilt ?? 20) * Math.PI) / 180;
       },
       setExplode(e: number) {
         explodeTarget = e;
       },
       highlight(label: string | null) {
         highlighted = label === null ? null : label.replace(/ ×\d+$/, '');
-        applyHighlight();
+      },
+      partNames: (i: number) => slots[i]?.names ?? [],
+      stats: (i: number) => {
+        const s = slots[i];
+        return s ? `${Math.round(s.triangles / 1000)}k tris · ${s.names.length} parts` : '';
       },
       setVisible(v: boolean) {
         visible = v;

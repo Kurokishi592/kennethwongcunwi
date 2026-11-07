@@ -1,10 +1,10 @@
 ---
-const { active } = Astro.props;
+const { active, wide = false } = Astro.props;
 import SocialIcons from './SocialIcons.astro';
 ---
 
 <header class="site-header">
-  <div class="container header-row">
+  <div class:list={[wide ? 'container-wide' : 'container', 'header-row']}>
     <a class="brand" href="/" aria-label="Home">
       <span class="brand-mark" aria-hidden="true">KW</span>
       <span class="brand-hover mono" aria-hidden="true">kenneth@home:~$</span>
