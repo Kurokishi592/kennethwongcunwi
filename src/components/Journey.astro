@@ -1,24 +1,38 @@
 ---
-// Landing-page scroll timeline, from src/data/journey.yaml.
-import ModelViewer from './ModelViewer.astro';
-import { getData, getProjects, thumb } from '../lib/content';
+// Landing-page "workbench": era tabs on one side, a 3D viewport on the other.
+// Content comes from src/data/journey.yaml. Nothing here is tied to page scrolling.
+import { getData, getProjects } from '../lib/content';
 
 const chapters = await getData('journey');
 const projects = await getProjects();
 const bySlug = new Map(projects.map((p) => [p.slug, p]));
+const eras = chapters.map((c) => c.models);
 ---
 
-<div class="journey">
-  {chapters.map((c, i) => {
-    const linked = c.projects.map((s) => bySlug.get(s)).filter(Boolean);
-    return (
-      <article class="chapter" data-scroll-track>
-        <div class="chapter-copy">
-          <p class="chapter-index mono">
-            <span>{String(i + 1).padStart(2, '0')}</span> {c.years}
-          </p>
-          <h3 class="chapter-title">{c.title}</h3>
-          <p class="chapter-text muted">{c.text}</p>
+<div class="workbench" data-workbench data-eras={JSON.stringify(eras)}>
+  <div class="wb-side">
+    <div class="wb-tabs" role="tablist" aria-label="Journey">
+      {chapters.map((c, i) => (
+        <button
+          class="wb-tab"
+          type="button"
+          role="tab"
+          id={`wb-tab-${i}`}
+          aria-controls={`wb-panel-${i}`}
+          aria-selected={i === 0 ? 'true' : 'false'}
+          tabindex={i === 0 ? 0 : -1}
+        >
+          <span class="wb-tab-years mono">{c.years}</span>
+          <span class="wb-tab-title">{c.title}</span>
+        </button>
+      ))}
+    </div>
+
+    {chapters.map((c, i) => {
+      const linked = c.projects.map((s) => bySlug.get(s)).filter(Boolean);
+      return (
+        <div class="wb-panel" role="tabpanel" id={`wb-panel-${i}`} aria-labelledby={`wb-tab-${i}`} hidden={i !== 0}>
+          <p class="muted">{c.text}</p>
           {linked.length ? (
             <ul class="chapter-links">
               {linked.map((p) => (
@@ -32,36 +46,439 @@ const bySlug = new Map(projects.map((p) => [p.slug, p]));
             </ul>
           ) : null}
         </div>
+      );
+    })}
+  </div>
 
-        <div class="chapter-visual">
-          {c.model ? (
-            <ModelViewer src={c.model.src} label={c.model.label} explode={c.model.explode} tilt={c.model.tilt} />
-          ) : (
-            <div class="photo-stack" data-photo-stack>
-              {c.photos.slice(0, 3).map((src, k) => (
-                <img src={thumb(src)} alt="" loading="lazy" style={`--i:${k}`} />
-              ))}
-            </div>
-          )}
-        </div>
-      </article>
-    );
-  })}
+  <div class="wb-stage">
+    <div class="wb-viewport">
+      <canvas aria-label="3D model viewer. Drag to rotate."></canvas>
+      <p class="wb-hud wb-hud-label mono" data-wb-label></p>
+      <p class="wb-hud wb-hud-stats mono" data-wb-stats></p>
+      <p class="wb-hud wb-hud-hint mono">drag to rotate</p>
+      <p class="wb-status mono muted" data-wb-status>loading 3D model…</p>
+    </div>
+
+    <div class="wb-tools">
+      <div class="wb-models" data-wb-models></div>
+      <label class="wb-explode" data-wb-explode hidden>
+        <span class="mono">explode</span>
+        <input type="range" min="0" max="100" value="0" />
+      </label>
+      <ul class="wb-parts" data-wb-parts aria-label="Parts (hover to isolate)"></ul>
+    </div>
+  </div>
 </div>
 
 <script>
-  // Photos drift apart slightly while their chapter scrolls past.
-  const stacks = Array.from(document.querySelectorAll<HTMLElement>('[data-photo-stack]'));
-  if (stacks.length && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-    const tick = () => {
-      for (const s of stacks) {
-        const track = s.closest<HTMLElement>('[data-scroll-track]') ?? s;
-        const r = track.getBoundingClientRect();
-        const p = Math.min(1, Math.max(0, (innerHeight - r.top) / (r.height + innerHeight)));
-        s.style.setProperty('--p', p.toFixed(3));
+  type ModelSpec = { src: string; label?: string; explode: boolean; tilt: number };
+
+  const wb = document.querySelector<HTMLElement>('[data-workbench]');
+  if (wb) setup(wb);
+
+  function setup(wb: HTMLElement) {
+    const eras: ModelSpec[][] = JSON.parse(wb.dataset.eras ?? '[]');
+    const tabs = Array.from(wb.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    const panels = Array.from(wb.querySelectorAll<HTMLElement>('[role="tabpanel"]'));
+    const modelsEl = wb.querySelector<HTMLElement>('[data-wb-models]')!;
+    const explodeEl = wb.querySelector<HTMLElement>('[data-wb-explode]')!;
+    const slider = explodeEl.querySelector('input')!;
+    const partsEl = wb.querySelector<HTMLElement>('[data-wb-parts]')!;
+    const labelEl = wb.querySelector<HTMLElement>('[data-wb-label]')!;
+    const statsEl = wb.querySelector<HTMLElement>('[data-wb-stats]')!;
+    const statusEl = wb.querySelector<HTMLElement>('[data-wb-status]')!;
+    const canvas = wb.querySelector('canvas')!;
+
+    let engine: Awaited<ReturnType<typeof createEngine>> | null = null;
+    let current: ModelSpec | null = null;
+
+    const show = async (spec: ModelSpec | undefined) => {
+      current = spec ?? null;
+      labelEl.textContent = spec?.label ?? '';
+      explodeEl.hidden = !spec?.explode;
+      slider.value = '0';
+      partsEl.replaceChildren();
+      statsEl.textContent = '';
+      if (!spec || !engine) return;
+      statusEl.hidden = false;
+      statusEl.textContent = 'loading 3D model…';
+      try {
+        const info = await engine.show(spec);
+        if (current !== spec) return;
+        statusEl.hidden = true;
+        statsEl.textContent = `${Math.round(info.triangles / 1000)}k tris · ${info.parts.length} parts`;
+        for (const name of info.parts) {
+          const li = document.createElement('li');
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.textContent = name;
+          const on = () => engine?.highlight(name);
+          const off = () => engine?.highlight(null);
+          btn.addEventListener('mouseenter', on);
+          btn.addEventListener('focus', on);
+          btn.addEventListener('mouseleave', off);
+          btn.addEventListener('blur', off);
+          li.append(btn);
+          partsEl.append(li);
+        }
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = '3D preview unavailable';
       }
-      requestAnimationFrame(tick);
     };
-    requestAnimationFrame(tick);
+
+    const selectModel = (era: number, index: number) => {
+      const list = eras[era] ?? [];
+      modelsEl.replaceChildren(
+        ...(list.length > 1
+          ? list.map((m, k) => {
+              const b = document.createElement('button');
+              b.type = 'button';
+              b.className = 'wb-chip mono';
+              b.textContent = m.label ?? m.src;
+              b.setAttribute('aria-pressed', String(k === index));
+              b.addEventListener('click', () => selectModel(era, k));
+              return b;
+            })
+          : [])
+      );
+      show(list[index]);
+    };
+
+    const selectEra = (i: number, focus = false) => {
+      tabs.forEach((t, k) => {
+        t.setAttribute('aria-selected', String(k === i));
+        t.tabIndex = k === i ? 0 : -1;
+      });
+      panels.forEach((p, k) => (p.hidden = k !== i));
+      if (focus) tabs[i].focus();
+      selectModel(i, 0);
+    };
+
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => selectEra(i));
+      t.addEventListener('keydown', (e) => {
+        const step = ['ArrowDown', 'ArrowRight'].includes(e.key) ? 1 : ['ArrowUp', 'ArrowLeft'].includes(e.key) ? -1 : 0;
+        if (!step) return;
+        e.preventDefault();
+        selectEra((i + step + tabs.length) % tabs.length, true);
+      });
+    });
+
+    slider.addEventListener('input', () => engine?.setExplode(Number(slider.value) / 100));
+
+    // Only download three.js and the first model when the workbench is about to be seen.
+    const io = new IntersectionObserver(
+      async (entries) => {
+        for (const entry of entries) {
+          engine?.setVisible(entry.isIntersecting);
+          if (entry.isIntersecting && !engine) {
+            try {
+              engine = await createEngine(canvas);
+              engine.setVisible(true);
+              const era = Math.max(0, tabs.findIndex((t) => t.getAttribute('aria-selected') === 'true'));
+              selectModel(era, 0);
+            } catch (err) {
+              console.error(err);
+              statusEl.textContent = '3D preview unavailable';
+            }
+          }
+        }
+      },
+      { rootMargin: '300px 0px' }
+    );
+    io.observe(wb);
+  }
+
+  async function createEngine(canvas: HTMLCanvasElement) {
+    const THREE = await import('three');
+    const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
+    const { MeshoptDecoder } = await import('three/examples/jsm/libs/meshopt_decoder.module.js');
+    const { toCreasedNormals } = await import('three/examples/jsm/utils/BufferGeometryUtils.js');
+    type Object3D = InstanceType<typeof THREE.Object3D>;
+    type Mesh = InstanceType<typeof THREE.Mesh>;
+    type Box3 = InstanceType<typeof THREE.Box3>;
+    type Vector3 = InstanceType<typeof THREE.Vector3>;
+    type Material = InstanceType<typeof THREE.MeshStandardMaterial>;
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    const scene = new THREE.Scene();
+    scene.add(new THREE.HemisphereLight(0xffffff, 0x3a4252, 2.4));
+    const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+    sun.position.set(1, 2, 1.5);
+    scene.add(sun);
+    const rim = new THREE.DirectionalLight(0xb9a6ff, 1.0);
+    rim.position.set(-1.5, 0.5, -1);
+    scene.add(rim);
+    const camera = new THREE.PerspectiveCamera(30, 1, 0.001, 100);
+
+    const loader = new GLTFLoader();
+    loader.setMeshoptDecoder(MeshoptDecoder);
+
+    type Part = { name: string; node: Object3D; home: Vector3; offset: Vector3; meshes: Mesh[] };
+    type Loaded = {
+      pivot: Object3D;
+      grid: Object3D;
+      parts: Part[];
+      names: string[];
+      size: Vector3;
+      r0: number;
+      r1: number;
+      triangles: number;
+      explodable: boolean;
+    };
+
+    // CAD node names -> readable labels, e.g. "AUV5_0-1_Sensors_Board" -> "Sensors Board" and
+    // "AUV5_ESC_Adaptor_Boardstep-3" -> "ESC Adaptor Board" (three.js strips the dot from ".step").
+    const words = (raw: string) =>
+      raw
+        .replace(/\.?(step|stp|sldprt|sldasm)([-_ ]?\d+)?$/i, '')
+        .replace(/[-_ ]\d+$/, '')
+        .replace(/_/g, ' ')
+        .trim()
+        .split(/\s+/);
+    const prettyNames = (raws: string[]) => {
+      const split = raws.map(words);
+      // A project prefix shared by most parts (like "AUV5") is dropped, as are part numbers like "0-1".
+      const first = split.map((w) => w[0]);
+      const prefix = first.find((f) => /\d/.test(f) && first.filter((x) => x === f).length >= raws.length / 2);
+      return split.map((w) => {
+        const rest = [...w];
+        if (rest.length > 1 && rest[0] === prefix) rest.shift();
+        while (rest.length > 1 && /^[\d-]+$/.test(rest[0])) rest.shift();
+        const name = rest.join(' ');
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      });
+    };
+
+    const boxGap = (a: Box3, b: Box3) =>
+      Math.hypot(
+        Math.max(0, a.min.x - b.max.x, b.min.x - a.max.x),
+        Math.max(0, a.min.y - b.max.y, b.min.y - a.max.y),
+        Math.max(0, a.min.z - b.max.z, b.min.z - a.max.z)
+      );
+
+    async function load(spec: ModelSpec): Promise<Loaded> {
+      const gltf = await loader.loadAsync(spec.src);
+      const model = gltf.scene;
+      let triangles = 0;
+      model.traverse((o: Object3D) => {
+        const mesh = o as Mesh;
+        if (!mesh.isMesh) return;
+        // CAD exports have no normals (smaller files); rebuild them with sharp edges kept.
+        if (!mesh.geometry.getAttribute('normal')) mesh.geometry = toCreasedNormals(mesh.geometry, Math.PI / 6);
+        // Own material per mesh so one part can be faded without fading the others.
+        mesh.material = (mesh.material as Material).clone();
+        const mat = mesh.material as Material;
+        mat.userData.color = mat.color.clone();
+        triangles += mesh.geometry.getAttribute('position').count / 3;
+      });
+
+      const box0 = new THREE.Box3().setFromObject(model);
+      const centre = box0.getCenter(new THREE.Vector3());
+      const size = box0.getSize(new THREE.Vector3());
+      model.position.sub(centre);
+      const pivot = new THREE.Group();
+      pivot.add(model);
+      model.updateMatrixWorld(true);
+
+      // Parts are the children of the first node that branches out.
+      let assembly: Object3D = model;
+      while (assembly.children.length === 1) assembly = assembly.children[0];
+      const volume = size.x * size.y * size.z;
+      const raw = assembly.children.map((node: Object3D) => {
+        const box = new THREE.Box3().setFromObject(node);
+        const s = box.getSize(new THREE.Vector3());
+        const meshes: Mesh[] = [];
+        node.traverse((o: Object3D) => (o as Mesh).isMesh && meshes.push(o as Mesh));
+        return { node, box, small: s.x * s.y * s.z < volume * 0.002, meshes, offset: new THREE.Vector3(), home: node.position.clone() };
+      });
+      const boards = raw.filter((x) => !x.small);
+      const lowest = box0.min.y - centre.y;
+
+      if (spec.explode) {
+        // Boards whose bottoms are at about the same height form a layer; layers rise in steps.
+        const gap = size.y * 0.04;
+        const bottoms = [...new Set(boards.map((x) => x.box.min.y))].sort((a, b) => a - b);
+        const layerOf = new Map<number, number>();
+        let layer = 0;
+        bottoms.forEach((y, i) => {
+          if (i > 0 && y - bottoms[i - 1] > gap) layer++;
+          layerOf.set(y, layer);
+        });
+        const mid = new THREE.Vector3(0, 0, 0);
+        const step = size.y * 0.34;
+        for (const b of boards) {
+          const c = b.box.getCenter(new THREE.Vector3());
+          const s = b.box.getSize(new THREE.Vector3());
+          const layerIndex = layerOf.get(b.box.min.y)!;
+          // Big plates in the bottom layer stay down; boards standing on them at the sides lift off.
+          const isBasePlate = layerIndex === 0 && s.x * s.z > size.x * size.z * 0.08;
+          const dx = c.x - mid.x;
+          const outer = Math.abs(dx) > size.x * 0.3;
+          b.offset.set(
+            outer ? Math.sign(dx) * size.x * 0.4 : dx * 0.3,
+            layerIndex * step + (outer && !isBasePlate ? step * 0.6 : 0),
+            (c.z - mid.z) * 0.7
+          );
+        }
+      }
+      // Small hardware (standoffs, nuts, brackets) belongs to the nearest board.
+      const labels = prettyNames(raw.map((x) => x.node.name));
+      const labelOf = (node: Object3D) => labels[raw.findIndex((x) => x.node === node)];
+      const parts: Part[] = [];
+      for (const b of boards) parts.push({ name: labelOf(b.node), node: b.node, home: b.home, offset: b.offset, meshes: b.meshes });
+      for (const s of raw.filter((x) => x.small)) {
+        const host = boards.reduce((best, b) => (boxGap(s.box, b.box) < boxGap(s.box, best.box) ? b : best), boards[0]);
+        const owner = parts.find((p) => p.node === host?.node);
+        parts.push({ name: owner?.name ?? labelOf(s.node), node: s.node, home: s.home, offset: host?.offset.clone() ?? s.offset, meshes: s.meshes });
+      }
+
+      const sphereAt = (e: number) => {
+        parts.forEach((p) => p.node.position.copy(p.home).addScaledVector(p.offset, e));
+        return new THREE.Box3().setFromObject(model).getBoundingSphere(new THREE.Sphere()).radius;
+      };
+      const r0 = sphereAt(0);
+      const r1 = spec.explode ? sphereAt(1) : r0;
+      sphereAt(0);
+
+      // A faint floor grid under the model, like a CAD viewport.
+      const span = Math.max(size.x, size.z) * 2.2;
+      const grid = new THREE.GridHelper(span, 16, 0x8892a6, 0x8892a6);
+      const gridMat = grid.material as InstanceType<typeof THREE.LineBasicMaterial>;
+      gridMat.transparent = true;
+      gridMat.opacity = 0.18;
+      grid.position.y = lowest - size.y * 0.02;
+      pivot.add(grid);
+
+      const names = [...new Set(parts.map((p) => p.name))];
+      const counts = new Map(names.map((n) => [n, new Set(parts.filter((p) => p.name === n && boards.some((b) => b.node === p.node)).map((p) => p.node)).size]));
+      return {
+        pivot,
+        grid,
+        parts,
+        names: names.map((n) => (counts.get(n)! > 1 ? `${n} ×${counts.get(n)}` : n)),
+        size,
+        r0,
+        r1,
+        triangles,
+        explodable: spec.explode
+      };
+    }
+
+    const cache = new Map<string, Promise<Loaded>>();
+    let active: Loaded | null = null;
+    let tilt = 0.35;
+    let explodeTarget = 0;
+    let explode = 0;
+    let highlighted: string | null = null;
+    let lift = 0;
+    let yaw = -0.6;
+    let visible = false;
+    let dragging = false;
+    let last = performance.now();
+
+    const resize = () => {
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    };
+    new ResizeObserver(resize).observe(canvas);
+    resize();
+
+    // Drag to rotate. Touch only turns left/right so the page still scrolls vertically.
+    let px: number | null = null;
+    let py = 0;
+    canvas.addEventListener('pointerdown', (e) => {
+      px = e.clientX;
+      py = e.clientY;
+      dragging = true;
+      canvas.setPointerCapture(e.pointerId);
+    });
+    canvas.addEventListener('pointermove', (e) => {
+      if (px === null) return;
+      yaw += (e.clientX - px) * 0.01;
+      if (e.pointerType === 'mouse') tilt = Math.min(1.2, Math.max(0.05, tilt + (e.clientY - py) * 0.006));
+      px = e.clientX;
+      py = e.clientY;
+    });
+    const release = () => {
+      px = null;
+      dragging = false;
+    };
+    canvas.addEventListener('pointerup', release);
+    canvas.addEventListener('pointercancel', release);
+
+    // Parts not being hovered turn into solid "ghosts" close to the page background.
+    // (Fading with transparency doesn't work here: dense assemblies stack up the faded layers.)
+    const applyHighlight = () => {
+      if (!active) return;
+      const ghost = new THREE.Color(getComputedStyle(document.body).backgroundColor).lerp(new THREE.Color(0x8892a6), 0.3);
+      for (const p of active.parts) {
+        const dim = highlighted !== null && p.name !== highlighted;
+        for (const m of p.meshes) {
+          const mat = m.material as Material;
+          mat.color.copy(mat.userData.color);
+          if (dim) mat.color.lerp(ghost, 0.85);
+        }
+      }
+    };
+
+    const frame = (now: number) => {
+      const dt = Math.min(0.05, (now - last) / 1000);
+      last = now;
+      if (active && visible) {
+        explode += (explodeTarget - explode) * Math.min(1, dt * 8);
+        lift += ((highlighted ? 1 : 0) - lift) * Math.min(1, dt * 8);
+        const up = active.size.y * 0.18 * lift;
+        for (const p of active.parts) {
+          p.node.position.copy(p.home).addScaledVector(p.offset, explode);
+          if (highlighted && p.name === highlighted) p.node.position.y += up;
+        }
+        if (!dragging && !reduceMotion && !highlighted) yaw += dt * 0.18;
+        active.pivot.rotation.y = yaw;
+
+        const radius = active.r0 + (active.r1 - active.r0) * explode;
+        const fov = (camera.fov * Math.PI) / 180;
+        let dist = (radius / Math.sin(fov / 2)) * 0.9;
+        if (camera.aspect < 1) dist /= Math.max(camera.aspect, 0.55);
+        const lookY = (active.r1 - active.r0) * explode * 0.35;
+        camera.position.set(0, lookY + Math.sin(tilt) * dist, Math.cos(tilt) * dist);
+        camera.lookAt(0, lookY, 0);
+        renderer.render(scene, camera);
+      }
+      requestAnimationFrame(frame);
+    };
+    requestAnimationFrame(frame);
+
+    return {
+      async show(spec: ModelSpec) {
+        if (!cache.has(spec.src)) cache.set(spec.src, load(spec));
+        const next = await cache.get(spec.src)!;
+        if (active) scene.remove(active.pivot);
+        active = next;
+        scene.add(next.pivot);
+        tilt = (spec.tilt * Math.PI) / 180;
+        explodeTarget = explode = 0;
+        highlighted = null;
+        applyHighlight();
+        return { triangles: next.triangles, parts: next.names };
+      },
+      setExplode(e: number) {
+        explodeTarget = e;
+      },
+      highlight(label: string | null) {
+        highlighted = label === null ? null : label.replace(/ ×\d+$/, '');
+        applyHighlight();
+      },
+      setVisible(v: boolean) {
+        visible = v;
+      }
+    };
   }
 </script>

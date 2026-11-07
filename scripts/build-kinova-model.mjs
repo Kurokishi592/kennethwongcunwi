@@ -176,13 +176,13 @@ const buildArm = (root, prefix) => {
 const MOUNT = { x: 0.15, y: 0.11, z: 0.12 };
 const rig = doc.createNode('rig');
 
-const mount = doc.createNode('mount').setMesh(makeMesh('mount', box(MOUNT.x, MOUNT.y, MOUNT.z), M.alu));
+const mount = doc.createNode('Centre block').setMesh(makeMesh('mount', box(MOUNT.x, MOUNT.y, MOUNT.z), M.alu));
 rig.addChild(mount);
 
 // Shoulder base plate, 90-degree mount and LUCID Helios2 + Triton mock-up, exported from the
 // SOLIDWORKS assembly (raw-assets/kinova/lucid/, mm, x forward / y up / z sideways).
 // Offset puts the plate's bottom centre on top of the block; rotation turns y-up into z-up.
-const lucid = doc.createNode('lucid_camera_mount')
+const lucid = doc.createNode('LUCID Helios2 + Triton mount')
   .setTranslation([0, 0, MOUNT.z / 2])
   .setRotation(rpyQuat(Math.PI / 2, 0, 0))
   .setScale([0.001, 0.001, 0.001]);
@@ -194,10 +194,10 @@ for (const [name, material] of [['plate', M.alu], ['mount', M.bracket], ['camera
 rig.addChild(lucid);
 
 // Left arm on the +y face, base pointing +y. Right arm is its mirror image.
-const left = doc.createNode('left_arm').setTranslation([0, MOUNT.y / 2, 0]).setRotation(rpyQuat(-Math.PI / 2, 0, 0));
+const left = doc.createNode('Left arm').setTranslation([0, MOUNT.y / 2, 0]).setRotation(rpyQuat(-Math.PI / 2, 0, 0));
 buildArm(left, 'L_');
 rig.addChild(left);
-const right = doc.createNode('right_arm').setScale([1, -1, 1]);
+const right = doc.createNode('Right arm').setScale([1, -1, 1]);
 const rightBase = doc.createNode('right_arm_base').setTranslation([0, MOUNT.y / 2, 0]).setRotation(rpyQuat(-Math.PI / 2, 0, 0));
 buildArm(rightBase, 'R_');
 right.addChild(rightBase);

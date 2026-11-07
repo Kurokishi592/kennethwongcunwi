@@ -2063,57 +2063,73 @@ html { scroll-behavior: smooth; }
   line-height: 1.35;
 }
 
-/* ---- Journey (scroll timeline) ---- */
-.journey {
-  display: grid;
-  border-left: 1px solid var(--border);
-  margin-left: 0.35rem;
-}
-
-.chapter {
-  position: relative;
+/* ---- Journey workbench: era tabs + 3D viewport ---- */
+.workbench {
   display: grid;
   gap: 1rem;
-  padding: 0 0 3rem 1.4rem;
 }
 
-.chapter::before {
-  content: "";
-  position: absolute;
-  left: -6px;
-  top: 0.35rem;
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: var(--bg);
-  border: 2px solid var(--brand);
+.wb-side {
+  display: contents; /* phones: tabs, then the viewport, then the text */
 }
 
-.chapter-index {
-  margin: 0;
-  color: var(--faint);
-  font-size: 0.88rem;
+.wb-tabs {
+  order: 1;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.4rem;
 }
 
-.chapter-index span {
+.wb-stage {
+  order: 2;
+}
+
+.wb-panel {
+  order: 3;
+}
+
+.wb-tab {
+  display: grid;
+  align-content: start;
+  gap: 0.15rem;
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.wb-tab:hover {
+  color: var(--text);
+}
+
+.wb-tab[aria-selected="true"] {
+  color: var(--text);
+  background: var(--bg-elev);
+  border-color: color-mix(in srgb, var(--brand) 60%, var(--border));
+}
+
+.wb-tab-years {
+  font-size: 0.78rem;
   color: var(--brand-2);
-  margin-right: 0.35rem;
 }
 
-.chapter-title {
-  margin: 0.3rem 0 0;
-  font-size: clamp(1.35rem, 3.4vw, 1.9rem);
-  letter-spacing: -0.015em;
+.wb-tab-title {
+  font-weight: 700;
+  font-size: 0.85rem;
+  line-height: 1.25;
 }
 
-.chapter-text {
-  margin: 0.6rem 0 0;
-  max-width: 52ch;
+.wb-panel p {
+  margin: 0;
 }
 
 .chapter-links {
   list-style: none;
-  margin: 1.1rem 0 0;
+  margin: 1rem 0 0;
   padding: 0;
   display: grid;
   gap: 0.45rem;
@@ -2143,70 +2159,67 @@ html { scroll-behavior: smooth; }
   font-size: 0.86rem;
 }
 
-.chapter-visual {
-  height: min(62vh, 440px);
+.wb-stage {
+  display: grid;
+  gap: 0.6rem;
+  min-width: 0;
 }
 
-@media (min-width: 960px) {
-  .journey {
-    border-left: 0;
-    margin-left: 0;
-  }
-
-  /* Tall chapters give the model room to turn while it stays pinned on screen. */
-  .chapter {
-    grid-template-columns: 0.9fr 1.1fr;
-    gap: 2.5rem;
-    min-height: 170vh;
-    padding: 0;
-    align-items: start;
-  }
-
-  .chapter::before {
-    display: none;
-  }
-
-  .chapter-copy {
-    position: sticky;
-    top: 22vh;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border);
-  }
-
-  .chapter-visual {
-    position: sticky;
-    top: 12vh;
-    height: 76vh;
-  }
-}
-
-/* ---- 3D model viewer ---- */
-.model-viewer {
+.wb-viewport {
   position: relative;
-  margin: 0;
-  width: 100%;
-  height: 100%;
+  height: min(70vh, 420px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(120% 90% at 50% 40%, color-mix(in srgb, var(--brand) 9%, transparent), transparent 70%),
+    color-mix(in srgb, var(--bg) 80%, #000 20%);
+  overflow: hidden;
 }
 
-.model-viewer canvas {
+html[data-theme="light"] .wb-viewport {
+  background:
+    radial-gradient(120% 90% at 50% 40%, color-mix(in srgb, var(--brand) 7%, transparent), transparent 70%),
+    #eef0f6;
+}
+
+.wb-viewport canvas {
   display: block;
   width: 100%;
   height: 100%;
   cursor: grab;
   touch-action: pan-y;
-  opacity: 0;
-  transition: opacity 0.6s ease;
 }
 
-.model-viewer.is-ready canvas {
-  opacity: 1;
-}
-
-.model-viewer canvas:active {
+.wb-viewport canvas:active {
   cursor: grabbing;
 }
 
-.model-status {
+.wb-hud {
+  position: absolute;
+  margin: 0;
+  font-size: 0.74rem;
+  color: var(--faint);
+  pointer-events: none;
+}
+
+.wb-hud-label {
+  top: 0.7rem;
+  left: 0.85rem;
+  right: 0.85rem;
+  color: var(--muted);
+}
+
+.wb-hud-stats {
+  bottom: 0.7rem;
+  left: 0.85rem;
+}
+
+.wb-hud-hint {
+  bottom: 0.7rem;
+  right: 0.85rem;
+}
+
+.wb-status {
   position: absolute;
   inset: 0;
   display: grid;
@@ -2215,32 +2228,109 @@ html { scroll-behavior: smooth; }
   font-size: 0.85rem;
 }
 
-.model-caption {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  font-size: 0.78rem;
-  color: var(--faint);
+.wb-status[hidden] {
+  display: none;
 }
 
-/* ---- Photo stack (chapters without a 3D model) ---- */
-.photo-stack {
-  --p: 0.5;
-  position: relative;
-  height: 100%;
+.wb-tools {
+  display: grid;
+  gap: 0.6rem;
 }
 
-.photo-stack img {
-  position: absolute;
-  width: 62%;
-  aspect-ratio: 4 / 3;
-  object-fit: cover;
-  border-radius: var(--radius);
+.wb-models {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.wb-models:empty {
+  display: none;
+}
+
+.wb-chip {
+  padding: 0.35rem 0.65rem;
   border: 1px solid var(--border);
-  box-shadow: var(--shadow);
-  left: calc(4% + var(--i) * 30%);
-  top: calc(8% + var(--i) * 26%);
-  transform: translateY(calc((var(--p) - 0.5) * (var(--i) * 60px - 30px))) rotate(calc((var(--i) - 0.5) * 3deg));
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.wb-chip[aria-pressed="true"] {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--brand) 60%, var(--border));
+  background: var(--bg-elev);
+}
+
+.wb-explode {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.wb-explode[hidden] {
+  display: none;
+}
+
+.wb-explode input {
+  flex: 1;
+  accent-color: var(--brand);
+}
+
+.wb-parts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.wb-parts button {
+  padding: 0.25rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elev);
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: default;
+}
+
+.wb-parts button:hover,
+.wb-parts button:focus-visible {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--brand-2) 60%, var(--border));
+}
+
+@media (min-width: 960px) {
+  .workbench {
+    grid-template-columns: minmax(280px, 0.8fr) 1.4fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .wb-side {
+    display: grid;
+    gap: 1rem;
+    align-content: start;
+  }
+
+  .wb-tabs {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .wb-tab-title {
+    font-size: 1rem;
+  }
+
+  .wb-viewport {
+    height: 480px;
+  }
 }
 
 /* ---- Experience: role dropdowns ---- */

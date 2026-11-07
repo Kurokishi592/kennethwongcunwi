@@ -12,7 +12,9 @@
     "check": "astro check",
     "model": "node scripts/optimize-model.mjs",
     "model:kinova": "node scripts/build-kinova-model.mjs",
-    "images": "node scripts/optimize-images.mjs"
+    "images": "node scripts/optimize-images.mjs",
+    "model:vex": "node scripts/build-vex-model.mjs",
+    "model:fpga": "node scripts/build-fpga-model.mjs"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.6",

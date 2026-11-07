@@ -33,7 +33,7 @@ git add -A && git commit -m "..." && git push    # publish
 | Jobs and roles (dropdowns)                | `src/data/experience.yaml`            |
 | Education                                 | `src/data/education.yaml`             |
 | Tech stack logos                          | `src/data/skills.yaml`                |
-| Landing page timeline + 3D models         | `src/data/journey.yaml`               |
+| Landing page journey (tabs + 3D models)   | `src/data/journey.yaml`               |
 | A project                                 | `src/content/projects/<name>.mdx`     |
 | Resume / transcript                       | replace `public/docs/resume.pdf` / `transcript.pdf` |
 
@@ -63,7 +63,7 @@ draft: true           # hide from the live site until it's ready
 
 4. Write the rest in Markdown. `## Headings` appear in the page's Contents menu automatically.
 
-To put it on the landing-page timeline, add its file name (without `.mdx`) to a chapter's
+To link it from the landing-page journey, add its file name (without `.mdx`) to an era's
 `projects:` list in `src/data/journey.yaml`.
 
 ## Images, videos, PDFs
@@ -87,7 +87,8 @@ To put it on the landing-page timeline, add its file name (without `.mdx`) to a 
 
 ## 3D models
 
-The landing page turns each chapter's model as you scroll. To add or replace one:
+The landing page's journey section is a small CAD-style viewport: visitors pick an era, drag to
+rotate, pull the explode slider, and hover a part name to isolate it. To add or replace a model:
 
 1. In SOLIDWORKS: File → Save As → `.glb`. Save it in `raw-assets/` (not uploaded; files there are
    too big for the web).
@@ -99,17 +100,25 @@ The landing page turns each chapter's model as you scroll. To add or replace one
 
    A 300 MB export usually comes out under 1 MB. If small parts look broken, add
    `--ratio 0.2` (more detail, bigger file). Parts smaller than 2.5 mm are dropped (`--min-size`).
-3. Point a chapter at it in `src/data/journey.yaml`:
+3. Add it to an era in `src/data/journey.yaml` (an era can have several; buttons switch between them):
 
    ```yaml
-   model:
-     src: /models/my-assembly.glb
-     label: What it is
-     explode: true    # pull the boards apart while scrolling
+   models:
+     - src: /models/my-assembly.glb
+       label: What it is
+       explode: true    # adds the explode slider
    ```
 
-The Kinova rig is built from Kinova's published meshes by `npm run model:kinova`. Change the arm
-pose with `JOINT_DEG` in `scripts/build-kinova-model.mjs`.
+   The part names in the viewer come from the top-level parts of your SOLIDWORKS assembly.
+
+Three models are built by scripts instead of exported:
+
+- `npm run model:kinova`: dual Kinova arms from Kinova's published meshes, plus the LUCID mount STLs
+  in `raw-assets/kinova/lucid/`. Arm pose: `JOINT_DEG` in `scripts/build-kinova-model.mjs`.
+- `npm run model:fpga`: the FPGA tracker from the EE2026 print STLs in `raw-assets/fpga/`, with
+  simple stand-ins for the Basys 3, servos and camera.
+- `npm run model:vex`: the 2020 VEX robot, rebuilt from simple shapes in `scripts/build-vex-model.mjs`.
+  Ladder angle: `TRAY_DEG` (about 85 = tipped up to score).
 
 ## Commands
 
@@ -121,3 +130,5 @@ pose with `JOINT_DEG` in `scripts/build-kinova-model.mjs`.
 | `npm run images`        | Shrink images in `public/assets/` now               |
 | `npm run model -- a b`  | Shrink a SOLIDWORKS `.glb` export                   |
 | `npm run model:kinova`  | Rebuild the dual Kinova arm model                   |
+| `npm run model:fpga`    | Rebuild the FPGA object tracker model               |
+| `npm run model:vex`     | Rebuild the VEX robot model                         |

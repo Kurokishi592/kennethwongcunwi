@@ -4,9 +4,11 @@ Work happens on the `redesign` branch. Nothing here is live until it is merged i
 Search the repo for `TODO(Kenneth)` to find every placeholder in the data files.
 
 ## Done (redesign branch)
-- [x] Landing page: name + one-liner hero, awards row, scroll timeline with 3D models, current roles, featured projects
-- [x] AUV 5.0 stack model (288 MB -> 0.9 MB), spins and explodes on scroll
-- [x] Dual Kinova Gen3 + Robotiq 2F-85 model built from Kinova's published meshes (0.15 MB)
+- [x] Landing page: intro, tiles (background, projects, resume, transcript, contacts), journey workbench (era tabs + 3D viewport with explode slider and part isolation)
+- [x] AUV 5.0 stack model (288 MB -> 0.9 MB) with layered explode
+- [x] FPGA tracker model from the EE2026 print STLs; rough VEX Tower Takeover robot rebuilt from photos
+- [x] Dual Kinova Gen3 + Robotiq 2F-85 model with the real LUCID camera mount (0.16 MB)
+- [x] Achievements moved to About; "Right now" and featured projects removed from the landing page
 - [x] All About/landing content moved into `src/data/*.yaml`; LinkedIn-style role dropdowns; tech stack as logo grid
 - [x] `draft: true` for projects; `TODO` bullets hidden automatically
 - [x] `<YouTube>`, `<Pdf>`, `<Video>` components; FPGA page converted

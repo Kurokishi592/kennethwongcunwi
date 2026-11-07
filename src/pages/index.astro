@@ -1,17 +1,11 @@
 ---
 // Landing page. The words live in src/data/*.yaml; this file only arranges them.
 import BaseLayout from '../layouts/BaseLayout.astro';
-import ProjectCard from '../components/ProjectCard.astro';
 import HomeTiles from '../components/HomeTiles.astro';
 import Journey from '../components/Journey.astro';
-import ExperienceList from '../components/ExperienceList.astro';
-import { getProfile, getProjects, thumb } from '../lib/content';
+import { getProfile, thumb } from '../lib/content';
 
 const profile = await getProfile();
-const featured = (await getProjects())
-  .filter((p) => p.data.featured)
-  .sort((a, b) => (a.data.featuredRank ?? 9999) - (b.data.featuredRank ?? 9999))
-  .slice(0, 3);
 ---
 
 <BaseLayout
@@ -45,35 +39,9 @@ const featured = (await getProjects())
     <div class="container">
       <div class="section-head">
         <h2>Journey</h2>
-        <p class="muted">Mechanical first, then electrical and firmware, now robot learning.</p>
       </div>
       <Journey />
     </div>
   </section>
 
-  <section class="section" id="now">
-    <div class="container">
-      <div class="section-head">
-        <h2>Right now</h2>
-      </div>
-      <ExperienceList currentOnly />
-      <div class="section-foot">
-        <a class="text-link" href="/about/#work-experiences">Full experience and education →</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="featured-projects">
-    <div class="container">
-      <div class="section-head">
-        <h2>Featured projects</h2>
-      </div>
-      <div class="grid cards">
-        {featured.map((p) => <ProjectCard entry={p} />)}
-      </div>
-      <div class="section-foot">
-        <a class="text-link" href="/projects/">All projects →</a>
-      </div>
-    </div>
-  </section>
 </BaseLayout>

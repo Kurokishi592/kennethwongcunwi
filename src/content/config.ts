@@ -144,15 +144,16 @@ const journey = defineCollection({
     title: z.string(),
     text: z.string(),
     projects: z.array(z.string()).default([]),
-    model: z
-      .object({
-        src: z.string(),
-        label: z.string().optional(),
-        explode: z.boolean().default(false),
-        tilt: z.number().default(20)
-      })
-      .optional(),
-    photos: z.array(z.string()).default([])
+    models: z
+      .array(
+        z.object({
+          src: z.string(),
+          label: z.string().optional(),
+          explode: z.boolean().default(false),
+          tilt: z.number().default(20)
+        })
+      )
+      .default([])
   })
 });
 
