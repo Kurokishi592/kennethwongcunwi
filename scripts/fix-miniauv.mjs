@@ -92,6 +92,9 @@ for (const n of doc.getRoot().listNodes()) {
   }
 }
 
+// The PCB mount bracket ends up below the bottom plate with no clear home; leave it out too.
+for (const n of byName('pcb mount-1')) n.traverse((x) => x.setMesh(null));
+
 // ---------- regroup for the parts list ----------
 const root = doc.getRoot().listScenes()[0].listChildren().find((n) => n.listChildren().length);
 const group = (name) => {
