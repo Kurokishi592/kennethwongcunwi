@@ -15,7 +15,7 @@ const older = entries.filter((e) => !e.current).length;
       <OrgLogo src={e.logo} name={e.org} dark={e.logoDark} />
       <div class="tl-body">
         <p class="tl-dates mono">{e.dates}</p>
-        <h3 class="tl-org">{e.org}</h3>
+        <h3 class="tl-title">{e.org}</h3>
         <p class="tl-sub">{e.degree}</p>
         {e.detail ? <p class="tl-sub muted">{e.detail}</p> : null}
         {e.lines.length ? (

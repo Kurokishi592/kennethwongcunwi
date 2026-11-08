@@ -73,8 +73,8 @@ draft: true           # hide from the live site until it's ready
 
 4. Write the rest in Markdown. `## Headings` appear in the page's Contents menu automatically.
 
-To link it from the landing-page showcase, add its file name (without `.mdx`) to an era's
-`projects:` list in `src/data/journey.yaml`.
+To link it from a model in the landing-page showcase, set that model's `project:` in
+`src/data/journey.yaml` to the file name (without `.mdx`).
 
 ## Images, videos, PDFs
 
@@ -98,9 +98,10 @@ To link it from the landing-page showcase, add its file name (without `.mdx`) to
 ## 3D models
 
 The landing page's showcase lines up every model from `journey.yaml` in one 3D scene, in timeline
-order. It moves to the next model every few seconds; visitors can click the timeline, drag to rotate,
-pull the explode slider (where enabled) and hover a part name to isolate it. Each era also lists
-`focus:` and `also:` domains as chips. To add or replace a model:
+order. It moves to the next model every few seconds; visitors can drag along the timeline (first
+year to now) or use the arrows, drag to rotate, pull the explode slider (where enabled) and hover a
+part name to isolate it. Under the timeline is the current model's description: its `text:`, or the
+subtitle of its `project:`. To add or replace a model:
 
 1. In SOLIDWORKS: File → Save As → `.glb`. Save it in `raw-assets/` (not uploaded; files there are
    too big for the web).
@@ -112,13 +113,13 @@ pull the explode slider (where enabled) and hover a part name to isolate it. Eac
 
    A 300 MB export usually comes out under 1 MB. If small parts look broken, add
    `--ratio 0.2` (more detail, bigger file). Parts smaller than 2.5 mm are dropped (`--min-size`).
-3. Add it to an era in `src/data/journey.yaml` (an era can have several):
+3. Add it to `src/data/journey.yaml`, in date order:
 
    ```yaml
-   models:
-     - src: /models/my-assembly.glb
-       label: What it is
-       explode: true    # adds the explode slider
+   - src: /models/my-assembly.glb
+     label: What it is
+     project: my-project   # links the project; its subtitle and date are shown
+     explode: true         # adds the explode slider
    ```
 
    The part names in the viewer come from the top-level parts of your SOLIDWORKS assembly.

@@ -1,62 +1,72 @@
 ---
-// Experience timeline from src/data/experience.yaml: one stop per organisation on a vertical line,
-// each role a dropdown that opens to show what was done in it. Entries without `current: true` are
-// hidden until "ls -a" at the bottom is pressed.
+// Experience timeline from src/data/experience.yaml: one stop per role, newest first, the role as the
+// heading and the organisation under it. A role with points opens like a dropdown to show them.
+// Later roles at the same organisation get a dot on the line instead of the logo again. Entries
+// without `current: true` are hidden until "ls -a" at the bottom is pressed.
 import OrgLogo from './OrgLogo.astro';
 import EraToggle from './EraToggle.astro';
 import { getData } from '../lib/content';
 
 const entries = await getData('experience');
-const older = entries.filter((e) => !e.current).length;
+const stops = entries.flatMap((e) =>
+  (e.roles.length ? e.roles : [{ title: e.org, dates: e.dates, points: [], tags: [], award: undefined }]).map((r, k) => ({
+    e,
+    r,
+    first: k === 0,
+    hasBody: r.points.length > 0 || r.tags.length > 0
+  }))
+);
+const older = stops.filter((s) => !s.e.current).length;
 ---
 
 <ol class="tl">
-  {entries.map((e) => (
-    <li class:list={['tl-item', { 'is-current': e.current }]} data-era={e.current ? 'current' : 'legacy'}>
-      <OrgLogo src={e.logo} name={e.org} dark={e.logoDark} />
-      <div class="tl-body">
-        <p class="tl-dates mono">{e.dates}</p>
-        <h3 class="tl-org">{e.org}</h3>
-        {e.location ? <p class="tl-sub muted">{e.location}</p> : null}
-        {e.summary ? <p class="tl-summary muted">{e.summary}</p> : null}
-
-        <div class="role-list">
-          {e.roles.map((r) => {
-            const hasBody = r.points.length > 0 || r.tags.length > 0;
-            const head = (
-              <span class="role-head">
-                <span class="role-title">{r.title}</span>
-                {r.award ? <span class="role-award">{r.award}</span> : null}
-                {r.dates ? <span class="role-dates muted">{r.dates}</span> : null}
-              </span>
-            );
-            return hasBody ? (
-              <details class="role">
-                <summary>{head}</summary>
-                <div class="role-body">
-                  {r.points.length ? (
-                    <ul class="bullets">
-                      {r.points.map((p) => (
-                        <li>{p}</li>
-                      ))}
-                    </ul>
-                  ) : null}
-                  {r.tags.length ? (
-                    <div class="tag-row">
-                      {r.tags.map((t) => (
-                        <span class="tag">{t}</span>
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
-              </details>
-            ) : (
-              <div class="role role-static">{head}</div>
-            );
-          })}
+  {stops.map(({ e, r, first, hasBody }) => {
+    const head = (
+      <>
+        <span class="tl-dates mono">{r.dates ?? e.dates}</span>
+        <span class="tl-head">
+          <h3 class="tl-title">{r.title}</h3>
+          {r.award ? <span class="role-award">{r.award}</span> : null}
+        </span>
+        {r.title !== e.org ? (
+          <span class="tl-org">
+            {e.org}
+            {e.location ? ` · ${e.location}` : ''}
+          </span>
+        ) : null}
+        {first && e.summary ? <span class="tl-summary muted">{e.summary}</span> : null}
+      </>
+    );
+    return (
+      <li class:list={['tl-item', { 'is-current': e.current, 'tl-same-org': !first }]} data-era={e.current ? 'current' : 'legacy'}>
+        {first ? <OrgLogo src={e.logo} name={e.org} dark={e.logoDark} /> : <span class="tl-dot" aria-hidden="true"></span>}
+        <div class="tl-body">
+          {hasBody ? (
+            <details class="tl-role">
+              <summary>{head}</summary>
+              <div class="role-body">
+                {r.points.length ? (
+                  <ul class="bullets">
+                    {r.points.map((p) => (
+                      <li>{p}</li>
+                    ))}
+                  </ul>
+                ) : null}
+                {r.tags.length ? (
+                  <div class="tag-row">
+                    {r.tags.map((t) => (
+                      <span class="tag">{t}</span>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            </details>
+          ) : (
+            <div class="tl-role">{head}</div>
+          )}
         </div>
-      </div>
-    </li>
-  ))}
+      </li>
+    );
+  })}
 </ol>
 <EraToggle count={older} />

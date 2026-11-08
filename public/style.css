@@ -1643,7 +1643,8 @@ html { scroll-behavior: smooth; }
 
 @media (min-width: 1100px) {
   .landing-grid {
-    grid-template-columns: 150px minmax(0, 1fr) minmax(420px, 520px);
+    /* A wider photo and tile column leave the name column about as wide as the name. */
+    grid-template-columns: clamp(170px, 16vw, 240px) minmax(0, 1fr) clamp(400px, 34vw, 500px);
     grid-template-areas:
       "photo head  tiles"
       "photo intro tiles"
@@ -1659,14 +1660,18 @@ html { scroll-behavior: smooth; }
   .landing-intro .hero-intro,
   .landing-intro .hero-focus { max-width: none; }
   .landing-intro > :last-child { margin-bottom: 0; }
-  .landing-tiles .home-tiles { height: 100%; grid-template-rows: 2fr 1fr 1fr; }
+  .landing-tiles .home-tiles { height: 100%; grid-template-rows: 1fr auto; }
+  .landing-tiles .tile-previews img { height: 100%; min-height: 56px; aspect-ratio: auto; }
+  .landing .hero-name { font-size: clamp(2.3rem, 3.4vw, 3.1rem); }
+  .landing .hero-headline { font-size: 1.35rem; }
   .landing-show { margin-top: 1.2rem; }
 }
 
-/* ---- Landing tiles: compact panel next to the intro ---- */
+/* ---- Landing tiles: background + projects, then a row of small links ---- */
+/* 30 columns so the top row splits in halves and the link row in fifths (or 2 + 3 on phones). */
 .home-tiles {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(30, minmax(0, 1fr));
   gap: 0.5rem;
 }
 
@@ -1676,7 +1681,7 @@ html { scroll-behavior: smooth; }
   flex-direction: column;
   gap: 0.15rem;
   min-width: 0;
-  padding: 0.65rem 0.8rem;
+  padding: 0.75rem 0.85rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--bg-elev);
@@ -1691,9 +1696,8 @@ html { scroll-behavior: smooth; }
 }
 
 .tile-about,
-.tile-projects,
-.tile-doc { grid-column: span 3; }
-.tile-contact { grid-column: span 2; }
+.tile-projects { grid-column: span 15; }
+.tile-small { grid-column: span 6; }
 
 .tile-label {
   font-size: 0.78rem;
@@ -1701,32 +1705,39 @@ html { scroll-behavior: smooth; }
 }
 
 .tile-title {
+  padding-right: 1rem; /* clear of the arrow */
   font-weight: 750;
   font-size: 0.95rem;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
-.tile-lines {
-  font-size: 0.8rem;
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+/* Current roles, one per line, at the bottom of the tile. */
+.tile-roles {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: auto;
+  padding-top: 0.6rem;
 }
 
-.tile-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-top: 0.15rem;
+.tile-role {
+  display: grid;
+  font-size: 0.82rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.tile-role .muted {
+  font-weight: 400;
+}
+
+.tile-count {
+  font-size: 0.82rem;
 }
 
 .tile-arrow {
   position: absolute;
-  top: 0.55rem;
-  right: 0.7rem;
+  top: 0.6rem;
+  right: 0.75rem;
   color: var(--faint);
   font-size: 0.9rem;
 }
@@ -1735,47 +1746,58 @@ html { scroll-behavior: smooth; }
   color: var(--brand);
 }
 
+/* Project thumbnails share the tile's width and fill the space left under the title. */
 .tile-previews {
-  display: flex;
-  gap: 0.25rem;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.35rem;
+  min-height: 56px;
+  margin-top: 0.6rem;
 }
 
 .tile-previews img {
-  width: 34px;
-  height: 26px;
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid var(--border);
 }
 
+/* Small links: icon over label, centred, so a narrow tile has no empty half. */
 .tile-small {
-  flex-direction: row;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  gap: 0.3rem;
   min-height: 44px;
-  padding: 0.5rem 0.7rem;
+  padding: 0.6rem 0.3rem;
+  text-align: center;
 }
 
 .tile-icon {
   flex: none;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
+  color: var(--muted);
+}
+
+.tile-small:hover .tile-icon {
+  color: var(--brand);
 }
 
 .tile-small .tile-title {
-  font-size: 0.88rem;
+  padding-right: 0;
+  font-size: 0.82rem;
+  font-weight: 650;
 }
 
-.tile-detail {
-  margin-left: auto;
-  font-size: 0.78rem;
-}
-
-/* Phones: background and projects take a full row each; contacts stack icon over label. */
+/* Phones: background and projects take a full row each; the links go two, then three, a row. */
 @media (max-width: 479px) {
   .tile-about,
-  .tile-projects { grid-column: span 6; }
-  .tile-contact { flex-direction: column; gap: 0.2rem; }
+  .tile-projects { grid-column: span 30; }
+  .tile-doc { grid-column: span 15; flex-direction: row; gap: 0.5rem; }
+  .tile-contact { grid-column: span 10; }
 }
 
 /* ---- Achievements (About page) ---- */
@@ -1886,11 +1908,11 @@ html[data-theme="light"] .sc-viewport {
   right: 0.85rem;
 }
 
-/* Previous / next on phones, where the timeline ticks are too narrow to hit reliably. */
+/* Previous / next model, on the stage itself so it is obvious there is more than one. */
 .sc-step {
   position: absolute;
   top: 50%;
-  display: none;
+  display: grid;
   place-items: center;
   width: 40px;
   height: 56px;
@@ -1908,10 +1930,6 @@ html[data-theme="light"] .sc-viewport {
 .sc-prev { left: 0.5rem; }
 .sc-next { right: 0.5rem; }
 
-@media (max-width: 719px) {
-  .sc-step { display: grid; }
-}
-
 .wb-status {
   position: absolute;
   inset: 0;
@@ -1925,89 +1943,142 @@ html[data-theme="light"] .sc-viewport {
   display: none;
 }
 
-/* Timeline: one segment per model, grouped by era; the active one fills while it is shown. */
-.sc-timeline {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+/* Timeline under the stage: one line from the first year to now, a stop per model. It works like a
+   video scrubber: press or drag anywhere on it; the line fills up to the model being shown. */
+.sc-scrub {
   display: flex;
+  align-items: center;
   gap: 1rem;
+  padding: 0.9rem 0 1.3rem;
 }
 
-.sc-era {
-  flex: 1 1 0;
-  display: grid;
-  gap: 0.35rem;
-  min-width: 0;
+.sc-end {
+  flex: none;
+  font-size: 0.8rem;
+  color: var(--muted);
 }
 
-.sc-era-years,
-.wb-tab-years {
-  margin: 0;
-  font-size: 0.76rem;
-  color: var(--brand-2);
-}
-
-.sc-ticks {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.sc-tick {
-  flex: 1 1 0;
-  min-width: 0;
-  display: grid;
-  gap: 0.35rem;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--faint);
-  font: inherit;
-  text-align: left;
+.sc-track {
+  --dot: 12px;
+  position: relative;
+  flex: 1;
+  height: 36px;
+  margin: 0 calc(var(--dot) / 2);
   cursor: pointer;
+  touch-action: pan-y; /* sideways drags scrub, up-down still scrolls the page */
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.sc-tick-bar {
-  display: block;
-  height: 3px;
+.sc-track:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 4px;
+  border-radius: 6px;
+}
+
+.sc-rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 4px;
+  margin-top: -2px;
   border-radius: 2px;
   background: var(--border);
-  overflow: hidden;
 }
 
-.sc-tick-fill {
-  --p: 0;
+.sc-fill {
+  --x: 0;
   display: block;
   height: 100%;
-  width: calc(var(--p) * 100%);
+  width: calc(var(--x) * 100%);
+  border-radius: inherit;
+  background: linear-gradient(to right, var(--brand), var(--brand-2));
+}
+
+.sc-stop {
+  --x: 0;
+  position: absolute;
+  top: 50%;
+  left: calc(var(--x) * 100%);
+  width: var(--dot);
+  height: var(--dot);
+  margin: calc(var(--dot) / -2) 0 0 calc(var(--dot) / -2);
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  background: var(--bg);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.sc-stop.is-past {
+  border-color: var(--brand);
   background: var(--brand);
 }
 
-.sc-tick[aria-pressed="true"] .sc-tick-bar {
-  background: color-mix(in srgb, var(--brand) 35%, var(--border));
+/* Model name above a stop on hover (mouse only). */
+.sc-stop-tip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: max-content;
+  max-width: 260px;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-elev);
+  color: var(--text);
+  font-size: 0.8rem;
+  line-height: 1.3;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
 }
 
-.sc-tick-label {
+.sc-stop.is-start .sc-stop-tip { left: 0; transform: none; }
+.sc-stop.is-end .sc-stop-tip { left: auto; right: 0; transform: none; }
+
+@media (hover: hover) {
+  .sc-stop:hover .sc-stop-tip { opacity: 1; }
+}
+
+/* The handle: sits on the active stop and shows its year underneath. */
+.sc-thumb {
+  --x: 0;
+  position: absolute;
+  top: 50%;
+  left: calc(var(--x) * 100%);
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: var(--text);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--brand) 45%, transparent);
+  pointer-events: none;
+  transition: left 0.3s ease, transform 0.15s ease;
+}
+
+.sc-track:hover .sc-thumb,
+.sc-track.is-scrubbing .sc-thumb { transform: scale(1.12); }
+.sc-track.is-scrubbing .sc-thumb { transition: transform 0.15s ease; }
+
+.sc-thumb-year {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
   font-size: 0.78rem;
-  line-height: 1.3;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  color: var(--brand-2);
   white-space: nowrap;
 }
 
-.sc-tick:hover .sc-tick-label,
-.sc-tick[aria-pressed="true"] .sc-tick-label {
-  color: var(--text);
+@media (prefers-reduced-motion: reduce) {
+  .sc-thumb { transition: none; }
 }
 
 .sc-details {
   display: grid;
   gap: 1rem;
-}
-
-.sc-panel {
-  display: grid;
-  gap: 0.8rem;
 }
 
 .sc-panel[hidden] {
@@ -2018,41 +2089,22 @@ html[data-theme="light"] .sc-viewport {
   margin: 0;
 }
 
+.sc-date {
+  margin: 0 0 0.2rem;
+  font-size: 0.8rem;
+  color: var(--brand-2);
+}
+
 .sc-title {
-  margin: 0.15rem 0 0.4rem;
-  font-size: 1.25rem;
+  margin: 0 0 0.4rem;
+  font-size: 1.2rem;
+  line-height: 1.3;
 }
 
-.chapter-links {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 0.45rem;
-}
-
-.chapter-links a {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  padding: 0.55rem 0.8rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--bg-elev);
-}
-
-.chapter-links a:hover {
-  text-decoration: none;
-  border-color: color-mix(in srgb, var(--brand) 55%, var(--border));
-}
-
-.chapter-link-title {
+.sc-link {
+  display: inline-block;
+  margin-top: 0.6rem;
   font-weight: 650;
-}
-
-.chapter-link-date {
-  font-size: 0.86rem;
 }
 
 .wb-tools {
@@ -2104,27 +2156,16 @@ html[data-theme="light"] .sc-viewport {
   border-color: color-mix(in srgb, var(--brand-2) 60%, var(--border));
 }
 
+/* Phones: no hover, so the hover-to-isolate parts list is left out. */
 @media (max-width: 719px) {
-  .sc-timeline { gap: 0.5rem; }
-  .sc-era { flex-grow: 1 !important; } /* equal widths so every era's years fit */
-  .sc-tick-label { display: none; }
-  .sc-era-years { font-size: 0.76rem; }
-  /* The bars are only 3px tall; padding makes each one a finger-sized target. */
-  .sc-ticks { gap: 0.3rem; }
-  .sc-tick { padding: 0.75rem 0; margin: -0.6rem 0 -0.75rem; }
-  .sc-tick-bar { height: 4px; }
-  /* The timeline right above already shows the era's years. */
-  .sc-panel .wb-tab-years { display: none; }
-  /* Phones: no hover, so the hover-to-isolate parts list is left out; the era panel stays short
-     so the intro and links come up quickly. */
   .wb-parts { display: none; }
-  .sc-panel .chapter-links { display: none; }
+  .sc-title { font-size: 1.05rem; }
 }
 
 @media (min-width: 960px) {
-  .sc-panel {
-    grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
+  .sc-details {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2rem;
   }
 }
 
@@ -2379,55 +2420,6 @@ html[data-theme="light"] .role-award {
     grid-template-columns: repeat(2, 1fr);
   }
 }
-/* Era name next to the years on the showcase timeline, and domain chips under the era title. */
-.sc-era-head {
-  display: flex;
-  gap: 0.5rem;
-  align-items: baseline;
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sc-era-title {
-  font-size: 0.82rem;
-  font-weight: 650;
-  color: var(--muted);
-}
-
-/* Tablets: an era with one model is too narrow for years and title on one line; stack them. */
-@media (max-width: 1099px) {
-  .sc-era-head { flex-direction: column; gap: 0.1rem; }
-  .sc-era-title { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
-}
-
-.sc-domains {
-  list-style: none;
-  margin: 0 0 0.6rem;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-}
-
-.sc-domain {
-  padding: 0.15rem 0.55rem;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  font-size: 0.78rem;
-  color: var(--muted);
-}
-
-.sc-domain.is-focus {
-  color: var(--text);
-  border-color: color-mix(in srgb, var(--brand) 60%, var(--border));
-  background: color-mix(in srgb, var(--brand) 18%, transparent);
-}
-
-@media (max-width: 719px) {
-  .sc-era-title { display: none; }
-}
 
 /* =====================================================================
    Page sections (src/data/layout.yaml): headings, scroll reveal, and the
@@ -2662,15 +2654,78 @@ html.show-legacy .tl-item[data-era="legacy"] { display: grid; }
 .tl-item.is-current .li-logo { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-2) 45%, transparent); }
 
 .tl-dates {
+  display: block;
   margin: 0.15rem 0;
   font-size: 0.82rem;
   color: var(--brand-2);
 }
 
-.tl-org {
+.tl-title {
   margin: 0;
   font-size: 1.15rem;
   line-height: 1.3;
+}
+
+/* Experience: role first, then the organisation in smaller type. */
+.tl-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem 0.6rem;
+}
+
+.tl-org {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.tl-role > summary {
+  display: block;
+  list-style: none;
+  cursor: pointer;
+}
+
+.tl-role > summary::-webkit-details-marker {
+  display: none;
+}
+
+.tl-role > summary .tl-title::before {
+  content: "\25B8";
+  display: inline-block;
+  width: 1.1rem;
+  color: var(--brand);
+  font-size: 0.8em;
+  transition: transform 0.15s ease;
+}
+
+.tl-role[open] > summary .tl-title::before {
+  transform: rotate(90deg);
+}
+
+.tl-role > summary:hover .tl-title {
+  color: color-mix(in srgb, var(--text) 75%, var(--brand));
+}
+
+.tl-role .role-body {
+  padding: 0.7rem 0 0.2rem;
+}
+
+/* A later role at the same organisation: a dot on the line, and closer to the role above. */
+.tl-same-org {
+  margin-top: -0.5rem;
+}
+
+.tl-dot {
+  position: relative;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  margin: 0.25rem auto 0;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--brand) 70%, var(--border));
+  background: var(--bg);
 }
 
 .tl-sub {
@@ -2679,6 +2734,7 @@ html.show-legacy .tl-item[data-era="legacy"] { display: grid; }
 }
 
 .tl-summary {
+  display: block;
   margin: 0.5rem 0 0;
   font-size: 0.95rem;
   line-height: 1.5;

@@ -1,61 +1,50 @@
-# The 3D showcase on the landing page, oldest era first. All models stand in one row in this
-# order; the showcase moves along them by itself, and the timeline underneath jumps between them.
+# The 3D showcase on the landing page, oldest first. All models stand in one row in this order; the
+# timeline under the viewer runs from the first model's year to "now", one stop per model.
 #
-#   years, title, text      what is shown under the timeline for this era
-#   focus                   what you mostly did then (highlighted chips)
-#   also                    what else you did (plain chips), so no era reads as "only X"
-#   projects                project file names (from src/content/projects/, without .mdx) to link
-#   models                  3D models (.glb in public/models/) for this era, in order
-#     label                 caption shown in the viewer and on the timeline
-#     explode: true         adds an "explode" slider that pulls the parts apart
-#     spin                  parts whose name starts with this keep spinning (e.g. thruster rotors)
-#     tilt                  starting camera height in degrees (default 20)
+#   src            3D model (.glb in public/models/)
+#   label          name shown under the timeline
+#   project        project file name (from src/content/projects/, without .mdx). Adds a link to it,
+#                  and its subtitle and date are used when `text` / `date` are left out
+#   text           (optional) description of the model, shown under the timeline
+#   date           (optional) when, e.g. 2020 or May 2025 – Aug 2025
+#   explode: true  adds an "explode" slider that pulls the parts apart
+#   spin           parts whose name starts with this keep spinning (e.g. thruster rotors)
+#   tilt           starting camera height in degrees (default 20)
 
-- years: 2013 – 2021
-  title: Competition robotics
-  focus: [Mechanical, Electrical, Software]
-  text: >-
-    LEGO MINDSTORMS for the National Robotics Competition, then VEX Robotics through secondary school
-    and junior college: designing, wiring and programming whole robots, iterated under competition
-    pressure.
-  projects: [nrc, vex]
-  models:
-    # Rebuilt from the WRO "Precision Farming" run video with real LEGO parts (npm run model:lego).
-    - src: /models/lego-ev3-robot.glb
-      label: LEGO MINDSTORMS EV3 robot, National Robotics Competition
-    - src: /models/vex-tower-takeover.glb
-      label: VEX Tower Takeover robot, 2020 national champions
+# Rebuilt from the WRO "Precision Farming" run video with real LEGO parts (npm run model:lego).
+- src: /models/lego-ev3-robot.glb
+  label: LEGO MINDSTORMS EV3 robot, National Robotics Competition
+  project: nrc
 
-- years: 2024 – 2026
-  title: Autonomous underwater vehicles
-  focus: [Electrical, System design]
-  also: [Software]
-  text: >-
-    Electrical stacks, PCBs and firmware for NUS Bumblebee's AUVs, system-level design as AUV Lead,
-    and hardware-accelerated computer vision on an FPGA.
-  projects: [full-electrical-stack-auv5, object-tracker-fpga, mini-auv-robosub-2025]
-  models:
-    # From the SOLIDWORKS export, re-assembled by scripts/fix-miniauv.mjs (see MAINTAINING.md).
-    - src: /models/mini-auv.glb
-      label: Mini-AUV, RoboSub 2025
-      spin: rotor_
-    - src: /models/fpga-object-tracker.glb
-      label: FPGA object tracker with pan-tilt camera
-    - src: /models/auv5-electrical-stack.glb
-      label: AUV 5.0 electrical stack
-      explode: true
-    - src: /models/auv5.glb
-      label: AUV 5.0, RoboSub 2026 champions (model by NUS Bumblebee)
-      spin: rotor_
+- src: /models/vex-tower-takeover.glb
+  label: VEX Tower Takeover robot, 2020 national champions
+  project: vex
+  date: 2020
 
-- years: 2026 – now
-  title: Embodied AI
-  focus: [Robot learning]
-  also: [Software, Electrical]
-  text: >-
-    Manipulation and tactile sensing for robot foundation models, on a dual-arm Kinova Gen3 rig.
-  projects: [embodied-ai-contact-rich-manipulation]
-  models:
-    - src: /models/kinova-dual-arm.glb
-      label: Dual Kinova Gen3 arms, Robotiq 2F-85 grippers, LUCID camera mount
-      tilt: 12
+# From the SOLIDWORKS export, re-assembled by scripts/fix-miniauv.mjs (see MAINTAINING.md).
+- src: /models/mini-auv.glb
+  label: Mini-AUV, RoboSub 2025
+  project: mini-auv-robosub-2025
+  spin: rotor_
+
+- src: /models/fpga-object-tracker.glb
+  label: FPGA object tracker with pan-tilt camera
+  project: object-tracker-fpga
+
+- src: /models/auv5-electrical-stack.glb
+  label: AUV 5.0 electrical stack
+  project: full-electrical-stack-auv5
+  explode: true
+
+- src: /models/auv5.glb
+  label: AUV 5.0, RoboSub 2026 champions (model by NUS Bumblebee)
+  project: full-electrical-stack-auv5
+  # From experience.yaml (AUV Lead). TODO(Kenneth): reword if you like
+  text: Development lead for AUV 5.0, Bumblebee's newest AUV, which won RoboSub 2026.
+  date: 2026
+  spin: rotor_
+
+- src: /models/kinova-dual-arm.glb
+  label: Dual Kinova Gen3 arms, Robotiq 2F-85 grippers, LUCID camera mount
+  project: embodied-ai-contact-rich-manipulation
+  tilt: 12

@@ -150,24 +150,15 @@ const skills = defineCollection({
 const journey = defineCollection({
   loader: yamlList('src/data/journey.yaml'),
   schema: z.object({
-    years: z.string(),
-    title: z.string(),
-    focus: z.array(z.string()).default([]),
-    also: z.array(z.string()).default([]),
-    text: z.string(),
-    projects: z.array(z.string()).default([]),
-    models: z
-      .array(
-        z.object({
-          src: z.string(),
-          label: z.string().optional(),
-          explode: z.boolean().default(false),
-          tilt: z.number().default(20),
-          // node-name prefix of parts that spin while the model is shown (e.g. "rotor_")
-          spin: z.string().optional()
-        })
-      )
-      .default([])
+    src: z.string(),
+    label: z.string(),
+    project: z.string().optional(),
+    text: z.string().optional(),
+    date: z.coerce.string().optional(),
+    explode: z.boolean().default(false),
+    tilt: z.number().default(20),
+    // node-name prefix of parts that spin while the model is shown (e.g. "rotor_")
+    spin: z.string().optional()
   })
 });
 

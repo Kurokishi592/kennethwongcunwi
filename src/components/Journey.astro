@@ -1,19 +1,31 @@
 ---
 // Landing-page showcase: one wide 3D stage with every model from src/data/journey.yaml lined up in
 // timeline order. The active model sits in front in full colour; the others wait in the background,
-// smaller and greyed out. It advances on its own; the timeline underneath jumps between models.
+// smaller and greyed out. It advances on its own; the timeline underneath (2013 to now, one stop per
+// model) can be dragged or clicked, and the arrows on the stage step through the models.
 import { getData, getProjects } from '../lib/content';
 
-const eras = await getData('journey');
 const projects = await getProjects();
 const bySlug = new Map(projects.map((p) => [p.slug, p]));
-const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })));
+const models = (await getData('journey')).map((m) => {
+  const project = m.project ? bySlug.get(m.project) : undefined;
+  return {
+    ...m,
+    href: project ? `/projects/${project.slug}/` : undefined,
+    projectTitle: project?.data.title,
+    text: m.text ?? project?.data.subtitle,
+    date: m.date ?? project?.data.date
+  };
+});
+const yearOf = (date?: string) => date?.match(/\d{4}/)?.[0] ?? '';
+const last = Math.max(1, models.length - 1);
+const pad = (n: number) => String(n).padStart(2, '0');
 ---
 
 <div class="showcase" data-showcase data-models={JSON.stringify(models)}>
   <div class="sc-viewport">
     <canvas aria-label="3D models of my projects. Drag to rotate."></canvas>
-    <p class="wb-hud wb-hud-label mono" data-sc-label></p>
+    <p class="wb-hud wb-hud-label mono" data-sc-count>{pad(1)} / {pad(models.length)}</p>
     <p class="wb-hud wb-hud-stats mono" data-sc-stats></p>
     <p class="wb-hud wb-hud-hint mono">drag to rotate</p>
     <button class="sc-step sc-prev" type="button" data-sc-step="-1" aria-label="Previous model">‹</button>
@@ -21,62 +33,45 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
     <p class="wb-status mono muted" data-sc-status>loading 3D models…</p>
   </div>
 
-  <ol class="sc-timeline" aria-label="Timeline">
-    {eras.map((era, e) => (
-      <li class="sc-era" style={`flex-grow:${era.models.length}`}>
-        <span class="sc-era-head">
-          <span class="sc-era-years mono">{era.years}</span>
-          <span class="sc-era-title">{era.title}</span>
+  <div class="sc-scrub">
+    <span class="sc-end mono">{yearOf(models[0]?.date)}</span>
+    <div
+      class="sc-track"
+      role="slider"
+      tabindex="0"
+      aria-label="Timeline: choose a model"
+      aria-valuemin="1"
+      aria-valuemax={models.length}
+      aria-valuenow="1"
+      aria-valuetext={models[0]?.label}
+      data-sc-track
+    >
+      <span class="sc-rail"><span class="sc-fill" data-sc-fill></span></span>
+      {models.map((m, i) => (
+        <span class:list={['sc-stop', { 'is-past': i === 0, 'is-start': i === 0, 'is-end': i === models.length - 1 }]} style={`--x:${i / last}`} data-sc-stop={i}>
+          <span class="sc-stop-tip">{m.label}</span>
         </span>
-        <div class="sc-ticks">
-          {models.map((m, i) =>
-            m.era === e ? (
-              <button class="sc-tick" type="button" data-sc-tick={i} aria-pressed={i === 0 ? 'true' : 'false'}>
-                <span class="sc-tick-bar"><span class="sc-tick-fill"></span></span>
-                <span class="sc-tick-label">{m.label ?? era.title}</span>
-              </button>
-            ) : null
-          )}
-        </div>
-      </li>
-    ))}
-  </ol>
+      ))}
+      <span class="sc-thumb" style="--x:0" data-sc-thumb>
+        <span class="sc-thumb-year mono" data-sc-year></span>
+      </span>
+    </div>
+    <span class="sc-end mono">now</span>
+  </div>
 
   <div class="sc-details">
-    {eras.map((era, e) => {
-      const linked = era.projects.map((s) => bySlug.get(s)).filter(Boolean);
-      return (
-        <div class="sc-panel" data-sc-panel={e} hidden={e !== 0}>
-          <div>
-            <p class="wb-tab-years mono">{era.years}</p>
-            <h2 class="sc-title">{era.title}</h2>
-            {era.focus.length || era.also.length ? (
-              <ul class="sc-domains" aria-label="Domains">
-                {era.focus.map((d) => (
-                  <li class="sc-domain is-focus">{d}</li>
-                ))}
-                {era.also.map((d) => (
-                  <li class="sc-domain">{d}</li>
-                ))}
-              </ul>
-            ) : null}
-            <p class="muted">{era.text}</p>
-          </div>
-          {linked.length ? (
-            <ul class="chapter-links">
-              {linked.map((p) => (
-                <li>
-                  <a href={`/projects/${p!.slug}/`}>
-                    <span class="chapter-link-title">{p!.data.title}</span>
-                    {p!.data.date ? <span class="chapter-link-date muted">{p!.data.date}</span> : null}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-        </div>
-      );
-    })}
+    {models.map((m, i) => (
+      <div class="sc-panel" data-sc-panel={i} hidden={i !== 0}>
+        {m.date ? <p class="sc-date mono">{m.date}</p> : null}
+        <h2 class="sc-title">{m.label}</h2>
+        {m.text ? <p class="muted">{m.text}</p> : null}
+        {m.href ? (
+          <a class="sc-link" href={m.href}>
+            {m.projectTitle}{' '}<span aria-hidden="true">→</span>
+          </a>
+        ) : null}
+      </div>
+    ))}
     <div class="wb-tools">
       <label class="wb-explode" data-sc-explode hidden>
         <span class="mono">explode</span>
@@ -88,7 +83,7 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
 </div>
 
 <script>
-  type ModelSpec = { src: string; label?: string; explode: boolean; tilt: number; spin?: string; era: number };
+  type ModelSpec = { src: string; label: string; date?: string; explode: boolean; tilt: number; spin?: string };
 
   const ADVANCE_MS = 9000; // time on each model
   const RESUME_MS = 8000; // pause after the visitor interacts
@@ -99,9 +94,13 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
   function setup(root: HTMLElement) {
     const specs: ModelSpec[] = JSON.parse(root.dataset.models ?? '[]');
     const canvas = root.querySelector('canvas')!;
-    const ticks = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-sc-tick]'));
+    const track = root.querySelector<HTMLElement>('[data-sc-track]')!;
+    const fill = root.querySelector<HTMLElement>('[data-sc-fill]')!;
+    const thumb = root.querySelector<HTMLElement>('[data-sc-thumb]')!;
+    const yearEl = root.querySelector<HTMLElement>('[data-sc-year]')!;
+    const stops = Array.from(root.querySelectorAll<HTMLElement>('[data-sc-stop]'));
     const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-sc-panel]'));
-    const labelEl = root.querySelector<HTMLElement>('[data-sc-label]')!;
+    const countEl = root.querySelector<HTMLElement>('[data-sc-count]')!;
     const statsEl = root.querySelector<HTMLElement>('[data-sc-stats]')!;
     const statusEl = root.querySelector<HTMLElement>('[data-sc-status]')!;
     const explodeEl = root.querySelector<HTMLElement>('[data-sc-explode]')!;
@@ -137,22 +136,60 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
       statsEl.textContent = engine?.stats(active) ?? '';
     };
 
+    const lastIndex = Math.max(1, specs.length - 1);
+    const pad = (n: number) => String(n).padStart(2, '0');
+
     const select = (i: number) => {
       active = (i + specs.length) % specs.length;
       elapsed = 0;
-      ticks.forEach((t, k) => t.setAttribute('aria-pressed', String(k === active)));
-      panels.forEach((p) => (p.hidden = Number(p.dataset.scPanel) !== specs[active].era));
-      labelEl.textContent = specs[active].label ?? '';
-      explodeEl.hidden = !specs[active].explode;
+      const spec = specs[active];
+      stops.forEach((s, k) => s.classList.toggle('is-past', k <= active));
+      thumb.style.setProperty('--x', String(active / lastIndex));
+      // The first stop sits next to the start label, which already shows its year.
+      yearEl.textContent = active === 0 ? '' : spec.date?.match(/\d{4}/)?.[0] ?? '';
+      track.setAttribute('aria-valuenow', String(active + 1));
+      track.setAttribute('aria-valuetext', spec.label);
+      countEl.textContent = `${pad(active + 1)} / ${pad(specs.length)}`;
+      panels.forEach((p) => (p.hidden = Number(p.dataset.scPanel) !== active));
+      explodeEl.hidden = !spec.explode;
       slider.value = '0';
       engine?.focus(active);
       renderParts();
     };
 
-    ticks.forEach((t) => t.addEventListener('click', () => (select(Number(t.dataset.scTick)), pause())));
     root.querySelectorAll<HTMLButtonElement>('[data-sc-step]').forEach((b) =>
       b.addEventListener('click', () => (select(active + Number(b.dataset.scStep)), pause()))
     );
+
+    // The timeline is a slider: press or drag anywhere along it to scrub through the models.
+    const stopAt = (clientX: number) => {
+      const r = track.getBoundingClientRect();
+      return Math.round(Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * lastIndex);
+    };
+    let scrubbing = false;
+    track.addEventListener('pointerdown', (e) => {
+      scrubbing = true;
+      track.setPointerCapture(e.pointerId);
+      track.classList.add('is-scrubbing');
+      select(stopAt(e.clientX));
+      pause();
+    });
+    track.addEventListener('pointermove', (e) => {
+      if (!scrubbing) return;
+      const i = stopAt(e.clientX);
+      if (i !== active) select(i);
+      pause();
+    });
+    const endScrub = () => ((scrubbing = false), track.classList.remove('is-scrubbing'));
+    track.addEventListener('pointerup', endScrub);
+    track.addEventListener('pointercancel', endScrub);
+    track.addEventListener('keydown', (e) => {
+      const to = { ArrowLeft: active - 1, ArrowDown: active - 1, ArrowRight: active + 1, ArrowUp: active + 1, Home: 0, End: specs.length - 1 }[e.key];
+      if (to === undefined) return;
+      e.preventDefault();
+      select(Math.min(specs.length - 1, Math.max(0, to)));
+      pause();
+    });
     slider.addEventListener('input', () => (pause(), engine?.setExplode(Number(slider.value) / 100)));
     canvas.addEventListener('pointerenter', () => (hovering = true));
     canvas.addEventListener('pointerleave', () => ((hovering = false), pause()));
@@ -168,9 +205,9 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
         elapsed += dt;
         if (elapsed >= ADVANCE_MS) select(active + 1);
       }
-      ticks.forEach((t, k) =>
-        t.querySelector<HTMLElement>('.sc-tick-fill')!.style.setProperty('--p', k === active ? String(Math.min(1, elapsed / ADVANCE_MS)) : '0')
-      );
+      // The filled part of the line creeps towards the next stop while a model is shown.
+      const p = active < specs.length - 1 ? Math.min(1, elapsed / ADVANCE_MS) : 0;
+      fill.style.setProperty('--x', String((active + p) / lastIndex));
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
