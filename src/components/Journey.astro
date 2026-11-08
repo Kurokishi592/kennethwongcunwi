@@ -16,6 +16,8 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
     <p class="wb-hud wb-hud-label mono" data-sc-label></p>
     <p class="wb-hud wb-hud-stats mono" data-sc-stats></p>
     <p class="wb-hud wb-hud-hint mono">drag to rotate</p>
+    <button class="sc-step sc-prev" type="button" data-sc-step="-1" aria-label="Previous model">‹</button>
+    <button class="sc-step sc-next" type="button" data-sc-step="1" aria-label="Next model">›</button>
     <p class="wb-status mono muted" data-sc-status>loading 3D models…</p>
   </div>
 
@@ -148,6 +150,9 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
     };
 
     ticks.forEach((t) => t.addEventListener('click', () => (select(Number(t.dataset.scTick)), pause())));
+    root.querySelectorAll<HTMLButtonElement>('[data-sc-step]').forEach((b) =>
+      b.addEventListener('click', () => (select(active + Number(b.dataset.scStep)), pause()))
+    );
     slider.addEventListener('input', () => (pause(), engine?.setExplode(Number(slider.value) / 100)));
     canvas.addEventListener('pointerenter', () => (hovering = true));
     canvas.addEventListener('pointerleave', () => ((hovering = false), pause()));
