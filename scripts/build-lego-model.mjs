@@ -23,7 +23,7 @@ const OUT = process.env.OUT ?? 'public/models/lego-ev3-robot.glb';
 const LIB = 'raw-assets/lego/ldraw';
 
 // LDraw colour codes
-const BLACK = 0, RED = 4, TAN = 19, LBGREY = 71, WHITE = 15;
+const BLACK = 0, RED = 4, TAN = 19, LBGREY = 71, DBGREY = 72, WHITE = 15;
 
 // ---------- placement helpers (y-up frame -> LDraw's y-down frame) ----------
 const deg = (d) => (d * Math.PI) / 180;
@@ -38,9 +38,9 @@ const F = [1, 0, 0, 0, -1, 0, 0, 0, -1];
 
 // Natural orientation of the parts used (y-up frame, from the LDraw geometry):
 //   beams run along z, holes along x;  open frames lie flat (5/7 wide along x, 7/11 long along z);
-//   pins and axles along x;  wheels' axle and bushes along z;
-//   EV3 large motor: hub axle along x, body forward (+z) and up;  medium motor: output faces +z,
-//   body back along -z;  EV3 sensors: lens / front face +z;  EV3 brick: lying flat, screen up, at -z.
+//   pins and axles along x;  wheels' axle, gears and bushes along z;
+//   medium motor: output faces +z, body back along -z;  EV3 / NXT sensors: lens or front face +z
+//   (the gyro's red marking is on top);  EV3 brick: lying flat, screen up, at -z.
 const parts = []; // [name, colour, [x,y,z], R] so each group can be exported as its own node
 // Layout is written with +x to the robot's right. Facing +z in a right-handed y-up frame, right is
 // -x, so positions are mirrored in x and rotations conjugated (M R M) to keep each part un-mirrored.
@@ -52,85 +52,82 @@ const UP_X = rx(90); // beam standing up, holes along x
 const UP_Z = rot(ry(90), rx(90)); // beam standing up, holes along z
 const ALONG_Z = ry(90); // pin / axle along z
 const SIDE = rz(90); // open frame as a side wall (y-z plane)
-const WALL = rot(rx(90), ry(90)); // open frame as a front wall (x-y plane), long side along x
-const LID = ry(90); // open frame lying flat, long side along x
-const LENS_UP = rx(-90);
 const LENS_DOWN = rx(90);
+const OUT_RIGHT = ry(90); // medium motor output facing +x
+const OUT_LEFT = ry(-90);
 
-// ---------- layout, from the run video (lego robo.MP4) ----------
-// WRO "Precision Farming" robot: a low black box with the drive wheels inside it at the back, the EV3
-// brick lying flat on the left (screen forward), a gyro sensor and a colour sensor standing next to
-// it, a black motor housing at the front right that swings a colour sensor out on an arm, and a red
-// fork at the front with two black prongs that tips up to carry the seedlings.
+// ---------- layout, from the run video (lego robo.MP4) and notes drawn on one of its frames ----------
+// WRO "Precision Farming" robot, compact: two medium motors back to back on the rear axle drive thin
+// bicycle wheels; the EV3 brick lies flat (screen forward) next to the left wheel, on top of the left
+// drive motor. To its right, a forward-facing medium motor with the gyro sensor on top drives the
+// grab-and-lift fork through a pair of bevel gears, and beside it another medium motor swings a
+// HiTechnic light sensor out past the right wheel on an arm (folded down, as in the video).
 
-// Drive: two large motors lying flat, hubs at the rear axle; 56908 rims with 41897 tyres sit inside
-// the side frames.
-const WHEEL = [125, 70, -110]; // x, y (tyre radius), z
-for (const s of [-1, 1]) {
-  place('Drive', '95658.dat', WHITE, [s * 50, WHEEL[1], WHEEL[2]]);
-  place('Drive', '3706.dat', BLACK, [s * 105, WHEEL[1], WHEEL[2]]);
-  place('Drive', '56908.dat', LBGREY, [s * WHEEL[0], WHEEL[1], WHEEL[2]], ry(90));
-  place('Drive', '41897.dat', BLACK, [s * WHEEL[0], WHEEL[1], WHEEL[2]], ry(90));
+// Drive: medium motors along the axle, outputs out to 2903 bicycle rims with 2902 tyres.
+const AXLE = [102, -60]; // y (tyre radius), z
+for (const [s, R] of [[-1, OUT_LEFT], [1, OUT_RIGHT]]) {
+  place('Drive', '99455.dat', WHITE, [s * 181, ...AXLE], R);
+  place('Drive', '3705.dat', BLACK, [s * 215, ...AXLE]);
+  place('Drive', '2903.dat', WHITE, [s * 211, ...AXLE], ry(90));
+  place('Drive', '2902.dat', BLACK, [s * 211, ...AXLE], ry(90));
 }
 
-// Chassis: 11x7 open frames along the back half of each side (the wheels show through them), 7x5
-// frames along the front half, 15L beams across the front and back, and 15L rails under the brick.
+// Chassis: 11x7 open frames outside the wheels, 7x5 frames ahead of them, 15L beams across the back
+// and front with 5L beams out to the side frames, 15L rails along under the brick and the two
+// upper motors, a 15L beam across the top front, and two skids at the front.
 for (const s of [-1, 1]) {
-  place('Chassis', '39794.dat', BLACK, [s * 175, 90, -100], SIDE);
-  place('Chassis', '64179.dat', BLACK, [s * 175, 90, 80], SIDE);
-  place('Chassis', '32278.dat', BLACK, [s * 150, 190, -60]);
-  place('Chassis', '32316.dat', BLACK, [s * 160, 150, 140], UP_Z);
+  place('Chassis', '39794.dat', BLACK, [s * 245, 90, -40], SIDE);
+  place('Chassis', '64179.dat', BLACK, [s * 245, 90, 140], SIDE);
+  for (const [y, z] of [[40, -165], [120, -165], [60, 165], [140, 165]]) place('Chassis', '32316.dat', BLACK, [s * 200, y, z], ACROSS);
   place('Chassis', '32140.dat', BLACK, [s * 100, 10, 140], rot(rz(180), rx(-90)));
 }
-for (const y of [60, 140]) place('Chassis', '32278.dat', BLACK, [0, y, 160], ACROSS);
-for (const y of [40, 120, 180]) place('Chassis', '32278.dat', BLACK, [0, y, -220], ACROSS);
-place('Chassis', '32278.dat', BLACK, [0, 190, 140], ACROSS);
+for (const [y, z] of [[40, -165], [120, -165], [60, 165], [140, 165], [240, 150]]) place('Chassis', '32278.dat', BLACK, [0, y, z], ACROSS);
+for (const x of [-160, -40, 30, 100]) place('Chassis', '32278.dat', BLACK, [x, 141, -20]);
 
-// EV3 brick lying flat on the rails, screen towards the front.
-place('EV3 brick', '95646c01.dat', WHITE, [-75, 308, -70], ry(180));
+// EV3 brick on the rails above the left drive motor, screen towards the front.
+place('EV3 brick', '95646c01.dat', WHITE, [-100, 259, -20], ry(180));
 
-// Gyro sensor and colour sensor standing up beside the brick.
-place('Sensors', '99380.dat', WHITE, [45, 229, 0], LENS_UP);
-place('Sensors', '95650.dat', WHITE, [110, 229, -60], LENS_UP);
-
-// Front right: a medium motor inside a black housing (front wall, side wall and lid are 7x5 frames).
-// Its output comes through the front wall and swings the sensor arm out to the right.
-place('Sensor arm', '99455.dat', WHITE, [130, 250, 150]);
-place('Sensor arm', '64179.dat', BLACK, [90, 250, 170], WALL);
-place('Sensor arm', '64179.dat', BLACK, [170, 250, 100], SIDE);
-place('Sensor arm', '64179.dat', BLACK, [90, 300, 115], LID);
-place('Sensor arm', '3705.dat', BLACK, [130, 250, 190], ALONG_Z);
-place('Sensor arm', '3713.dat', LBGREY, [130, 250, 222]);
-place('Sensor arm', '40490.dat', BLACK, [210, 250, 200], ACROSS);
-place('Sensor arm', '32524.dat', BLACK, [290, 190, 200], UP_Z);
-place('Sensor arm', '95650.dat', WHITE, [290, 90, 192], LENS_DOWN);
-
-// Front fork: a second medium motor across the front turns an axle; two red 7L arms hang from it
-// with two red 9L beams across, a red T-beam in the middle, tan pins, and two 8L axles as prongs.
-place('Fork', '99455.dat', WHITE, [5, 230, 120], ry(90));
-const PIVOT = [0, 170, 190];
-place('Fork', '3707.dat', BLACK, PIVOT);
+// Lift-and-grab: forward-facing medium motor (gyro sensor on top, red marking up), a 12T double
+// bevel on its output meshing with one on the cross axle, and the two halves of the red fork on
+// that axle, each a 9L arm, two red 5L beams, a red T-beam, tan pins and an 8L axle as a prong.
+const LIFT = [30, 200]; // motor x, output axis height
+const PIVOT_Z = 190;
+place('Lift and grab', '99455.dat', WHITE, [LIFT[0], LIFT[1], 155]);
+place('Gyro sensor', '99380.dat', WHITE, [LIFT[0], 238, 40]);
+place('Lift and grab', '32270.dat', DBGREY, [LIFT[0], LIFT[1], 173]);
+place('Lift and grab', '32270.dat', DBGREY, [LIFT[0] - 17, LIFT[1], PIVOT_Z], ry(90));
+place('Lift and grab', '3707.dat', BLACK, [0, LIFT[1], PIVOT_Z]);
 for (const s of [-1, 1]) {
-  place('Fork', '3713.dat', LBGREY, [s * 88, PIVOT[1], PIVOT[2]], ry(90));
-  place('Fork', '32524.dat', RED, [s * 70, 110, PIVOT[2]], UP_X);
-  place('Fork', '3707.dat', BLACK, [s * 30, 50, 290], ALONG_Z);
-  for (const y of [150, 50]) place('Fork', '32556.dat', TAN, [s * 50, y, 220], ALONG_Z);
+  place('Lift and grab', '3713.dat', LBGREY, [s * 88, LIFT[1], PIVOT_Z], ry(90));
+  place('Lift and grab', '40490.dat', RED, [s * 70, 120, PIVOT_Z], UP_X);
+  for (const y of [170, 50]) {
+    place('Lift and grab', '32316.dat', RED, [s * 50, y, 210], ACROSS);
+    place('Lift and grab', '32556.dat', TAN, [s * 70, y, 220], ALONG_Z);
+  }
+  place('Lift and grab', '60484.dat', RED, [s * 50, 160, 230], rx(90));
+  place('Lift and grab', '3707.dat', BLACK, [s * 30, 50, 290], ALONG_Z);
 }
-for (const y of [150, 50]) place('Fork', '40490.dat', RED, [0, y, 210], ACROSS);
-place('Fork', '60484.dat', RED, [0, 140, 230], rx(90));
+
+// Light sensor arm: medium motor facing forward, a 13L beam on its output reaching out past the
+// right wheel, a 5L hanger, and the HiTechnic light sensor (NXT housing) looking down at the mat.
+const ARM = [100, 200, 175]; // motor x, output height, arm z
+place('Light sensor arm', '99455.dat', WHITE, [ARM[0], ARM[1], 160]);
+place('Light sensor arm', '3705.dat', BLACK, [ARM[0], ARM[1], ARM[2]], ALONG_Z);
+place('Light sensor arm', '41239.dat', BLACK, [ARM[0] + 120, ARM[1], ARM[2]], ACROSS);
+place('Light sensor arm', '32316.dat', BLACK, [ARM[0] + 240, ARM[1] - 40, ARM[2]], UP_Z);
+place('Light sensor arm', '55969.dat', LBGREY, [ARM[0] + 240, 95, 165], LENS_DOWN);
 
 // Cables are not LEGO parts: thin tubes added after the LDraw meshes. Points are in the same frame
 // (LDU). In the video they loop high over the brick before going down to each port.
-const PORTS_FRONT = (i) => [-140 + i * 40, 315, 60]; // motor ports A-D, at the screen end
-const PORTS_BACK = (i) => [-140 + i * 40, 315, -200]; // sensor ports 1-4
+const PORTS_FRONT = (i) => [-160 + i * 40, 270, 112]; // motor ports A-D, at the screen end
+const PORTS_BACK = (i) => [-160 + i * 40, 270, -152]; // sensor ports 1-4
 const CABLES = [
-  [PORTS_FRONT(0), [-150, 380, 90], [-120, 300, 140], [-60, 240, 130]], // fork motor
-  [PORTS_FRONT(1), [-60, 420, 60], [80, 380, 40], [130, 280, -40]], // arm motor
-  [PORTS_FRONT(2), [-40, 360, -40], [-160, 300, -120], [-160, 170, -150], [-50, 150, -140]], // left drive
-  [PORTS_FRONT(3), [10, 340, -20], [60, 300, -140], [50, 150, -140]], // right drive
-  [PORTS_BACK(0), [-120, 400, -120], [40, 420, 40], [200, 340, 160], [290, 300, 230], [290, 150, 215]], // arm sensor
-  [PORTS_BACK(1), [-60, 380, -150], [40, 340, -40], [45, 305, 0]], // gyro
-  [PORTS_BACK(2), [0, 360, -160], [100, 360, -100], [110, 305, -60]] // colour sensor
+  [PORTS_FRONT(0), [-120, 340, 140], [-20, 300, 60], [LIFT[0], 240, -30]], // lift motor
+  [PORTS_FRONT(1), [-60, 360, 80], [80, 320, -40], [ARM[0], 240, -30]], // arm motor
+  [PORTS_FRONT(2), [-2, 300, 40], [0, 250, -110], [-5, 140, -75]], // left drive (port at the axle centre)
+  [PORTS_FRONT(3), [10, 330, 30], [5, 245, -120], [5, 140, -75]], // right drive
+  [PORTS_BACK(0), [-140, 320, -170], [60, 345, 20], [260, 300, 200], [ARM[0] + 240, 150, 185]], // light sensor
+  [PORTS_BACK(1), [-100, 315, -175], [0, 320, -60], [LIFT[0], 290, 5]] // gyro
 ];
 
 // ---------- build meshes per group ----------

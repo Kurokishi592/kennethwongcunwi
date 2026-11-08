@@ -395,15 +395,18 @@ const models = eras.flatMap((era, e) => era.models.map((m) => ({ ...m, era: e })
       }
 
       // Spinning parts (e.g. thruster rotors): nodes whose name starts with spec.spin. Each turns
-      // about its own centre, around the axis its geometry is thinnest along (a propeller's axle).
+      // about the centroid of its vertices (on the axle for a symmetric propeller; a 3-blade
+      // propeller's bounding box is not), around the axis its geometry is thinnest along.
       const rotors: Slot['rotors'] = [];
       if (spec.spin) {
         model.traverse((o: Object3D) => {
           const mesh = o as Mesh;
           if (!mesh.isMesh || !mesh.name.startsWith(spec.spin!)) return;
           mesh.geometry = mesh.geometry.clone();
-          mesh.geometry.computeBoundingBox();
-          const c = mesh.geometry.boundingBox!.getCenter(new THREE.Vector3());
+          const pos = mesh.geometry.getAttribute('position');
+          const c = new THREE.Vector3();
+          for (let k = 0; k < pos.count; k++) c.add(new THREE.Vector3(pos.getX(k), pos.getY(k), pos.getZ(k)));
+          c.divideScalar(pos.count);
           mesh.geometry.translate(-c.x, -c.y, -c.z);
           mesh.position.add(c.applyQuaternion(mesh.quaternion).multiply(mesh.scale));
           rotors.push({ node: mesh, base: mesh.quaternion.clone(), axis: thinnestAxis(mesh.geometry.getAttribute('position').array as ArrayLike<number>) });

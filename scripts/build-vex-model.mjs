@@ -1,6 +1,6 @@
 // Builds public/models/vex-tower-takeover.glb: the 2020 VEX Tower Takeover robot (national champions),
-// assembled from VEX's official STEP parts (C-channels, omni wheels, V5 motors/brain/battery, gears,
-// tank tread). Part positions are estimated from photos, so the layout is approximate.
+// assembled from VEX's official STEP parts (C-channels, omni wheels, V5 motors/brain/battery, tank
+// tread) plus generated 16T/64T gears for the tray lift. Part positions are estimated from photos, so the layout is approximate.
 //
 //   npm run model:vex
 //
@@ -46,8 +46,7 @@ const C = {
   black: [0.04, 0.04, 0.05],
   nylon: [0.93, 0.91, 0.85],
   band: [0.72, 0.55, 0.32],
-  cover: [0.85, 0.9, 0.95],
-  cubeGreen: [0.18, 0.66, 0.3],
+    cubeGreen: [0.18, 0.66, 0.3],
   cubeOrange: [0.95, 0.42, 0.1],
   cubePurple: [0.45, 0.22, 0.68]
 };
@@ -165,15 +164,12 @@ const OMNI = await part('omni4', {
   colorOf: (p) => (Math.max(...p.size) < 0.03 ? C.rollerGreen : C.hub)
 });
 const MOTOR = await part('motor', { triangles: 2000, error: 0.15 });
-const BRAIN = await part('brain', { triangles: 4000 });
-const COVER = await part('brain_cover', { triangles: 1500, color: C.cover, alpha: 0.3 });
+// The brain STEP leaves its housing uncoloured; it is black (glass, screen and logo keep their colours).
+const BRAIN = await part('brain', { triangles: 4000, colorOf: (p) => p.color ?? C.black });
 const BATTERY = await part('battery', { triangles: 3000, error: 0.06 });
 const SPROCKET = await part('tread_wheel', { triangles: 3000, color: C.green });
 const LINK = await part('tread_link', { triangles: 150, error: 0.05, color: C.tread });
 const TRACTION = await part('tread_traction', { triangles: 180, error: 0.05, color: C.tread });
-const GEAR84 = await part('gear84', { triangles: 6000, color: C.green });
-const GEAR12 = await part('gear12', { triangles: 600, color: C.black });
-const STANDOFF = await part('standoff2', { triangles: 200 });
 
 // ---------- robot ----------
 const root = doc.createNode('VEX Tower Takeover robot');
@@ -197,31 +193,84 @@ for (const x of [0.105, -0.105]) for (const z of [0.08, -0.08]) place(drive, MOT
 // Steel rails sticking out of the back along the floor.
 for (const z of [0.12, -0.12]) place(drive, await STEEL(0.3), [-0.37, 0.013, z], q(Math.PI / 2, 0, 0));
 
-// Lift: two arms on the 84T gear shafts mid-robot, driven by 12T pinions on two motors. Each arm
-// ends in a roller that pushes the ladder up from underneath; it leans back when the ladder is
-// down and swings forward and up as the ladder tips upright.
-const HINGE = [0.12, 0.105];
-const PIVOT = [0.0, 0.125];
-const ARM = 0.24;
+// Lift: on each side a V5 motor at the base drives a two-stage gear train, 16T metal pinion to 64T
+// plastic gear, a 16T on that gear's shaft to a second 64T (16:1 overall). The second 64T turns a
+// C-channel crank; an axle at the crank's end joins a second C-channel (the coupler), and an axle at
+// the coupler's far end joins the tray. Crank, coupler, tray and base form a four-bar linkage, so the
+// joint between crank and coupler is solved from LADDER_DEG.
+const HINGE = [0.12, 0.105]; // tray hinge (side view: x forward, y up)
 const theta = (LADDER_DEG * Math.PI) / 180;
-const dir = [-Math.cos(theta), Math.sin(theta)]; // along the ladder, back and up from the hinge
-const w = [HINGE[0] - PIVOT[0], HINGE[1] - PIVOT[1]];
-const wd = w[0] * dir[0] + w[1] * dir[1];
-const along = -wd + Math.sqrt(wd * wd - (w[0] ** 2 + w[1] ** 2) + ARM * ARM); // where the arm meets the ladder
-const tip = [HINGE[0] + along * dir[0], HINGE[1] + along * dir[1]];
-const armAngle = Math.atan2(tip[1] - PIVOT[1], tip[0] - PIVOT[0]);
+const dir = [-Math.cos(theta), Math.sin(theta)]; // along the tray, back and up from the hinge
+const ON_TRAY = 0.22; // where the coupler joins the tray, measured from the hinge
+const CRANK_PIVOT = [0.0, 0.12]; // the second 64T gear
+const CRANK = 0.136;
+const COUPLER = 0.126;
+const trayJoint = [HINGE[0] + ON_TRAY * dir[0], HINGE[1] + ON_TRAY * dir[1]];
+// Crank-coupler joint: the intersection of the two circles that lies behind (smaller x).
+const joint = (() => {
+  const [ax, ay] = CRANK_PIVOT;
+  const [bx, by] = trayJoint;
+  const d = Math.hypot(bx - ax, by - ay);
+  const a = (CRANK ** 2 - COUPLER ** 2 + d * d) / (2 * d);
+  const h = Math.sqrt(Math.max(0, CRANK ** 2 - a * a));
+  const [mx, my] = [ax + (a * (bx - ax)) / d, ay + (a * (by - ay)) / d];
+  const options = [
+    [mx + (h * (by - ay)) / d, my - (h * (bx - ax)) / d],
+    [mx - (h * (by - ay)) / d, my + (h * (bx - ax)) / d]
+  ];
+  return options[0][0] < options[1][0] ? options[0] : options[1];
+})();
+const crankAngle = Math.atan2(joint[1] - CRANK_PIVOT[1], joint[0] - CRANK_PIVOT[0]);
+const couplerAngle = Math.atan2(trayJoint[1] - joint[1], trayJoint[0] - joint[0]);
+
+// Spur gear at VEX pitch (24 teeth per inch of pitch diameter), turning about z.
+const MODULE = 0.0254 / 24;
+const gearMesh = (teeth, thick, rgb, opts) => {
+  const r = (teeth * MODULE) / 2;
+  const [tip, root] = [r + MODULE, r - 1.25 * MODULE];
+  const pitch = (2 * Math.PI) / teeth;
+  const outline = [];
+  for (let i = 0; i < teeth; i++) {
+    const a = i * pitch;
+    for (const [f, rad] of [[-0.5, root], [-0.28, root], [-0.12, tip], [0.12, tip], [0.28, root]])
+      outline.push([rad * Math.cos(a + f * pitch), rad * Math.sin(a + f * pitch)]);
+  }
+  const n = outline.length;
+  const pos = [0, 0, -thick / 2, 0, 0, thick / 2];
+  for (const [x, y] of outline) pos.push(x, y, -thick / 2, x, y, thick / 2);
+  const idx = [];
+  for (let i = 0; i < n; i++) {
+    const a = 2 + i * 2, b = 2 + ((i + 1) % n) * 2;
+    idx.push(0, b, a, 1, a + 1, b + 1, a, b, b + 1, a, b + 1, a + 1);
+  }
+  return shapeMesh(`gear${teeth}`, [pos, idx], rgb, opts);
+};
+const GEAR64 = gearMesh(64, 0.0064, C.black, { rough: 0.5 });
+const GEAR16 = gearMesh(16, 0.0048, C.steel, { rough: 0.35, metal: 0.6 });
+const CENTRES = (16 + 64) * MODULE / 2; // 16T meshing with 64T
+const gear1 = [CRANK_PIVOT[0] + CENTRES * Math.cos(0.17), CRANK_PIVOT[1] + CENTRES * Math.sin(0.17)];
+const pinion = [gear1[0] + CENTRES * Math.cos(-0.35), gear1[1] + CENTRES * Math.sin(-0.35)];
+const axle = (len) => shapeMesh('axle', cylData(0.0025, len, 8), C.steel, { rough: 0.35, metal: 0.6 });
+
 const lift = group(root, 'Lift gear train');
-for (const z of [0.085, -0.085]) {
-  const s = Math.sign(z);
-  place(lift, await CH(0.1), [PIVOT[0], 0.085, z + s * 0.02], UPRIGHT);
-  place(lift, GEAR84, [PIVOT[0], PIVOT[1], z], q(0, 0, armAngle));
-  place(lift, GEAR12, [PIVOT[0] - 0.0525, PIVOT[1], z + s * 0.002]);
-  place(lift, MOTOR, [PIVOT[0] - 0.0525, PIVOT[1], z + s * 0.03], AXLE_Z);
-  const arm = group(lift, '', [PIVOT[0], PIVOT[1], z - s * 0.014], q(0, 0, armAngle));
-  place(arm, await CH(ARM), [ARM / 2, 0, 0], s > 0 ? ALONG_X_FLIP : ALONG_X);
+for (const s of [1, -1]) {
+  // Gear tower beside the train, the motor bolted to the base, the two gear planes, and axles.
+  place(lift, await CH(0.1), [gear1[0], 0.085, s * 0.108], UPRIGHT);
+  place(lift, MOTOR, [pinion[0], pinion[1], s * 0.124], AXLE_Z);
+  put(lift, GEAR16, [pinion[0], pinion[1], s * 0.094]);
+  put(lift, GEAR64, [gear1[0], gear1[1], s * 0.094]);
+  put(lift, GEAR16, [gear1[0], gear1[1], s * 0.086], q(0, 0, 0.1));
+  put(lift, GEAR64, [CRANK_PIVOT[0], CRANK_PIVOT[1], s * 0.086], q(0, 0, crankAngle));
+  put(lift, axle(0.035), [gear1[0], gear1[1], s * 0.095]);
+  put(lift, axle(0.04), [CRANK_PIVOT[0], CRANK_PIVOT[1], s * 0.09]);
+  // Crank on the second 64T, coupler from the crank's end up to the tray, axles at both joints.
+  const crank = group(lift, '', [CRANK_PIVOT[0], CRANK_PIVOT[1], s * 0.077], q(0, 0, crankAngle));
+  place(crank, await CH(CRANK + 0.02), [CRANK / 2, 0, 0], s > 0 ? ALONG_X_FLIP : ALONG_X);
+  const coupler = group(lift, '', [joint[0], joint[1], s * 0.067], q(0, 0, couplerAngle));
+  place(coupler, await CH(COUPLER + 0.02), [COUPLER / 2, 0, 0], s > 0 ? ALONG_X_FLIP : ALONG_X);
+  put(lift, axle(0.025), [joint[0], joint[1], s * 0.072]);
+  put(lift, axle(0.025), [trayJoint[0], trayJoint[1], s * 0.062]);
 }
-const tipRoller = shapeMesh('lift_roller', cylData(0.011, 0.15), C.nylon, { rough: 0.6 });
-put(lift, tipRoller, [tip[0], tip[1] - 0.012, 0]);
 
 // Ladder: two telescoping sections hinged at the front, zip-tie rungs, rollers and bands at the joint.
 const ladder = group(root, 'Ladder', [0.12, 0.105, 0], q(0, 0, Math.PI - (LADDER_DEG * Math.PI) / 180));
@@ -274,12 +323,10 @@ for (const [side, z] of [['left', 0.098], ['right', -0.098]]) {
   place(intake, MOTOR, [0, 0.055, 0]);
 }
 
-// V5 brain lying flat under its clear cover, battery beside it; standoffs hold the cover.
+// V5 brain lying flat, screen up, battery beside it.
 const brainGroup = group(root, 'V5 brain & battery', [-0.11, 0.08, 0.04]);
-place(brainGroup, BRAIN, [0, 0, 0], q(-Math.PI / 2, 0, 0));
-place(brainGroup, COVER, [0, 0.022, 0]);
+place(brainGroup, BRAIN, [0, 0, 0], q(Math.PI / 2, 0, 0));
 place(brainGroup, BATTERY, [0, -0.01, -0.13]);
-for (const [x, z] of [[0.06, 0.045], [-0.06, 0.045], [0.06, -0.045], [-0.06, -0.045]]) place(brainGroup, STANDOFF, [x, -0.015, z]);
 
 // ---------- write ----------
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder });

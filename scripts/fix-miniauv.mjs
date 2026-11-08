@@ -7,7 +7,7 @@
 //   - scattered pieces (exploded motherboard PCB components, loose camera parts) are left out.
 // It also regroups the parts for the website's parts list. Output: raw-assets/mini-auv/miniauv-fixed.glb
 //
-//   node scripts/fix-miniauv.mjs && npm run model -- raw-assets/mini-auv/miniauv-fixed.glb public/models/mini-auv.glb
+//   node scripts/fix-miniauv.mjs && npm run model -- raw-assets/mini-auv/miniauv-fixed.glb public/models/mini-auv.glb --ratio 0.06 --error 0.01 --keep rotor_
 
 import { NodeIO, getBounds } from '@gltf-transform/core';
 import { Matrix4, Vector3 } from 'three';
@@ -103,6 +103,17 @@ if (wetlinks.length) {
   const slide = plateMid.clone().sub(nutsMid()).dot(outward) - plateThick / 2 - 0.006;
   const S = new Matrix4().makeTranslation(outward.clone().multiplyScalar(slide));
   for (const n of strayFaceplates) applyWorld(n, S);
+  // Centre the turned block on the plate face (its bounds before turning had a different centre):
+  // vertically by its overall bounds,
+  const after = strayFaceplates.map((n) => getBounds(n));
+  const mid = new Vector3(...[0, 1, 2].map((i) => (Math.min(...after.map((b) => b.min[i])) + Math.max(...after.map((b) => b.max[i]))) / 2));
+  // sideways by the wetlink grid's centre (the ethernet plug sits under its middle).
+  const grid = wetlinks.reduce((s, g) => s.add(centre(g)), new Vector3()).divideScalar(wetlinks.length);
+  mid.x = grid.x;
+  mid.z = grid.z;
+  const across = plateMid.clone().sub(mid);
+  across.addScaledVector(outward, -across.dot(outward));
+  for (const n of strayFaceplates) applyWorld(n, new Matrix4().makeTranslation(across));
 }
 
 // ---------- leave out anything still far from the vehicle ----------
@@ -150,5 +161,29 @@ for (const cap of [one('Master_SensorHullCap'), one('Master_ThrusterHullCap')])
     })
   );
 
+// ---------- propellers: the blue blades of each T200 become their own node, rotor_<n>, so the
+// website can spin them (journey.yaml: spin: rotor_). Optimise with --keep rotor_ to keep them apart.
+const isBlue = (p) => {
+  const [r, g, b] = p.getMaterial()?.getBaseColorFactor() ?? [1, 1, 1];
+  return b > 0.5 && r < 0.2 && g < b;
+};
+const rotorMeshes = new Map(); // thruster meshes may be shared between the eight thrusters
+let rotors = 0;
+for (const n of [...thrusters.listChildren()].flatMap((t) => { const all = []; t.traverse((x) => all.push(x)); return all; })) {
+  const mesh = n.getMesh();
+  if (!mesh) continue;
+  if (!rotorMeshes.has(mesh)) {
+    const blue = mesh.listPrimitives().filter(isBlue);
+    const rotorMesh = blue.length ? doc.createMesh('rotor') : null;
+    for (const p of blue) {
+      mesh.removePrimitive(p);
+      rotorMesh.addPrimitive(p);
+    }
+    rotorMeshes.set(mesh, rotorMesh);
+  }
+  const rotorMesh = rotorMeshes.get(mesh);
+  if (rotorMesh) n.addChild(doc.createNode(`rotor_${rotors++}`).setMesh(rotorMesh));
+}
+
 await io.write(OUT, doc);
-console.log(`${OUT}: frame turned ${((angle * 180) / Math.PI).toFixed(1)} deg, ${strayFaceplates.length} faceplate parts moved, ${dropped} stray meshes left out`);
+console.log(`${OUT}: frame turned ${((angle * 180) / Math.PI).toFixed(1)} deg, ${strayFaceplates.length} faceplate parts moved, ${dropped} stray meshes left out, ${rotors} rotors`);

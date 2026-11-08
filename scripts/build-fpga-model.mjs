@@ -1,6 +1,6 @@
 // Builds public/models/fpga-object-tracker.glb: the EE2026 FPGA object tracker rig from its 3D-print
 // STLs (raw-assets/fpga/, copied from the EE2026 repo's project/hardware folder), plus simple stand-ins
-// for the Basys 3 board, the two SG90 servos and the OV7670 camera.
+// for the Basys 3 board, the two SG90 servos, the OV7670 camera and its jumper wires to the board.
 //
 //   npm run model:fpga
 //
@@ -8,12 +8,13 @@
 // (pan base, its servo clamp, tilt base) was exported in its own frame and is moved onto the
 // turntable by PAN_STAGE_OFFSET.
 
-import { Document, NodeIO } from '@gltf-transform/core';
+import { Document, NodeIO, getBounds } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
 import { meshopt, prune, weld } from '@gltf-transform/functions';
 import { MeshoptEncoder } from 'meshoptimizer';
 import { existsSync, mkdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
+import { CatmullRomCurve3, LineCurve3, TubeGeometry, Vector3 } from 'three';
 import { loadStep } from './lib/step.mjs';
 
 const OUT = process.env.OUT ?? 'public/models/fpga-object-tracker.glb';
@@ -74,12 +75,34 @@ const cylY = (r, h, [cx, cy, cz], n = 20) => {
   return { pos, idx: c.idx };
 };
 
-// SG90 micro servo (datasheet dimensions): body, mounting tabs, output boss, spline and horn.
-// Centre of the body at c; height along y, length along z, output shaft towards +z end.
-const sg90 = (parent, name, [cx, cy, cz]) => {
-  const top = cy + 22.7 / 2;
-  add(parent, `${name}_body`, [box(12.2, 22.7, 22.8, [cx, cy, cz]), box(12.2, 2.5, 32.2, [cx, cy - 22.7 / 2 + 15.9, cz]), cylY(5.9, 4, [cx, top, cz + 5.5])], M.servo);
-  add(parent, `${name}_horn`, [cylY(2.4, 3, [cx, top + 4, cz + 5.5]), box(5, 1.6, 20, [cx, top + 7.8, cz + 5.5])], M.horn);
+// Tube along a path of points (wires, push rod).
+const tube = (points, r, segments = 48) => {
+  const curve = points.length === 2 ? new LineCurve3(...points.map((v) => new Vector3(...v))) : new CatmullRomCurve3(points.map((v) => new Vector3(...v)));
+  const g = new TubeGeometry(curve, segments, r, 6, false);
+  return { pos: new Float32Array(g.getAttribute('position').array), idx: new Uint32Array(g.getIndex().array) };
+};
+// Moves shapes: each vertex v -> f(v).
+const mapShapes = (shapes, f) =>
+  [].concat(shapes).map(({ pos, idx }) => {
+    const out = new Float32Array(pos.length);
+    for (let i = 0; i < pos.length; i += 3) out.set(f([pos[i], pos[i + 1], pos[i + 2]]), i);
+    return { pos: out, idx };
+  });
+
+// SG90 micro servo (datasheet dimensions): body, mounting tabs, output boss and spline. Built with
+// height along y and length along z, output shaft on top towards the +z end, then turned:
+//   along: 'x' puts the length along x (output towards +x);  down: true hangs it output-down.
+// c is the centre of the body. Returns the tip of the output shaft.
+const sg90 = (parent, name, [cx, cy, cz], { along = 'z', down = false } = {}) => {
+  const top = 22.7 / 2;
+  const local = [box(12.2, 22.7, 22.8), box(12.2, 2.5, 32.2, [0, -top + 15.9, 0]), cylY(5.9, 4, [0, top, 5.5]), cylY(2.4, 3, [0, top + 4, 5.5])];
+  const f = ([x, y, z]) => {
+    if (down) [x, y] = [-x, -y]; // half turn about the length axis
+    if (along === 'x') [x, z] = [z, -x];
+    return [x + cx, y + cy, z + cz];
+  };
+  add(parent, `${name}_body`, mapShapes(local, f), M.servo);
+  return f([0, top + 7, 5.5]);
 };
 
 const meshOf = (name, shapes, material) => {
@@ -149,23 +172,42 @@ add(board, 'basys3_pmods', [box(16, 9, 6, [-52, 10.5, -10]), box(16, 9, 6, [-52,
 const platform = group('Pan-tilt platform');
 add(platform, 'pantilt_base_mount', stl('pantilt_base_mount'), M.grey);
 
-// Pan stage: rotates on the turntable and carries the tilt servo and camera plate.
+// Pan stage: rotates on the turntable and carries the tilt servo and camera plate. The pan servo hangs
+// output-down through the 23 x 12.7 mm cutout in the middle of the plate (tabs on the plate's top,
+// y 18.3), turning the stage on the turntable. Coordinates below are the assembly frame, so they are
+// shifted back by PAN_STAGE_OFFSET inside this group.
 const pan = group('Pan stage', PAN_STAGE_OFFSET);
 for (const n of ['pantilt_pan_base', 'pantilt_pan_base_servo_clamp']) add(pan, n, stl(n), M.red);
-sg90(pan, 'pan_servo', [17, 11.5, 94]);
+const PLATE_TOP = 18.3;
+const local = ([x, y, z]) => [x - PAN_STAGE_OFFSET[0], y - PAN_STAGE_OFFSET[1], z - PAN_STAGE_OFFSET[2]];
+sg90(pan, 'pan_servo', local([151.7, PLATE_TOP - 5.55 + 22.7 / 2, -21.65]), { along: 'x', down: true });
 
 const tilt = group('Tilt stage & camera');
 // The tilt base was exported with the pan stage, so it gets the same offset.
 add(tilt, 'pantilt_tilt_base', { pos: stl('pantilt_tilt_base').pos.map((v, i) => v + PAN_STAGE_OFFSET[i % 3]), idx: null }, M.red);
-for (const n of ['pantilt_tilt_arm', 'pantilt_tilt_servo_clamp']) add(tilt, n, stl(n), M.red);
-sg90(tilt, 'tilt_servo', [151, 33, -53.5]);
+// pantilt_tilt_arm is left out: in the export it lies across the front of the plate, and the build
+// uses the push rod below instead.
+add(tilt, 'pantilt_tilt_servo_clamp', stl('pantilt_tilt_servo_clamp'), M.red);
+// Tilt servo: upright beside the pan servo, strapped down by the U clamp (x 151.3-160.3), with its
+// output end out past the strap. A single-arm horn turns the servo's rotation into a push or pull on
+// a rod to a clevis on the back of the camera plate, which tilts the plate about its bottom hinge.
+const shaft = sg90(tilt, 'tilt_servo', [161, PLATE_TOP + 22.7 / 2, -0.3], { along: 'x' });
+const hornTip = [shaft[0], shaft[1], shaft[2] - 12];
+const clevis = [shaft[0], 58, -51];
+add(tilt, 'tilt_horn', [cylY(3.5, 2, [shaft[0], shaft[1] - 2, shaft[2]]), box(5, 1.6, 14, [shaft[0], shaft[1], shaft[2] - 6])], M.horn);
+add(tilt, 'tilt_push_rod', [tube([[hornTip[0], hornTip[1] + 1, hornTip[2]], [clevis[0], clevis[1], clevis[2] + 1]], 0.9, 4), cylY(1.8, 3, [hornTip[0], hornTip[1] - 1, hornTip[2]])], M.horn);
+add(tilt, 'tilt_clevis', box(5, 7, 4.4, [clevis[0], clevis[1], -51]), M.red);
 // OV7670 module on the outer face of the tilt plate, lens facing out.
-// (35 x 35 mm board, 2x9 header on the back, M12 lens holder and lens on the front.)
+// (35 x 35 mm board, M12 lens holder and lens on the front.) Its 2x9 header runs up one edge and
+// pokes through the 5 mm slot in the plate (x 146.8-151.8, y 37.3-77.7).
+const HEADER = [149.3, 57.5]; // x, y of the header's centre
 add(tilt, 'ov7670_pcb', box(35, 35, 1.6, [164, 60, -62.5]), M.camPcb);
-add(tilt, 'ov7670_header', box(23, 5, 2.5, [164, 45, -60.4]), M.black);
+add(tilt, 'ov7670_header', box(5, 23, 2.5, [HEADER[0], HEADER[1], -60]), M.black);
 const pins = [];
-for (let i = 0; i < 9; i++) for (const dy of [-1.27, 1.27]) pins.push(box(0.64, 0.64, 7, [164 - 10.16 + i * 2.54, 45 + dy, -57]));
+for (let i = 0; i < 9; i++) for (const dx of [-1.27, 1.27]) pins.push(box(0.64, 0.64, 11.2, [HEADER[0] + dx, HEADER[1] - 10.16 + i * 2.54, -56.1]));
 add(tilt, 'ov7670_pins', pins, M.gold);
+// 2x9 Dupont housing on the pins behind the plate; the jumpers leave from its back (z -41.2).
+add(tilt, 'ov7670_jumper_housing', box(5.4, 23.5, 12, [HEADER[0], HEADER[1], -47.2]), M.black);
 add(tilt, 'ov7670_lens_holder', [box(14, 14, 4.5, [164, 60, -65.5]), lens(6.8, 3, [164, 60, -67.7])], M.black);
 add(tilt, 'ov7670_lens', lens(5.6, 9, [164, 60, -70.7]), M.lens);
 add(tilt, 'ov7670_glass', lens(4.2, 0.4, [164, 60, -79.7]), M.glass);
@@ -189,6 +231,51 @@ const rotated = [from[0], from[1] * Math.cos(t) - from[2] * Math.sin(t), from[1]
 for (const g of [frame, board]) g.setRotation(rot).setTranslation(to.map((v, i) => v - rotated[i]));
 
 for (const g of [stand, frame, board, platform, panTilt]) root.addChild(g);
+
+// Jumper wires from the camera's 2x9 header to Pmod JB and JC, the two right-angle headers on the
+// board's edge next to the rig (Digilent's STEP has them grey; they are black). From the photo: the
+// bundle leaves the back of the camera, drops behind the pan stage onto the base, and goes up into
+// the Pmods. World (root) frame, mm.
+const mm = (b) => ({ min: b.min.map((v) => v * 1000), max: b.max.map((v) => v * 1000) });
+const pmods = board
+  .listChildren()
+  .map((n) => ({ n, b: mm(getBounds(n)) }))
+  .filter(({ b }) => b.max[0] > 50 && Math.max(...b.max.map((v, i) => v - b.min[i])) > 15 && Math.max(...b.max.map((v, i) => v - b.min[i])) < 18)
+  .sort((a, b) => b.b.max[1] - a.b.max[1]);
+for (const { n } of pmods) n.getMesh().listPrimitives().forEach((pr) => pr.setMaterial(M.black));
+const wires = group('Camera wires');
+if (pmods.length >= 2) {
+  const along = [0, -Math.sin(t), Math.cos(t)]; // pin rows run along the board edge
+  const normal = [0, Math.cos(t), Math.sin(t)];
+  const at = (c, a, b) => c.map((v, i) => v + along[i] * a + normal[i] * b);
+  const ends = []; // 9 sockets on each Pmod (6 on one row, 3 on the other)
+  for (const { b } of pmods.slice(0, 2)) {
+    const c = [b.max[0] + 12, (b.min[1] + b.max[1]) / 2, (b.min[2] + b.max[2]) / 2]; // back of the plug housing
+    for (let k = 0; k < 9; k++) ends.push(at(c, ((k % 6) - 2.5) * 2.54, k < 6 ? 1.27 : -1.27));
+    const housing = doc.createNode('pmod_jumper_housing').setRotation(rot).setTranslation([b.max[0] + 6, c[1], c[2]]);
+    housing.setMesh(meshOf('pmod_jumper_housing', box(12, 5.4, 15.5), M.black));
+    wires.addChild(housing);
+  }
+  // Camera header pins in the pan-tilt frame, turned like the pan-tilt group (half turn about y at TURNTABLE).
+  const turn = ([x, y, z]) => [2 * TURNTABLE[0] - x, y, 2 * TURNTABLE[2] - z];
+  const COLOURS = [[0.35, 0.2, 0.1], [0.8, 0.1, 0.1], [0.95, 0.5, 0.1], [0.95, 0.85, 0.15], [0.15, 0.6, 0.25], [0.15, 0.3, 0.8], [0.5, 0.2, 0.7], [0.55, 0.55, 0.55], [0.92, 0.92, 0.92]];
+  const wireMats = COLOURS.map((c, i) => mat(`wire_${i}`, c, 0.5));
+  for (let j = 0; j < 18; j++) {
+    const lane = j - 8.5;
+    const start = turn([HEADER[0] + (j < 9 ? 1.27 : -1.27), HEADER[1] - 10.16 + (j % 9) * 2.54, -41.2]);
+    const end = ends[j];
+    const pts = [
+      start,
+      [start[0] - 4, start[1] + 4, start[2] - 10],
+      [128 + lane * 0.5, 40, -20 + lane * 0.7],
+      [100 + lane * 0.5, 12, -16 + lane * 0.9],
+      [end[0] + 16, end[1] - 6, end[2] + lane * 0.3],
+      end
+    ];
+    add(wires, `jumper_${j}`, tube(pts, 0.6), wireMats[j % 9]);
+  }
+}
+root.addChild(wires);
 doc.createScene('scene').addChild(root);
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder });

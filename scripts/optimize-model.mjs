@@ -11,6 +11,8 @@
 //   --min-size 2.5   smallest part to keep, in mm
 //   --ratio 0.08     fraction of triangles to keep after simplifying
 //   --error 0.002    how far the simplified shape may drift, relative to the part size
+//   --keep rotor_    nodes whose name starts with this stay separate objects inside their part
+//                    (e.g. propellers the website spins), instead of being merged into it
 
 import { NodeIO, PropertyType, getBounds } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
@@ -32,6 +34,7 @@ if (!input || !output) {
 const minSize = flag('min-size', 2.5) / 1000;
 const ratio = flag('ratio', 0.08);
 const error = flag('error', 0.002);
+const keep = args.includes('--keep') ? args[args.indexOf('--keep') + 1] : null;
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({
   'meshopt.encoder': MeshoptEncoder
@@ -73,9 +76,29 @@ for (const part of assembly.listChildren()) {
   const alignedWithBoard = (b) =>
     bb && b.min.every((v, i) => v >= bb.min[i] - 0.002) && b.max.every((v, i) => v <= bb.max[i] + 0.002);
 
+  // Copies src's primitives into mesh with `matrix` baked in. Repeated parts share vertex data, and
+  // each copy gets a different transform, so the data is copied too.
+  const bake = (src, mesh, matrix) => {
+    for (const prim of src.listPrimitives()) {
+      const copy = prim.clone();
+      for (const semantic of copy.listSemantics()) copy.setAttribute(semantic, copy.getAttribute(semantic).clone());
+      if (copy.getIndices()) copy.setIndices(copy.getIndices().clone());
+      transformPrimitive(copy, matrix);
+      mesh.addPrimitive(copy);
+    }
+  };
   part.traverse((child) => {
     const src = child.getMesh();
     if (!src) return;
+    if (keep && child.getName().startsWith(keep)) {
+      const kb = getBounds(child);
+      const kc = kb.min.map((v, i) => (v + kb.max[i]) / 2);
+      const kmesh = doc.createMesh(child.getName());
+      bake(src, kmesh, new Matrix4().makeTranslation(-kc[0], -kc[1], -kc[2]).multiply(new Matrix4().fromArray(child.getWorldMatrix())).toArray());
+      node.addChild(doc.createNode(child.getName()).setTranslation(kc.map((v, i) => v - center[i])).setMesh(kmesh));
+      kept++;
+      return;
+    }
     const cb = getBounds(child);
     if (child.getName().startsWith('Layer_') && !(/SolderMask/.test(child.getName()) && alignedWithBoard(cb))) {
       dropped++;
@@ -86,18 +109,11 @@ for (const part of assembly.listChildren()) {
       return;
     }
     kept++;
-    const matrix = toLocal.clone().multiply(new Matrix4().fromArray(child.getWorldMatrix())).toArray();
-    for (const prim of src.listPrimitives()) {
-      // Copy the vertex data: repeated parts share it, and we bake a different transform into each.
-      const copy = prim.clone();
-      for (const semantic of copy.listSemantics()) copy.setAttribute(semantic, copy.getAttribute(semantic).clone());
-      if (copy.getIndices()) copy.setIndices(copy.getIndices().clone());
-      transformPrimitive(copy, matrix);
-      mesh.addPrimitive(copy);
-    }
+    bake(src, mesh, toLocal.clone().multiply(new Matrix4().fromArray(child.getWorldMatrix())).toArray());
   });
 
-  if (mesh.listPrimitives().length) out.addChild(node.setMesh(mesh));
+  if (mesh.listPrimitives().length) node.setMesh(mesh);
+  if (mesh.listPrimitives().length || node.listChildren().length) out.addChild(node);
 }
 
 // Replace the original hierarchy with the merged one.
