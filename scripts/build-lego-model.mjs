@@ -1,5 +1,6 @@
-// Builds public/models/lego-ev3-robot.glb: the EV3 robot for the National Robotics Competition,
-// rebuilt from video with real LEGO part geometry from the LDraw library. The layout is approximate.
+// Builds public/models/lego-ev3-robot.glb: the EV3 robot from the WRO "Precision Farming" run video,
+// rebuilt with real LEGO part geometry from the LDraw library. Part sizes are exact; the layout is
+// read off the video frames, so hidden internals (gearing under the fork, cable routing) are guesses.
 //
 //   npm run model:lego
 //
@@ -7,7 +8,7 @@
 // (https://library.ldraw.org/library/updates/complete.zip, CC BY 4.0).
 //
 // Positions below are in LDraw units (1 LDU = 0.4 mm; a stud / beam hole = 20 LDU) in a y-up frame:
-// x to the robot's right, y up, z forward. Wheels are at the back, colour sensors at the front.
+// x to the robot's right, y up, z forward (see place()). Wheels are at the back, the fork at the front.
 
 import { Document, NodeIO } from '@gltf-transform/core';
 import { ALL_EXTENSIONS } from '@gltf-transform/extensions';
@@ -22,7 +23,7 @@ const OUT = process.env.OUT ?? 'public/models/lego-ev3-robot.glb';
 const LIB = 'raw-assets/lego/ldraw';
 
 // LDraw colour codes
-const BLACK = 0, RED = 4, YELLOW = 14, LBGREY = 71, DBGREY = 72, WHITE = 15;
+const BLACK = 0, RED = 4, TAN = 19, LBGREY = 71, WHITE = 15;
 
 // ---------- placement helpers (y-up frame -> LDraw's y-down frame) ----------
 const deg = (d) => (d * Math.PI) / 180;
@@ -36,112 +37,101 @@ const I = rot();
 const F = [1, 0, 0, 0, -1, 0, 0, 0, -1];
 
 // Natural orientation of the parts used (y-up frame, from the LDraw geometry):
-//   beams run along z, holes along x;  pins and axles along x;  wheels' axle, gears and bushes along z;
-//   cross blocks along y;
-//   EV3 large motor: hub axle along x, body forward (+z) and up;  medium motor: output along -z;
-//   EV3 brick: lying flat, screen up.
+//   beams run along z, holes along x;  open frames lie flat (5/7 wide along x, 7/11 long along z);
+//   pins and axles along x;  wheels' axle and bushes along z;
+//   EV3 large motor: hub axle along x, body forward (+z) and up;  medium motor: output faces +z,
+//   body back along -z;  EV3 sensors: lens / front face +z;  EV3 brick: lying flat, screen up, at -z.
 const parts = []; // [name, colour, [x,y,z], R] so each group can be exported as its own node
-const place = (group, part, colour, [x, y, z], R = I) => parts.push([group, part, colour, [x, y, z], R]);
+// Layout is written with +x to the robot's right. Facing +z in a right-handed y-up frame, right is
+// -x, so positions are mirrored in x and rotations conjugated (M R M) to keep each part un-mirrored.
+const M = [-1, 0, 0, 0, 1, 0, 0, 0, 1];
+const place = (group, part, colour, [x, y, z], R = I) => parts.push([group, part, colour, [-x, y, z], m3(m3(M, R), M)]);
 
-// Beam along an arbitrary direction in the x-y plane (degrees from +x), holes along z.
-const BEAM_IN_XY = (angle) => rot(rz(angle), ry(90));
-// Beam standing up (along y), holes along x / along z.
-const UP_X = rx(90);
-const UP_Z = rot(ry(90), rx(90));
-// Beam lying across the robot (along x), holes along z.
-const ACROSS = ry(90);
+const ACROSS = ry(90); // beam along x, holes along z
+const UP_X = rx(90); // beam standing up, holes along x
+const UP_Z = rot(ry(90), rx(90)); // beam standing up, holes along z
+const ALONG_Z = ry(90); // pin / axle along z
+const SIDE = rz(90); // open frame as a side wall (y-z plane)
+const WALL = rot(rx(90), ry(90)); // open frame as a front wall (x-y plane), long side along x
+const LID = ry(90); // open frame lying flat, long side along x
+const LENS_UP = rx(-90);
+const LENS_DOWN = rx(90);
 
-// ---------- layout, from the front photo ----------
-// Two boxy black towers either side, the EV3 brick tilted between them (screen forward and up),
-// two line sensors at the front centre, an outer sensor hanging on each side, side arms with red
-// axles ending in black feet, two more feet at the front, and grey axles across the towers with
-// yellow bushes, black 24T gears on the outer ends and yellow rubber bands.
+// ---------- layout, from the run video (lego robo.MP4) ----------
+// WRO "Precision Farming" robot: a low black box with the drive wheels inside it at the back, the EV3
+// brick lying flat on the left (screen forward), a gyro sensor and a colour sensor standing next to
+// it, a black motor housing at the front right that swings a colour sensor out on an arm, and a red
+// fork at the front with two black prongs that tips up to carry the seedlings.
 
-// Four-wheeled base: two large motors drive the rear wheels (56908 rims with 41897 tyres);
-// the front wheels are small 56145 rims without tyres.
-const REAR_Y = 70; // tyre radius
-const FRONT_Y = 38; // rim radius
+// Drive: two large motors lying flat, hubs at the rear axle; 56908 rims with 41897 tyres sit inside
+// the side frames.
+const WHEEL = [125, 70, -110]; // x, y (tyre radius), z
 for (const s of [-1, 1]) {
-  place('Drive', '95658.dat', WHITE, [s * 60, REAR_Y, -80]);
-  place('Drive', '56908.dat', LBGREY, [s * 150, REAR_Y, -80], ry(90));
-  place('Drive', '41897.dat', BLACK, [s * 150, REAR_Y, -80], ry(90));
-  place('Drive', '56145.dat', WHITE, [s * 95, FRONT_Y, 185], ry(90));
-  place('Drive', '3706.dat', LBGREY, [s * 95, FRONT_Y, 185]);
-  place('Drive', '32278.dat', BLACK, [s * 115, 175, 60]);
+  place('Drive', '95658.dat', WHITE, [s * 50, WHEEL[1], WHEEL[2]]);
+  place('Drive', '3706.dat', BLACK, [s * 105, WHEEL[1], WHEEL[2]]);
+  place('Drive', '56908.dat', LBGREY, [s * WHEEL[0], WHEEL[1], WHEEL[2]], ry(90));
+  place('Drive', '41897.dat', BLACK, [s * WHEEL[0], WHEEL[1], WHEEL[2]], ry(90));
 }
-place('Drive', '32524.dat', BLACK, [0, 175, 200], ACROSS);
 
-// EV3 brick, lying back about 60 degrees so the screen faces mostly up and a little forward.
-place('EV3 brick', '95646c01.dat', WHITE, [0, 270, -20], rx(30));
-place('EV3 brick', '32524.dat', RED, [0, 180, 175], ACROSS);
-place('EV3 brick', '32524.dat', RED, [0, 365, -45], ACROSS);
-
-// Line sensors at the front centre, lenses down, with red brackets either side.
+// Chassis: 11x7 open frames along the back half of each side (the wheels show through them), 7x5
+// frames along the front half, 15L beams across the front and back, and 15L rails under the brick.
 for (const s of [-1, 1]) {
-  place('Line sensors', '95650.dat', WHITE, [s * 26, 80, 235], rx(90));
-  place('Line sensors', '32523.dat', RED, [s * 72, 120, 235], UP_X);
-  place('Line sensors', '32184.dat', RED, [s * 72, 165, 220], rz(90));
+  place('Chassis', '39794.dat', BLACK, [s * 175, 90, -100], SIDE);
+  place('Chassis', '64179.dat', BLACK, [s * 175, 90, 80], SIDE);
+  place('Chassis', '32278.dat', BLACK, [s * 150, 190, -60]);
+  place('Chassis', '32316.dat', BLACK, [s * 160, 150, 140], UP_Z);
+  place('Chassis', '32140.dat', BLACK, [s * 100, 10, 140], rot(rz(180), rx(-90)));
 }
-place('Line sensors', '40490.dat', BLACK, [0, 165, 245], ACROSS);
+for (const y of [60, 140]) place('Chassis', '32278.dat', BLACK, [0, y, 160], ACROSS);
+for (const y of [40, 120, 180]) place('Chassis', '32278.dat', BLACK, [0, y, -220], ACROSS);
+place('Chassis', '32278.dat', BLACK, [0, 190, 140], ACROSS);
 
-// Front feet: red axles straight down with black cross blocks as feet.
+// EV3 brick lying flat on the rails, screen towards the front.
+place('EV3 brick', '95646c01.dat', WHITE, [-75, 308, -70], ry(180));
+
+// Gyro sensor and colour sensor standing up beside the brick.
+place('Sensors', '99380.dat', WHITE, [45, 229, 0], LENS_UP);
+place('Sensors', '95650.dat', WHITE, [110, 229, -60], LENS_UP);
+
+// Front right: a medium motor inside a black housing (front wall, side wall and lid are 7x5 frames).
+// Its output comes through the front wall and swings the sensor arm out to the right.
+place('Sensor arm', '99455.dat', WHITE, [130, 250, 150]);
+place('Sensor arm', '64179.dat', BLACK, [90, 250, 170], WALL);
+place('Sensor arm', '64179.dat', BLACK, [170, 250, 100], SIDE);
+place('Sensor arm', '64179.dat', BLACK, [90, 300, 115], LID);
+place('Sensor arm', '3705.dat', BLACK, [130, 250, 190], ALONG_Z);
+place('Sensor arm', '3713.dat', LBGREY, [130, 250, 222]);
+place('Sensor arm', '40490.dat', BLACK, [210, 250, 200], ACROSS);
+place('Sensor arm', '32524.dat', BLACK, [290, 190, 200], UP_Z);
+place('Sensor arm', '95650.dat', WHITE, [290, 90, 192], LENS_DOWN);
+
+// Front fork: a second medium motor across the front turns an axle; two red 7L arms hang from it
+// with two red 9L beams across, a red T-beam in the middle, tan pins, and two 8L axles as prongs.
+place('Fork', '99455.dat', WHITE, [5, 230, 120], ry(90));
+const PIVOT = [0, 170, 190];
+place('Fork', '3707.dat', BLACK, PIVOT);
 for (const s of [-1, 1]) {
-  place('Front feet', '3706.dat', RED, [s * 118, 110, 255], rz(90));
-  place('Front feet', '32184.dat', BLACK, [s * 118, 45, 255], rz(90));
+  place('Fork', '3713.dat', LBGREY, [s * 88, PIVOT[1], PIVOT[2]], ry(90));
+  place('Fork', '32524.dat', RED, [s * 70, 110, PIVOT[2]], UP_X);
+  place('Fork', '3707.dat', BLACK, [s * 30, 50, 290], ALONG_Z);
+  for (const y of [150, 50]) place('Fork', '32556.dat', TAN, [s * 50, y, 220], ALONG_Z);
 }
+for (const y of [150, 50]) place('Fork', '40490.dat', RED, [0, y, 210], ACROSS);
+place('Fork', '60484.dat', RED, [0, 140, 230], rx(90));
 
-// The towers are the lifting mechanisms; they lean back a little (side view sketch).
-const LEAN = 12;
-const PIVOT = [0, 240, 130];
-const lean = ([x, y, z]) => {
-  const c = Math.cos(deg(-LEAN)), sn = Math.sin(deg(-LEAN));
-  const [dy, dz] = [y - PIVOT[1], z - PIVOT[2]];
-  return [x, PIVOT[1] + dy * c - dz * sn, PIVOT[2] + dy * sn + dz * c];
-};
-const placeLean = (g, part, colour, p, R = I) => place(g, part, colour, lean(p), rot(rx(-LEAN), R));
-// Towers: 13L uprights at the four corners, 7L beams across top and bottom, a medium motor and
-// grey gears inside, grey axles across the front with yellow bushes, rubber bands and black gears.
-for (const [side, s] of [['left', -1], ['right', 1]]) {
-  const g = `Tower (${side})`;
-  for (const x of [s * 140, s * 240]) for (const z of [70, 190]) placeLean(g, '41239.dat', BLACK, [x, 360, z], UP_X);
-  for (const y of [240, 490]) for (const z of [70, 200]) placeLean(g, '32524.dat', BLACK, [s * 190, y, z], ACROSS);
-  placeLean(g, '99455.dat', WHITE, [s * 190, 380, 160], rx(-90));
-  placeLean(g, '3648b.dat', LBGREY, [s * 190, 300, 200]);
-  placeLean(g, '3648b.dat', LBGREY, [s * 190, 420, 200]);
-  for (const [y, z] of [[460, 214], [280, 214], [470, 80]]) {
-    placeLean(g, '3708.dat', LBGREY, [s * 205, y, z]);
-    placeLean(g, '3648b.dat', BLACK, [s * 310, y, z], ry(90));
-    for (const x of [150, 235]) placeLean(g, '32123a.dat', YELLOW, [s * x, y, z + 4], ry(90));
-  }
-  for (const y of [360, 420]) placeLean(g, '6558.dat', YELLOW, [s * 245, y, 205]);
-}
-
-// Side arms: two black 9L beams reaching out from each tower, a red axle down to a black foot,
-// and the outer line sensor hanging from a short black upright.
-for (const [side, s] of [['left', -1], ['right', 1]]) {
-  const g = `Arm (${side})`;
-  for (const z of [170, 200]) place(g, '40490.dat', BLACK, [s * 320, 305, z], BEAM_IN_XY(s > 0 ? -12 : 192));
-  place(g, '32184.dat', LBGREY, [s * 400, 290, 215], rz(90));
-  place(g, '3706.dat', RED, [s * 410, 225, 215], rz(90));
-  place(g, '32184.dat', BLACK, [s * 410, 160, 215], rz(90));
-  place(g, '32316.dat', BLACK, [s * 300, 220, 200], UP_X);
-  place(g, '95650.dat', WHITE, [s * 300, 95, 215], rx(90));
-}
-
-// Rear: red cross beams and skids.
-place('Rear', '32524.dat', RED, [0, 300, -40], ACROSS);
-for (const s of [-1, 1]) place('Rear', '32140.dat', BLACK, [s * 40, 10, -160], rot(rz(180), rx(-90)));
-
-// Rubber bands and cables are not LEGO parts: thin tubes added after the LDraw meshes.
-// Points are in the same frame (LDU).
-const BANDS = [];
-for (const s of [-1, 1]) for (const x of [150, 235]) BANDS.push([lean([s * x, 460, 220]), lean([s * x, 280, 220])]);
-const CABLES = [];
-for (const s of [-1, 1]) {
-  CABLES.push([[s * 300, 115, 215], [s * 340, 420, 170], [s * 230, 560, 120], [s * 40, 375, -10]]); // outer sensors
-  CABLES.push([[s * 26, 115, 235], [s * 20, 300, 265], [s * 70, 430, 160], [s * 30, 375, -10]]); // line sensors
-  CABLES.push([[s * 190, 500, 160], [s * 90, 570, 90], [s * 25, 380, -15]]); // tower motors
-}
+// Cables are not LEGO parts: thin tubes added after the LDraw meshes. Points are in the same frame
+// (LDU). In the video they loop high over the brick before going down to each port.
+const PORTS_FRONT = (i) => [-140 + i * 40, 315, 60]; // motor ports A-D, at the screen end
+const PORTS_BACK = (i) => [-140 + i * 40, 315, -200]; // sensor ports 1-4
+const CABLES = [
+  [PORTS_FRONT(0), [-150, 380, 90], [-120, 300, 140], [-60, 240, 130]], // fork motor
+  [PORTS_FRONT(1), [-60, 420, 60], [80, 380, 40], [130, 280, -40]], // arm motor
+  [PORTS_FRONT(2), [-40, 360, -40], [-160, 300, -120], [-160, 170, -150], [-50, 150, -140]], // left drive
+  [PORTS_FRONT(3), [10, 340, -20], [60, 300, -140], [50, 150, -140]], // right drive
+  [PORTS_BACK(0), [-120, 400, -120], [40, 420, 40], [200, 340, 160], [290, 300, 230], [290, 150, 215]], // arm sensor
+  [PORTS_BACK(1), [-60, 380, -150], [40, 340, -40], [45, 305, 0]], // gyro
+  [PORTS_BACK(2), [0, 360, -160], [100, 360, -100], [110, 305, -60]] // colour sensor
+];
 
 // ---------- build meshes per group ----------
 const doc = new Document();
@@ -156,7 +146,7 @@ const matFor = (rgb) => {
   return materials.get(key);
 };
 
-const root = doc.createNode('NRC EV3 robot');
+const root = doc.createNode('WRO EV3 robot');
 doc.createScene('scene').addChild(root);
 const groups = [...new Set(parts.map((p) => p[0]))];
 for (const g of groups) {
@@ -175,11 +165,11 @@ for (const g of groups) {
   root.addChild(doc.createNode(g).setMesh(mesh));
 }
 
-// Tubes for rubber bands and cables (LDU, y-up frame -> glTF metres).
+// Tubes for the cables (LDU, layout frame -> glTF metres, mirrored in x like place()).
 const tubeMesh = (name, paths, radius, rgb) => {
   const mesh = doc.createMesh(name);
   for (const pts of paths) {
-    const curve = new CatmullRomCurve3(pts.map(([x, y, z]) => new Vector3(x * 4e-4, y * 4e-4, z * 4e-4)));
+    const curve = new CatmullRomCurve3(pts.map(([x, y, z]) => new Vector3(-x * 4e-4, y * 4e-4, z * 4e-4)));
     const geo = new TubeGeometry(curve, 40, radius * 4e-4, 6, false);
     mesh.addPrimitive(
       doc
@@ -191,7 +181,6 @@ const tubeMesh = (name, paths, radius, rgb) => {
   }
   return mesh;
 };
-root.addChild(doc.createNode('Rubber bands').setMesh(tubeMesh('bands', BANDS, 3, [0.95, 0.85, 0.1])));
 root.addChild(doc.createNode('Cables').setMesh(tubeMesh('cables', CABLES, 6, [0.06, 0.06, 0.07])));
 
 const io = new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({ 'meshopt.encoder': MeshoptEncoder });

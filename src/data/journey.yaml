@@ -20,9 +20,9 @@
     pressure.
   projects: [nrc, vex]
   models:
-    # TODO(Kenneth): LEGO robot taken out until it is more accurate (npm run model:lego rebuilds it):
-    # - src: /models/lego-ev3-robot.glb
-    #   label: LEGO MINDSTORMS EV3 robot, National Robotics Competition
+    # Rebuilt from the WRO "Precision Farming" run video with real LEGO parts (npm run model:lego).
+    - src: /models/lego-ev3-robot.glb
+      label: LEGO MINDSTORMS EV3 robot, National Robotics Competition
     - src: /models/vex-tower-takeover.glb
       label: VEX Tower Takeover robot, 2020 national champions
 

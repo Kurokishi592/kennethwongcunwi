@@ -71,15 +71,38 @@ const frameT = new Matrix4()
   .multiply(new Matrix4().makeTranslation(-frameMid.x, -frameMid.y, -frameMid.z));
 const frame = one('Master_Frame');
 applyWorld(frame, frameT);
-// The thruster-end faceplate parts (penetrators) travelled with the frame. Turn them like the frame,
-// then sit them on the thruster-end cap, just outside its flange.
-const strayFaceplates = byName('ThrusterFaceplate').filter((n) => centre(n).distanceTo(hullMid) > 1);
-const thrusterFlange = centre(byName('Flange').find((n) => parentOf(n)?.getName().includes('ThrusterHullCap')) ?? byName('Flange')[1]);
-const outward = thrusterFlange.clone().sub(hullMid).normalize();
-for (const n of strayFaceplates) {
-  applyWorld(n, frameT);
-  const target = thrusterFlange.clone().addScaledVector(outward, 0.03);
-  applyWorld(n, new Matrix4().makeTranslation(target.sub(centre(n))));
+// The thruster-end penetrators (wetlinks, ethernet bulkhead) ended up ~6 m away, while their back
+// plate stayed on the cap. Move them as one block (keeping their layout) onto the plate: turn the
+// block so the wetlinks point out of the hull, centre it on the plate, and push the nuts against
+// the plate's inner face.
+const strayFaceplates = nodes.filter((n) => n.getName().endsWith('^ThrusterFaceplate') && centre(n).distanceTo(hullMid) > 1);
+const thrusterPlate = one('Master_ThrusterHullCap-1/ThrusterFaceplate-3/ThrusterFaceplate-2');
+const plateMid = centre(thrusterPlate);
+const outward = plateMid.clone().sub(hullMid);
+outward.y = 0;
+outward.normalize();
+const wetlinks = strayFaceplates.filter((n) => n.getName().startsWith('wetlink'));
+const partOf = (g, key) => centre(g.listChildren().find((n) => n.getName().includes(key)));
+const nutsMid = () => wetlinks.reduce((s, g) => s.add(partOf(g, 'NUT')), new Vector3()).divideScalar(wetlinks.length);
+if (wetlinks.length) {
+  // Penetrator body minus its nut points outward (the nut is on the inside of the plate).
+  const was = wetlinks.reduce((s, g) => s.add(partOf(g, 'WLP').sub(partOf(g, 'NUT'))), new Vector3());
+  was.y = 0;
+  const turn = Math.atan2(outward.x, outward.z) - Math.atan2(was.x, was.z);
+  const box = strayFaceplates.map((n) => getBounds(n));
+  const lo = [0, 1, 2].map((i) => Math.min(...box.map((b) => b.min[i])));
+  const hi = [0, 1, 2].map((i) => Math.max(...box.map((b) => b.max[i])));
+  const blockMid = new Vector3(...lo.map((v, i) => (v + hi[i]) / 2));
+  const T = new Matrix4()
+    .makeTranslation(plateMid.x, plateMid.y, plateMid.z)
+    .multiply(new Matrix4().makeRotationY(turn))
+    .multiply(new Matrix4().makeTranslation(-blockMid.x, -blockMid.y, -blockMid.z));
+  for (const n of strayFaceplates) applyWorld(n, T);
+  const b = getBounds(thrusterPlate);
+  const plateThick = Math.min(...b.max.map((v, i) => v - b.min[i]));
+  const slide = plateMid.clone().sub(nutsMid()).dot(outward) - plateThick / 2 - 0.006;
+  const S = new Matrix4().makeTranslation(outward.clone().multiplyScalar(slide));
+  for (const n of strayFaceplates) applyWorld(n, S);
 }
 
 // ---------- leave out anything still far from the vehicle ----------
