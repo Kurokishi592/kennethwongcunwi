@@ -74,8 +74,18 @@ const profile = defineCollection({
     resume: z.string().optional(),
     transcript: z.string().optional(),
     highlights: z
-      .array(z.object({ title: z.string(), body: z.string().optional(), points }))
-      .default([])
+      .array(
+        z.object({
+          title: z.string(),
+          body: z.string().optional(),
+          points,
+          // "steps" numbers the points (01, 02, ...) instead of bullets
+          style: z.enum(['list', 'steps']).default('list')
+        })
+      )
+      .default([]),
+    // Big-number facts in the About page header
+    facts: z.array(z.object({ value: z.coerce.string(), label: z.string() })).default([])
   })
 });
 
@@ -161,4 +171,20 @@ const journey = defineCollection({
   })
 });
 
-export const collections = { blog, projects, profile, achievements, experience, education, skills, journey };
+// Which sections each page shows, in order (src/data/layout.yaml).
+const sectionList = z
+  .array(
+    // A bare name ("- skills") is short for { section: skills }.
+    z.preprocess(
+      (v) => (typeof v === 'string' ? { section: v } : v),
+      z.object({ section: z.string(), title: z.string().optional(), link: z.string().optional() })
+    )
+  )
+  .default([]);
+
+const layout = defineCollection({
+  loader: yamlList('src/data/layout.yaml'),
+  schema: z.object({ home: sectionList, about: sectionList })
+});
+
+export const collections = { blog, projects, profile, achievements, experience, education, skills, journey, layout };

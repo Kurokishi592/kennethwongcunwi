@@ -1,0 +1,16 @@
+---
+// Projects marked `featured: true`, ordered by featuredRank. A row of cards on wide screens, a
+// swipeable strip on phones.
+import ProjectCard from './ProjectCard.astro';
+import { getProjects } from '../lib/content';
+
+const featured = (await getProjects())
+  .filter((p) => p.data.featured)
+  .sort((a, b) => (a.data.featuredRank ?? 9999) - (b.data.featuredRank ?? 9999));
+---
+
+<div class="work-row">
+  {featured.map((p) => (
+    <ProjectCard entry={p} />
+  ))}
+</div>

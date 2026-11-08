@@ -33,9 +33,10 @@ html[data-theme="light"] {
 
 * { box-sizing: border-box; }
 
-html, body {
-  height: 100%;
-}
+/* min-height, not height: a body fixed to one screen tall made the sticky header scroll away
+   after the first screen. */
+html { height: 100%; }
+body { min-height: 100%; }
 
 body {
   margin: 0;
@@ -381,99 +382,6 @@ a:hover {
   align-items: start;
 }
 
-/* Whoami hero image */
-.whoami-hero-media {
-  position: relative;
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
-  box-shadow: var(--shadow);
-  overflow: hidden;
-  min-height: 260px;
-}
-
-/* Fills the card at any height (height: 100% alone falls back to the photo's own height and left
-   an empty band under it on phones). */
-.whoami-hero-media img {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  border: 0;
-  border-radius: 0;
-  filter: brightness(0.62) saturate(1.02);
-}
-
-html[data-theme="light"] .whoami-hero-media img {
-  filter: brightness(0.86) saturate(1.02);
-}
-
-.whoami-hero-overlay {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(900px 500px at 20% 20%, rgba(124, 58, 237, 0.25), transparent 60%),
-    radial-gradient(900px 500px at 85% 25%, rgba(34, 197, 94, 0.18), transparent 55%),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.35), rgba(0, 0, 0, 0.55));
-  pointer-events: none;
-}
-
-html[data-theme="light"] .whoami-hero-overlay {
-  background:
-    radial-gradient(900px 500px at 20% 20%, rgba(124, 58, 237, 0.16), transparent 62%),
-    radial-gradient(900px 500px at 85% 25%, rgba(34, 197, 94, 0.12), transparent 58%),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.14), rgba(0, 0, 0, 0.28));
-}
-
-.whoami-hero-text {
-  position: absolute;
-  inset: 0 auto auto 0;
-  padding: 1.15rem;
-  max-width: 72ch;
-  color: rgba(255, 255, 255, 0.96);
-}
-
-.whoami-hero-text .hero-title,
-.whoami-hero-text .hero-subtitle {
-  color: inherit;
-  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
-}
-
-.whoami-hero-text .hero-subtitle {
-  color: rgba(255, 255, 255, 0.84);
-}
-
-.whoami-hero-text .muted {
-  color: rgba(255, 255, 255, 0.84);
-}
-
-.whoami-hero-text a {
-  color: rgba(255, 255, 255, 0.96);
-}
-
-.whoami-hero-text a:hover {
-  color: rgba(255, 255, 255, 1);
-}
-
-.whoami-hero-text .eyebrow {
-  display: inline-flex;
-  padding: 0.3rem 0.55rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--border) 55%, transparent);
-  background: color-mix(in srgb, var(--bg) 55%, transparent);
-}
-
-.whoami-hero-text .hero-title {
-  margin-top: 0.5rem;
-}
-
-.whoami-hero-text .hero-subtitle {
-  margin-top: 0.45rem;
-  max-width: 65ch;
-}
-
 /* Whoami contents card */
 .toc-card {
   border: 1px solid var(--border);
@@ -483,14 +391,7 @@ html[data-theme="light"] .whoami-hero-overlay {
   padding: 0.75rem;
 }
 
-.whoami-side {
-  display: grid;
-  gap: 0.9rem;
-}
 
-.filter-card {
-  padding: 0.85rem;
-}
 
 .toc-top {
   display: flex;
@@ -507,63 +408,13 @@ html[data-theme="light"] .whoami-hero-overlay {
   font-size: 1.2rem;
 }
 
-.filter-row {
-  display: inline-flex;
-  gap: 0.35rem;
-  align-items: center;
-}
 
-.toc-actions {
-  margin-top: 0.65rem;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.55rem;
-}
 
-.filter-title {
-  margin: 0.15rem 0 0;
-  font-weight: 850;
-  color: var(--text);
-  letter-spacing: -0.01em;
-  font-size: 1.02rem;
-}
 
-.filter-help {
-  margin: 0;
-  font-size: 0.98rem;
-  line-height: 1.25;
-  text-align: left;
-}
 
-.filter-btn {
-  appearance: none;
-  border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg) 65%, transparent);
-  color: var(--muted);
-  border-radius: 999px;
-  padding: 0.8rem 1.05rem;
-  font-size: 1.25rem;
-  min-height: 56px;
-  width: 100%;
-  cursor: pointer;
-}
 
-.filter-btn.filter-flag {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  letter-spacing: -0.01em;
-}
 
-.filter-btn:hover {
-  color: var(--text);
-  filter: brightness(1.06);
-}
 
-.filter-btn.is-active {
-  color: var(--text);
-  border-color: color-mix(in srgb, var(--border) 65%, var(--brand) 45%);
-  background: color-mix(in srgb, var(--brand) 14%, var(--bg-elev));
-}
 
 .toc {
   display: grid;
@@ -623,72 +474,6 @@ html[data-theme="light"] .whoami-hero-overlay {
   width: 18px;
   height: 18px;
   flex: 0 0 auto;
-}
-
-@media (min-width: 960px) {
-  .whoami-hero .toc-card {
-    width: min(100%, 320px);
-    justify-self: end;
-  }
-
-  .whoami-hero .hero-grid {
-    grid-template-columns: 1.35fr 0.65fr;
-    align-items: stretch;
-  }
-
-  .whoami-hero-media {
-    min-height: 420px;
-  }
-}
-
-/* Phones and tablets: the contents list becomes a row of chips and the filter one line, so the
-   intro starts within the first screen instead of after a screen of sidebar. */
-@media (max-width: 959px) {
-  .whoami-side { gap: 0.6rem; }
-  .whoami-hero .toc-card { padding: 0.6rem; box-shadow: none; }
-  .whoami-hero .toc-top { display: none; }
-  .whoami-hero .toc {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 0;
-    padding-left: 0;
-  }
-  .whoami-hero .toc a {
-    min-height: 40px;
-    padding: 0.4rem 0.75rem;
-    border-color: var(--border);
-    background: var(--bg-elev);
-    font-size: 0.92rem;
-  }
-  .filter-card {
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-    padding: 0.6rem;
-    box-shadow: none;
-  }
-  .filter-title { display: none; }
-  .filter-btn {
-    width: auto;
-    min-height: 44px;
-    padding: 0.45rem 1.1rem;
-    font-size: 1rem;
-  }
-  .filter-help { font-size: 0.92rem; }
-}
-
-.li-item.is-hidden {
-  display: none;
-}
-
-/* Legacy toggle: current is always visible */
-.li-item[data-era="legacy"] {
-  display: none;
-}
-
-html.show-legacy .li-item[data-era="legacy"] {
-  display: grid;
 }
 
 .hero-photo {
@@ -1119,76 +904,18 @@ html[data-theme="light"] .featured-badge {
 
 .card-top p { margin: 0.4rem 0 0; }
 
-/* LinkedIn-style cards (Focus section) */
-.li-card {
-  row-gap: 0.45rem;
-}
 
-/* LinkedIn-style timeline items (Whoami) */
-.li-timeline {
-  display: grid;
-  gap: 1rem;
-}
 
-.li-item {
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: color-mix(in srgb, var(--bg) 70%, transparent);
-  box-shadow: var(--shadow);
-  padding: 1.05rem;
-  display: grid;
-  gap: 0.75rem;
-}
 
-.li-positions {
-  display: grid;
-  gap: 0.9rem;
-}
 
-.li-position {
-  padding-top: 0.1rem;
-}
 
-.li-pos-head {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  align-items: baseline;
-}
 
-.li-pos-title {
-  margin: 0;
-  font-weight: 850;
-  color: var(--text);
-}
 
 /* "See more" blocks */
-.see-more {
-  border-top: 1px dashed color-mix(in srgb, var(--border) 65%, transparent);
-  padding-top: 0.65rem;
-}
 
-.see-more > summary {
-  list-style: none;
-  cursor: pointer;
-  color: color-mix(in srgb, var(--text) 90%, var(--brand) 35%);
-  font-weight: 700;
-}
 
-.see-more > summary::-webkit-details-marker {
-  display: none;
-}
 
-.see-more[open] > summary {
-  margin-bottom: 0.5rem;
-}
 
-.li-head {
-  display: grid;
-  grid-template-columns: 46px 1fr;
-  gap: 0.7rem;
-  align-items: start;
-}
 
 .li-logo {
   width: 46px;
@@ -1214,83 +941,18 @@ html[data-theme="light"] .featured-badge {
   border-radius: 0;
 }
 
-.li-head-text {
-  display: grid;
-  gap: 0.15rem;
-  padding-top: 0.05rem;
-}
 
-.li-title {
-  margin: 0;
-  font-size: 1.08rem;
-  font-weight: 850;
-  letter-spacing: -0.01em;
-  color: var(--text);
-}
 
-.li-subtitle {
-  margin: 0;
-  font-size: 0.95rem;
-  font-weight: 650;
-}
 
-.li-dates {
-  margin: 0;
-  font-size: 0.9rem;
-}
 
-.li-desc {
-  margin: 0;
-  font-size: 0.97rem;
-  line-height: 1.55;
-}
 
-.li-lines {
-  display: grid;
-  gap: 0.08rem;
-  margin-top: 0.06rem;
-}
 
-.li-lines p {
-  margin: 0;
-  line-height: 1.22;
-}
 
-.li-label {
-  margin: 0.06rem 0 0;
-  font-size: 0.98rem;
-  font-weight: 750;
-  letter-spacing: -0.01em;
-  color: var(--text);
-}
 
-.li-grade {
-  margin: 0.25rem 0 0;
-  color: var(--text);
-  opacity: 0.92;
-  font-size: 0.98rem;
-}
 
-.li-grade-value {
-  font-weight: 800;
-}
 
-.li-block {
-  display: grid;
-  gap: 0.12rem;
-  margin-top: 0.32rem;
-}
 
-.li-card .bullets {
-  margin-top: 0.05rem;
-  padding-left: 1rem;
-  font-size: 0.93rem;
-}
 
-.li-card .bullets li {
-  margin-top: 0.14rem;
-  line-height: 1.35;
-}
 
 .focus-cards {
   align-items: start;
@@ -2117,31 +1779,37 @@ html { scroll-behavior: smooth; }
 }
 
 /* ---- Achievements (About page) ---- */
+/* A row of award cards, the year large so the run of results reads at a glance. */
 .achievements {
   list-style: none;
   margin: 0;
   padding: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 0.6rem;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
 }
 
 .achievement {
-  display: grid;
-  gap: 0.1rem;
-  padding: 0.7rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 1rem 1.05rem 1.1rem;
   border: 1px solid var(--border);
-  border-left: 3px solid color-mix(in srgb, var(--brand) 70%, var(--border));
+  border-top: 2px solid color-mix(in srgb, var(--brand) 70%, var(--border));
   border-radius: var(--radius-sm);
   background: var(--bg-elev);
 }
 
 .achievement-year {
-  font-size: 0.8rem;
-  color: var(--faint);
+  font-size: 1.6rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--brand-2);
 }
 
 .achievement-title {
+  margin-top: 0.35rem;
   font-weight: 750;
   line-height: 1.3;
 }
@@ -2149,6 +1817,13 @@ html { scroll-behavior: smooth; }
 .achievement-detail {
   font-size: 0.86rem;
   line-height: 1.35;
+}
+
+@media (max-width: 479px) {
+  .achievements { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .achievement { padding: 0.8rem 0.85rem 0.9rem; }
+  .achievement-year { font-size: 1.3rem; }
+  .achievement-title { font-size: 0.95rem; }
 }
 
 /* ---- 3D showcase: wide stage, timeline, details ---- */
@@ -2538,7 +2213,6 @@ html[data-theme="light"] .role-award {
 /* Phones: dates on their own line under the title (they used to land right-aligned or not
    depending on the title's length), and less padding so bullets get more width. */
 @media (max-width: 719px) {
-  .li-item { padding: 0.85rem; }
   .role-dates { flex-basis: 100%; margin-left: 0; }
   .role-body .bullets { padding-left: 1rem; }
 }
@@ -2550,54 +2224,68 @@ html[data-theme="light"] .role-award {
   font-size: 0.8rem;
 }
 
-/* ---- Tech stack ---- */
+/* ---- Tech stack: one row per group, logo chips that wrap (scannable in one screen) ---- */
 .skill-groups {
   display: grid;
-  gap: 1.4rem;
+  border-top: 1px solid var(--border);
+}
+
+.skill-group {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 0.6rem 1.5rem;
+  align-items: baseline;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border);
 }
 
 .skill-group-title {
-  margin: 0 0 0.6rem;
+  margin: 0;
   font-size: 0.85rem;
   font-weight: 600;
-  color: var(--faint);
+  color: var(--brand-2);
 }
 
 .skill-grid {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
 }
 
 .skill {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 0.6rem;
-  padding: 0.6rem 0.7rem;
+  gap: 0.5rem;
+  padding: 0.4rem 0.75rem 0.4rem 0.55rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   background: var(--bg-elev);
-  font-size: 0.92rem;
-  line-height: 1.25;
+  font-size: 0.9rem;
+  line-height: 1.2;
 }
 
 .skill-icon {
   flex: none;
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   color: var(--text);
 }
 
 .skill-initials {
   display: grid;
   place-items: center;
-  border-radius: 6px;
+  border-radius: 50%;
   background: color-mix(in srgb, var(--brand) 25%, transparent);
-  font-size: 0.66rem;
+  font-size: 0.6rem;
   font-weight: 800;
+}
+
+@media (max-width: 719px) {
+  .skill-group { grid-template-columns: 1fr; padding: 0.75rem 0; }
+  .skill { font-size: 0.86rem; }
 }
 
 /* ---- Embeds: YouTube, PDF, video ---- */
@@ -2740,3 +2428,360 @@ html[data-theme="light"] .role-award {
 @media (max-width: 719px) {
   .sc-era-title { display: none; }
 }
+
+/* =====================================================================
+   Page sections (src/data/layout.yaml): headings, scroll reveal, and the
+   pieces used by the landing page and About page.
+   ===================================================================== */
+
+/* Heading with an optional link to the page that has the full version. */
+.section-head-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
+}
+
+.section-link {
+  padding: 0.6rem 0 0.6rem 0.6rem;
+  margin: -0.6rem 0;
+  font-size: 0.9rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.section-link:hover {
+  color: var(--text);
+  text-decoration: none;
+}
+
+/* Landing page: the first section follows the showcase closely. */
+.landing + .section { padding-top: 0.6rem; }
+
+/* Fade up on first scroll into view (set up in main.js; skipped for reduced motion). */
+html.js-reveal .reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+html.js-reveal .reveal.is-in {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- About header: photo beside name, intro and facts; stacked on phones ---- */
+.about-hero {
+  padding: 1.6rem 0 1.2rem;
+}
+
+.about-hero-grid {
+  display: grid;
+  gap: 1.25rem;
+  align-items: center;
+}
+
+.about-photo {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  max-height: 260px;
+  object-fit: cover;
+  object-position: 50% 35%;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.about-hero-text .hero-intro {
+  margin-top: 0.8rem;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+}
+
+.fact {
+  padding: 0.7rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev);
+}
+
+.fact-value {
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.fact-label {
+  margin: 0.2rem 0 0;
+  font-size: 0.84rem;
+  line-height: 1.3;
+}
+
+@media (min-width: 820px) {
+  .about-hero { padding: 2.4rem 0 1.6rem; }
+  .about-hero-grid { grid-template-columns: 300px 1fr; gap: 2.2rem; }
+  .about-photo { aspect-ratio: 4 / 5; max-height: none; }
+}
+
+/* ---- In-page nav: sticks under the header; one sideways-scrolling row on phones ---- */
+.page-nav {
+  position: sticky;
+  top: var(--header-h, 69px);
+  z-index: 15;
+  border-block: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.page-nav-row {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.5rem 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.page-nav-row::-webkit-scrollbar { display: none; }
+
+.page-nav a {
+  flex: none;
+  padding: 0.45rem 0.8rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.page-nav a:hover {
+  color: var(--text);
+  text-decoration: none;
+  background: var(--bg-elev);
+}
+
+.page-nav a[aria-current] {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--border) 50%, var(--brand) 50%);
+  background: color-mix(in srgb, var(--brand) 14%, transparent);
+}
+
+/* Section anchors land below the header and the in-page nav. */
+.page-nav ~ .section { scroll-margin-top: calc(var(--header-h, 69px) + 3.2rem); }
+
+/* ---- "A short intro" cards ---- */
+.highlights {
+  display: grid;
+  gap: 0.75rem;
+}
+
+@media (min-width: 820px) {
+  .highlights { grid-template-columns: repeat(3, 1fr); }
+}
+
+.highlight {
+  padding: 1.05rem 1.1rem 1.15rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-elev);
+}
+
+.highlight h3 {
+  margin: 0 0 0.55rem;
+  font-size: 1.05rem;
+}
+
+.highlight p,
+.highlight .bullets { margin: 0; }
+
+/* Numbered points (style: steps) */
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+  counter-reset: step;
+  color: var(--muted);
+}
+
+.steps li {
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  counter-increment: step;
+}
+
+.steps li::before {
+  content: counter(step, decimal-leading-zero);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.85rem;
+  line-height: 1.75;
+  color: var(--brand-2);
+}
+
+/* ---- Timeline (experience, education): logos on a vertical line, no boxes ---- */
+.tl {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 1.6rem;
+}
+
+.tl::before {
+  content: "";
+  position: absolute;
+  left: 22px;
+  top: 0.5rem;
+  bottom: 0.5rem;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, var(--brand), color-mix(in srgb, var(--brand-2) 60%, var(--border)) 60%, var(--border));
+}
+
+.tl-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.tl-item[data-era="legacy"] { display: none; }
+html.show-legacy .tl-item[data-era="legacy"] { display: grid; }
+
+.tl-item .li-logo { position: relative; z-index: 1; }
+.tl-item .li-logo.initials { background: linear-gradient(var(--bg-elev), var(--bg-elev)), var(--bg); }
+.tl-item.is-current .li-logo { box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand-2) 45%, transparent); }
+
+.tl-dates {
+  margin: 0.15rem 0;
+  font-size: 0.82rem;
+  color: var(--brand-2);
+}
+
+.tl-org {
+  margin: 0;
+  font-size: 1.15rem;
+  line-height: 1.3;
+}
+
+.tl-sub {
+  margin: 0.15rem 0 0;
+  font-size: 0.95rem;
+}
+
+.tl-summary {
+  margin: 0.5rem 0 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.tl-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.tl-stat {
+  padding: 0.25rem 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--border) 50%, var(--brand-2) 50%);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--text);
+}
+
+.tl-body .role-list { margin-top: 0.55rem; }
+
+.tl-block {
+  padding: 0.6rem 0 0.2rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+}
+
+.tl-block .bullets { margin-top: 0.3rem; }
+
+.tl-label {
+  margin: 0;
+  font-weight: 750;
+  color: var(--text);
+}
+
+.era-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 44px;
+  margin: 1.2rem 0 0;
+  padding: 0.4rem 1rem 0.4rem 0.5rem;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 0.92rem;
+  cursor: pointer;
+}
+
+.era-toggle:hover {
+  color: var(--text);
+  border-color: color-mix(in srgb, var(--border) 50%, var(--brand) 50%);
+}
+
+.era-toggle-cmd {
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: var(--bg-elev);
+  color: var(--brand-2);
+  font-size: 0.85rem;
+}
+
+/* ---- Featured projects: a row of cards; a swipeable strip on phones ---- */
+.work-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.9rem;
+}
+
+.work-row .featured-badge { display: none; }
+.work-row .card { padding: 0.8rem; gap: 0.7rem; }
+.work-row .card-top h3 { font-size: 1rem; line-height: 1.3; }
+.work-row .card-top p { font-size: 0.9rem; }
+.work-row .card-meta { font-size: 0.85rem; }
+.work-row .tag:nth-child(n + 4) { display: none; }
+
+@media (max-width: 719px) {
+  .work-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-inline: -1rem;
+    padding: 0 1rem 0.4rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-inline: 1rem;
+    scrollbar-width: none;
+  }
+  .work-row::-webkit-scrollbar { display: none; }
+  .work-row .card { flex: 0 0 78%; scroll-snap-align: start; }
+}
+
+/* ---- Resume, transcript, socials: one row of cards ---- */
+.docs-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 0.75rem;
+}
+
+.socials-card {
+  grid-template-columns: 1fr;
+  align-content: start;
+}
+
+.socials-card .icon-row { margin-top: 0.2rem; }

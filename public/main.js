@@ -154,11 +154,83 @@
     });
   };
 
+  // Sections fade up as they scroll into view. Without JS, or with reduced motion, they just show.
+  const initReveal = () => {
+    const items = document.querySelectorAll('.reveal');
+    if (!items.length || !('IntersectionObserver' in window)) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          e.target.classList.add('is-in');
+          io.unobserve(e.target);
+        }
+      },
+      { rootMargin: '0px 0px -6% 0px' }
+    );
+    document.documentElement.classList.add('js-reveal');
+    items.forEach((el) => io.observe(el));
+  };
+
+  // "ls -a" buttons under the About timelines: show or hide entries without `current: true`.
+  const initEraToggle = () => {
+    const toggles = document.querySelectorAll('[data-era-toggle]');
+    const set = (on) => {
+      document.documentElement.classList.toggle('show-legacy', on);
+      toggles.forEach((t) => {
+        t.setAttribute('aria-pressed', String(on));
+        const label = t.querySelector('.era-toggle-label');
+        if (label) label.textContent = on ? 'Hide earlier' : `Show ${t.dataset.count} earlier`;
+      });
+    };
+    toggles.forEach((t) =>
+      t.addEventListener('click', () => set(!document.documentElement.classList.contains('show-legacy')))
+    );
+  };
+
+  // In-page nav (About): sits under the sticky header and marks the section being read.
+  const initPageNav = () => {
+    const nav = document.querySelector('.page-nav');
+    const header = document.querySelector('.site-header');
+    if (!nav) return;
+    const setOffset = () => {
+      if (header) document.documentElement.style.setProperty('--header-h', `${header.offsetHeight}px`);
+    };
+    setOffset();
+    window.addEventListener('resize', setOffset);
+
+    const links = [...nav.querySelectorAll('a[href^="#"]')];
+    const targets = links.map((a) => document.getElementById(a.getAttribute('href').slice(1))).filter(Boolean);
+    if (!targets.length || !('IntersectionObserver' in window)) return;
+    const row = nav.querySelector('.page-nav-row');
+    const mark = (id) => {
+      links.forEach((a) => {
+        const on = a.getAttribute('href') === `#${id}`;
+        if (on) a.setAttribute('aria-current', 'location');
+        else a.removeAttribute('aria-current');
+        // Phones: the row scrolls sideways; keep the marked link in view.
+        if (on && row) row.scrollTo({ left: a.offsetLeft - (row.clientWidth - a.offsetWidth) / 2, behavior: 'smooth' });
+      });
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        const hit = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (hit) mark(hit.target.id);
+      },
+      { rootMargin: '-30% 0px -60% 0px' }
+    );
+    targets.forEach((t) => io.observe(t));
+  };
+
   document.addEventListener('DOMContentLoaded', () => {
     initTheme();
     initMenu();
     initContactMenu();
     initYear();
     initCopyEmail();
+    initReveal();
+    initEraToggle();
+    initPageNav();
   });
 })();

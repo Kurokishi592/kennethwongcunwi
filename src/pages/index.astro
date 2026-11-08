@@ -1,10 +1,12 @@
 ---
 // Landing page. The words live in src/data/*.yaml; this file only arranges them.
 // Desktop: photo + intro + tiles on top, the 3D showcase full width underneath (both in the first
-// screen). Phones: name, then the showcase, then the intro and tiles.
+// screen). Phones: name, then the showcase, then the intro and tiles. Below that, the sections
+// listed under `home:` in src/data/layout.yaml.
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HomeTiles from '../components/HomeTiles.astro';
 import Journey from '../components/Journey.astro';
+import Sections from '../components/Sections.astro';
 import { getProfile, thumb } from '../lib/content';
 
 const profile = await getProfile();
@@ -44,4 +46,6 @@ const profile = await getProfile();
       </div>
     </div>
   </section>
+
+  <Sections page="home" wide />
 </BaseLayout>

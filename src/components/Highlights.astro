@@ -1,0 +1,31 @@
+---
+// "A short intro" cards from the `highlights` list in src/data/profile.yaml.
+import { getProfile } from '../lib/content';
+
+const { highlights } = await getProfile();
+---
+
+<div class="highlights">
+  {highlights.map((h) => (
+    <article class="highlight">
+      <h3>{h.title}</h3>
+      {h.points.length ? (
+        h.style === 'steps' ? (
+          <ol class="steps">
+            {h.points.map((p) => (
+              <li>{p}</li>
+            ))}
+          </ol>
+        ) : (
+          <ul class="bullets">
+            {h.points.map((p) => (
+              <li>{p}</li>
+            ))}
+          </ul>
+        )
+      ) : (
+        <p class="muted">{h.body}</p>
+      )}
+    </article>
+  ))}
+</div>

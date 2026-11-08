@@ -1,0 +1,24 @@
+---
+// Resume and transcript previews plus social links, from src/data/profile.yaml.
+import DocumentCard from './DocumentCard.astro';
+import SocialIcons from './SocialIcons.astro';
+import { getProfile } from '../lib/content';
+
+const profile = await getProfile();
+---
+
+<div class="docs-row">
+  {profile.resume ? <DocumentCard href={profile.resume} title="Resume.pdf" subtitle="Download my resume." /> : null}
+  {profile.transcript ? (
+    <DocumentCard href={profile.transcript} title="Transcript.pdf" subtitle="Download my academic transcript." />
+  ) : null}
+  <div class="doc-card socials-card">
+    <div class="doc-text">
+      <div class="doc-title">Socials</div>
+      <div class="doc-subtitle">Email, GitHub and LinkedIn.</div>
+    </div>
+    <div class="icon-row" aria-label="Social links">
+      <SocialIcons />
+    </div>
+  </div>
+</div>

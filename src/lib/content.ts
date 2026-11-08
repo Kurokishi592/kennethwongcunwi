@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { getCollection, type CollectionEntry } from 'astro:content';
 
-type DataCollection = 'profile' | 'achievements' | 'experience' | 'education' | 'skills' | 'journey';
+type DataCollection = 'profile' | 'achievements' | 'experience' | 'education' | 'skills' | 'journey' | 'layout';
 
 /** Entries of a src/data/*.yaml file, in the order they appear in the file. */
 export async function getData<C extends DataCollection>(name: C) {

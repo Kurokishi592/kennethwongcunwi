@@ -1,0 +1,22 @@
+# Which sections each page shows, top to bottom.
+# Move a line to reorder, delete it (or put # in front) to hide that section.
+#
+#   section   one of: achievements, skills, projects, highlights, experience, education, documents
+#   title     (optional) the heading; leave it out for the default
+#   link      (optional) a page the heading links to, e.g. /projects/ or /about/#skills
+#
+# The landing page's top (photo, intro, tiles, 3D showcase) and the About page's header are fixed;
+# these lists are what comes after them.
+
+home:
+  - { section: achievements, link: /about/#achievements }
+  - { section: skills, link: /about/#skills }
+  - { section: projects, title: Featured projects, link: /projects/ }
+
+about:
+  - highlights
+  - skills
+  - achievements
+  - experience
+  - education
+  - documents

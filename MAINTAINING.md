@@ -28,8 +28,9 @@ git add -A && git commit -m "..." && git push    # publish
 
 | To change...                              | Edit                                  |
 | ----------------------------------------- | ------------------------------------- |
-| Name, one-liner, intro, links, About cards | `src/data/profile.yaml`              |
-| Award row on the landing page             | `src/data/achievements.yaml`          |
+| Name, one-liner, intro, links, About cards, About facts | `src/data/profile.yaml` |
+| Which sections the landing and About pages show, and their order | `src/data/layout.yaml` |
+| Awards (landing page and About)           | `src/data/achievements.yaml`          |
 | Jobs and roles (dropdowns)                | `src/data/experience.yaml`            |
 | Education                                 | `src/data/education.yaml`             |
 | Tech stack logos                          | `src/data/skills.yaml`                |
@@ -41,6 +42,15 @@ Each YAML file starts with notes explaining its fields. Two rules apply everywhe
 
 - A bullet that starts with `TODO` is never shown on the site. Use it for notes to yourself.
 - In YAML, wrap text in quotes if it contains a colon, e.g. `- "GPA: 4.88 / 5.00"`.
+
+## Page sections
+
+Below the 3D showcase (landing page) and the header (About page), each page is a list of sections
+in `src/data/layout.yaml`. Move a line to reorder, delete it to hide a section, add `title:` to
+rename one or `link:` to point its heading at another page.
+
+A new kind of section is one component in `src/components/` plus two lines: its name in `SECTIONS`
+in `src/components/Sections.astro`, and its default title in `src/lib/sections.ts`.
 
 ## Add a project
 

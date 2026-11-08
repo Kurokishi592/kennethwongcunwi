@@ -1,68 +1,62 @@
 ---
-// LinkedIn-style experience list from src/data/experience.yaml.
-// Each role title is a dropdown; opening it shows what was done in that role.
+// Experience timeline from src/data/experience.yaml: one stop per organisation on a vertical line,
+// each role a dropdown that opens to show what was done in it. Entries without `current: true` are
+// hidden until "ls -a" at the bottom is pressed.
 import OrgLogo from './OrgLogo.astro';
+import EraToggle from './EraToggle.astro';
 import { getData } from '../lib/content';
 
-type Props = {
-  /** Only entries marked `current: true`, without the older-entries filter (landing page). */
-  currentOnly?: boolean;
-};
-const { currentOnly = false } = Astro.props;
-
-const all = await getData('experience');
-const entries = currentOnly ? all.filter((e) => e.current) : all;
+const entries = await getData('experience');
+const older = entries.filter((e) => !e.current).length;
 ---
 
-<div class="li-timeline">
+<ol class="tl">
   {entries.map((e) => (
-    <article class="li-item" data-era={currentOnly || e.current ? 'current' : 'legacy'}>
-      <div class="li-head">
-        <OrgLogo src={e.logo} name={e.org} dark={e.logoDark} />
-        <div class="li-head-text">
-          <p class="li-title">{e.org}</p>
-          {e.location ? <p class="li-subtitle muted">{e.location}</p> : null}
-          <p class="li-dates muted">{e.dates}</p>
+    <li class:list={['tl-item', { 'is-current': e.current }]} data-era={e.current ? 'current' : 'legacy'}>
+      <OrgLogo src={e.logo} name={e.org} dark={e.logoDark} />
+      <div class="tl-body">
+        <p class="tl-dates mono">{e.dates}</p>
+        <h3 class="tl-org">{e.org}</h3>
+        {e.location ? <p class="tl-sub muted">{e.location}</p> : null}
+        {e.summary ? <p class="tl-summary muted">{e.summary}</p> : null}
+
+        <div class="role-list">
+          {e.roles.map((r) => {
+            const hasBody = r.points.length > 0 || r.tags.length > 0;
+            const head = (
+              <span class="role-head">
+                <span class="role-title">{r.title}</span>
+                {r.award ? <span class="role-award">{r.award}</span> : null}
+                {r.dates ? <span class="role-dates muted">{r.dates}</span> : null}
+              </span>
+            );
+            return hasBody ? (
+              <details class="role">
+                <summary>{head}</summary>
+                <div class="role-body">
+                  {r.points.length ? (
+                    <ul class="bullets">
+                      {r.points.map((p) => (
+                        <li>{p}</li>
+                      ))}
+                    </ul>
+                  ) : null}
+                  {r.tags.length ? (
+                    <div class="tag-row">
+                      {r.tags.map((t) => (
+                        <span class="tag">{t}</span>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </details>
+            ) : (
+              <div class="role role-static">{head}</div>
+            );
+          })}
         </div>
       </div>
-
-      {e.summary ? <p class="li-desc muted">{e.summary}</p> : null}
-
-      <div class="role-list">
-        {e.roles.map((r) => {
-          const hasBody = r.points.length > 0 || r.tags.length > 0;
-          const head = (
-            <span class="role-head">
-              <span class="role-title">{r.title}</span>
-              {r.award ? <span class="role-award">{r.award}</span> : null}
-              {r.dates ? <span class="role-dates muted">{r.dates}</span> : null}
-            </span>
-          );
-          return hasBody ? (
-            <details class="role">
-              <summary>{head}</summary>
-              <div class="role-body">
-                {r.points.length ? (
-                  <ul class="bullets">
-                    {r.points.map((p) => (
-                      <li>{p}</li>
-                    ))}
-                  </ul>
-                ) : null}
-                {r.tags.length ? (
-                  <div class="tag-row">
-                    {r.tags.map((t) => (
-                      <span class="tag">{t}</span>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            </details>
-          ) : (
-            <div class="role role-static">{head}</div>
-          );
-        })}
-      </div>
-    </article>
+    </li>
   ))}
-</div>
+</ol>
+<EraToggle count={older} />

@@ -1,15 +1,14 @@
 ---
 // About page. All the words live in src/data/*.yaml; this file only arranges them.
+// Header (photo, name, facts) and a sticky in-page nav, then the sections listed under `about:` in
+// src/data/layout.yaml.
 import BaseLayout from '../layouts/BaseLayout.astro';
-import SocialIcons from '../components/SocialIcons.astro';
-import DocumentCard from '../components/DocumentCard.astro';
-import ExperienceList from '../components/ExperienceList.astro';
-import EducationList from '../components/EducationList.astro';
-import SkillGrid from '../components/SkillGrid.astro';
-import Achievements from '../components/Achievements.astro';
+import Sections from '../components/Sections.astro';
 import { getProfile, thumb } from '../lib/content';
+import { getSections } from '../lib/sections';
 
 const profile = await getProfile();
+const sections = await getSections('about');
 ---
 
 <BaseLayout
@@ -18,168 +17,35 @@ const profile = await getProfile();
   canonicalPath="/about/"
   activeNav="whoami"
 >
-  <section class="hero whoami-hero">
-    <div class="container hero-grid">
-      <div class="whoami-hero-media">
-        <img src={thumb('/assets/images/profile-rs25.jpg')} alt={`Portrait of ${profile.name}`} fetchpriority="high" />
-        <div class="whoami-hero-overlay" aria-hidden="true"></div>
-        <div class="whoami-hero-text">
-          <h1 class="hero-title">Hi, I'm Kenneth.</h1>
-          <p class="hero-subtitle">{profile.headline}</p>
-        </div>
-      </div>
-
-      <div class="whoami-side">
-        <aside class="toc-card" aria-label="Contents">
-          <div class="toc-top">
-            <p class="toc-title">Contents</p>
-          </div>
-          <nav class="toc" aria-label="On this page">
-            <a href="#nutshell">A short intro</a>
-            <a href="#achievements">Achievements</a>
-            <a href="#work-experiences">Experience</a>
-            <a href="#education">Education</a>
-            <a href="#skills">Tech stack</a>
-            <a href="#links">Resume, transcript & socials</a>
-          </nav>
-        </aside>
-
-        <aside class="toc-card filter-card" aria-label="Filter">
-          <p class="filter-title">Filter</p>
-          <button
-            class="filter-btn filter-flag"
-            type="button"
-            data-era-toggle
-            aria-pressed="false"
-            aria-label="Show all older entries"
-            title="Show all older entries"
-          >
-            ls -a
-          </button>
-          <p class="filter-help muted">Show all older entries</p>
-        </aside>
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="nutshell">
-    <div class="container">
-      <div class="section-head">
-        <h2>A short intro</h2>
-      </div>
-      <div class="grid cards">
-        {profile.highlights.map((h) => (
-          <article class="card">
-            <div class="card-top">
-              <h3>{h.title}</h3>
-              {h.points.length ? (
-                <ul class="bullets">
-                  {h.points.map((b) => (
-                    <li>{b}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p class="muted">{h.body}</p>
-              )}
-            </div>
-          </article>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <section class="section" id="achievements">
-    <div class="container">
-      <div class="section-head">
-        <h2>Achievements</h2>
-      </div>
-      <Achievements />
-    </div>
-  </section>
-
-  <section class="section" id="work-experiences">
-    <div class="container">
-      <div class="section-head">
-        <h2>Experience</h2>
-        <p class="muted">Click a role to see what I did.</p>
-      </div>
-      <ExperienceList />
-    </div>
-  </section>
-
-  <section class="section" id="education">
-    <div class="container">
-      <div class="section-head">
-        <h2>Education</h2>
-      </div>
-      <EducationList />
-    </div>
-  </section>
-
-  <section class="section" id="skills">
-    <div class="container">
-      <div class="section-head">
-        <h2>Tech stack</h2>
-      </div>
-      <SkillGrid />
-    </div>
-  </section>
-
-  <section class="section" id="links">
-    <div class="container">
-      <div class="section-head">
-        <h2>Resume, transcript & socials</h2>
-      </div>
-      <div class="grid cards">
-        {profile.resume ? (
-          <article class="card">
-            <div class="card-top"><h3>Resume</h3></div>
-            <div class="doc-list">
-              <DocumentCard href={profile.resume} title="Resume.pdf" subtitle="Download my resume." />
-            </div>
-          </article>
+  <section class="about-hero">
+    <div class="container about-hero-grid">
+      <img class="about-photo" src={thumb('/assets/images/profile-rs25.jpg')} alt={`${profile.name} at RoboSub`} fetchpriority="high" />
+      <div class="about-hero-text">
+        <p class="hero-prompt mono muted">kenneth@home:~$ whoami</p>
+        <h1 class="hero-name">Hi, I'm Kenneth.</h1>
+        <p class="hero-headline">{profile.headline}</p>
+        <p class="hero-intro muted">{profile.intro}</p>
+        {profile.facts.length ? (
+          <dl class="facts">
+            {profile.facts.map((f) => (
+              <div class="fact">
+                <dt class="fact-value">{f.value}</dt>
+                <dd class="fact-label muted">{f.label}</dd>
+              </div>
+            ))}
+          </dl>
         ) : null}
-        {profile.transcript ? (
-          <article class="card">
-            <div class="card-top"><h3>Academic transcript</h3></div>
-            <div class="doc-list">
-              <DocumentCard href={profile.transcript} title="Transcript.pdf" subtitle="Download my academic transcript." />
-            </div>
-          </article>
-        ) : null}
-        <article class="card">
-          <div class="card-top">
-            <h3>Socials</h3>
-            <p class="muted">Email, GitHub and LinkedIn.</p>
-          </div>
-          <div class="icon-row" aria-label="Social links">
-            <SocialIcons />
-          </div>
-        </article>
       </div>
     </div>
   </section>
 
-  <script is:inline>
-    (() => {
-      const toggle = document.querySelector('[data-era-toggle]');
-      const help = document.querySelector('.filter-help');
-      if (!toggle) return;
+  <nav class="page-nav" aria-label="On this page">
+    <div class="container page-nav-row">
+      {sections.map((s) => (
+        <a href={`#${s.id}`}>{s.title}</a>
+      ))}
+    </div>
+  </nav>
 
-      const setLegacyVisible = (visible) => {
-        document.documentElement.classList.toggle('show-legacy', visible);
-        toggle.setAttribute('aria-pressed', String(visible));
-        toggle.classList.toggle('is-active', visible);
-        const label = visible ? 'Hide older entries' : 'Show all older entries';
-        toggle.setAttribute('aria-label', label);
-        toggle.setAttribute('title', label);
-        if (help) help.textContent = visible ? 'Showing older entries' : 'Show all older entries';
-      };
-
-      toggle.addEventListener('click', () => {
-        setLegacyVisible(!document.documentElement.classList.contains('show-legacy'));
-      });
-      setLegacyVisible(false);
-    })();
-  </script>
+  <Sections page="about" />
 </BaseLayout>

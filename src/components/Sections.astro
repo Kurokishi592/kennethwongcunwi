@@ -1,0 +1,46 @@
+---
+// Renders a page's sections in the order set in src/data/layout.yaml.
+// To add a new kind of section: make its component, add it to SECTIONS below, and give it a default
+// title in src/lib/sections.ts.
+import Achievements from './Achievements.astro';
+import SkillGrid from './SkillGrid.astro';
+import FeaturedProjects from './FeaturedProjects.astro';
+import Highlights from './Highlights.astro';
+import ExperienceList from './ExperienceList.astro';
+import EducationList from './EducationList.astro';
+import Documents from './Documents.astro';
+import { getSections } from '../lib/sections';
+
+const SECTIONS: Record<string, any> = {
+  achievements: Achievements,
+  skills: SkillGrid,
+  projects: FeaturedProjects,
+  highlights: Highlights,
+  experience: ExperienceList,
+  education: EducationList,
+  documents: Documents
+};
+
+type Props = { page: 'home' | 'about'; wide?: boolean };
+const { page, wide = false } = Astro.props;
+const sections = await getSections(page);
+---
+
+{sections.map((s) => {
+  const Body = SECTIONS[s.section];
+  return (
+    <section class="section reveal" id={s.id}>
+      <div class={wide ? 'container-wide' : 'container'}>
+        <div class="section-head section-head-row">
+          <h2>{s.title}</h2>
+          {s.link ? (
+            <a class="section-link mono" href={s.link}>
+              {s.linkLabel}{' '}<span aria-hidden="true">→</span>
+            </a>
+          ) : null}
+        </div>
+        <Body />
+      </div>
+    </section>
+  );
+})}

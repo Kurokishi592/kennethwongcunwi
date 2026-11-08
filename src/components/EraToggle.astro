@@ -1,0 +1,13 @@
+---
+// "ls -a" button under a timeline: shows or hides the entries without `current: true`.
+// Every toggle on the page flips the same switch (handled in public/main.js).
+type Props = { count: number };
+const { count } = Astro.props;
+---
+
+{count > 0 ? (
+  <button class="era-toggle" type="button" data-era-toggle aria-pressed="false" data-count={count}>
+    <span class="era-toggle-cmd mono">ls -a</span>
+    <span class="era-toggle-label">Show {count} earlier</span>
+  </button>
+) : null}

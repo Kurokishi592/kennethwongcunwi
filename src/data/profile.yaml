@@ -19,7 +19,15 @@ linkedin: https://www.linkedin.com/in/kwcw7/
 resume: /docs/resume.pdf
 transcript: /docs/transcript.pdf
 
+# About page header: a few facts shown as big numbers. value is the big part, label the line under it.
+# TODO(Kenneth): check these; add, change or delete freely (an empty list hides the row).
+facts:
+  - { value: 2×, label: RoboSub champion (2025 and 2026) }
+  - { value: "4.88", label: "GPA / 5.00, NUS Computer Engineering" }
+  - { value: 10+, label: years building robots }
+
 # About page, "A short intro" cards. Each card has a title and either `body` (a paragraph) or `points` (a list).
+# Add `style: steps` to a card with points to number them (01, 02, ...) instead of bullets.
 highlights:
   - title: What I do
     body: >-
@@ -30,6 +38,7 @@ highlights:
       - Robot foundation models for manipulation, and how touch (tactile sensing) can make them better at contact-rich tasks
       - Hardware acceleration in embedded systems, such as AI accelerators on SoCs
   - title: How I work
+    style: steps
     points:
       - Conceptualise solutions from the problem statement and first principles
       - Apply my research and knowledge in iterations

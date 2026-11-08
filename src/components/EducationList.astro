@@ -1,59 +1,64 @@
 ---
-// Education list from src/data/education.yaml.
+// Education timeline from src/data/education.yaml, same layout as the experience timeline.
+// `lines` (e.g. GPA) show as highlighted chips; `sections` as labelled lists or dropdowns.
 import OrgLogo from './OrgLogo.astro';
+import EraToggle from './EraToggle.astro';
 import { getData } from '../lib/content';
 
 const entries = await getData('education');
+const older = entries.filter((e) => !e.current).length;
 ---
 
-<div class="li-timeline">
+<ol class="tl">
   {entries.map((e) => (
-    <article class="li-item" data-era={e.current ? 'current' : 'legacy'}>
-      <div class="li-head">
-        <OrgLogo src={e.logo} name={e.org} dark={e.logoDark} />
-        <div class="li-head-text">
-          <p class="li-title">{e.org}</p>
-          <p class="li-subtitle muted">{e.degree}</p>
-          {e.detail ? <p class="li-subtitle muted">{e.detail}</p> : null}
-          <p class="li-dates muted">{e.dates}</p>
-        </div>
-      </div>
-
-      {e.lines.length ? (
-        <div class="li-lines">
-          {e.lines.map((l) => (
-            <p>{l}</p>
-          ))}
-        </div>
-      ) : null}
-
-      {e.sections.map((s) =>
-        s.collapsed ? (
-          <details class="role">
-            <summary>
-              <span class="role-head">
-                <span class="role-title">{s.label}</span>
-              </span>
-            </summary>
-            <div class="role-body">
-              <ul class="bullets">
-                {s.points.map((p) => (
-                  <li>{p}</li>
-                ))}
-              </ul>
-            </div>
-          </details>
-        ) : (
-          <div class="li-block">
-            <p class="li-label">{s.label}</p>
-            <ul class="bullets">
-              {s.points.map((p) => (
-                <li>{p}</li>
-              ))}
-            </ul>
+    <li class:list={['tl-item', { 'is-current': e.current }]} data-era={e.current ? 'current' : 'legacy'}>
+      <OrgLogo src={e.logo} name={e.org} dark={e.logoDark} />
+      <div class="tl-body">
+        <p class="tl-dates mono">{e.dates}</p>
+        <h3 class="tl-org">{e.org}</h3>
+        <p class="tl-sub">{e.degree}</p>
+        {e.detail ? <p class="tl-sub muted">{e.detail}</p> : null}
+        {e.lines.length ? (
+          <div class="tl-stats">
+            {e.lines.map((l) => (
+              <span class="tl-stat mono">{l}</span>
+            ))}
           </div>
-        )
-      )}
-    </article>
+        ) : null}
+
+        {e.sections.length ? (
+          <div class="role-list">
+            {e.sections.map((s) =>
+              s.collapsed ? (
+                <details class="role">
+                  <summary>
+                    <span class="role-head">
+                      <span class="role-title">{s.label}</span>
+                    </span>
+                  </summary>
+                  <div class="role-body">
+                    <ul class="bullets">
+                      {s.points.map((p) => (
+                        <li>{p}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </details>
+              ) : (
+                <div class="tl-block">
+                  <p class="tl-label">{s.label}</p>
+                  <ul class="bullets">
+                    {s.points.map((p) => (
+                      <li>{p}</li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            )}
+          </div>
+        ) : null}
+      </div>
+    </li>
   ))}
-</div>
+</ol>
+<EraToggle count={older} />
