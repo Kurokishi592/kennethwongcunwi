@@ -1,15 +1,14 @@
 ---
 // Landing-page showcase: one wide 3D stage with every model from src/data/journey.yaml lined up in
-// timeline order, newest first. The active model sits in front in full colour; the others wait in the
-// background, smaller and greyed out. It advances on its own, back in time; the timeline underneath
-// (now back to the first year, one stop per model) can be dragged or clicked, and the arrows on the
-// stage step through the models.
+// timeline order. The active model sits in front in full colour; the others wait in the background,
+// smaller and greyed out. It opens on the newest model (the handle at "now") and steps back in time on
+// its own; the timeline underneath (2013 to now, one stop per model) can be dragged or clicked, and the
+// arrows on the stage step through the models.
 import { getData, getProjects } from '../lib/content';
 
 const projects = await getProjects();
 const bySlug = new Map(projects.map((p) => [p.slug, p]));
-// journey.yaml lists the models oldest first; the showcase opens on the newest.
-const models = (await getData('journey')).reverse().map((m) => {
+const models = (await getData('journey')).map((m) => {
   const project = m.project ? bySlug.get(m.project) : undefined;
   return {
     ...m,
@@ -21,13 +20,14 @@ const models = (await getData('journey')).reverse().map((m) => {
 });
 const yearOf = (date?: string) => date?.match(/\d{4}/)?.[0] ?? '';
 const last = Math.max(1, models.length - 1);
+const start = models.length - 1; // open on the newest model
 const pad = (n: number) => String(n).padStart(2, '0');
 ---
 
 <div class="showcase" data-showcase data-models={JSON.stringify(models)}>
   <div class="sc-viewport">
     <canvas aria-label="3D models of my projects. Drag to rotate."></canvas>
-    <p class="wb-hud wb-hud-label mono" data-sc-count>{pad(1)} / {pad(models.length)}</p>
+    <p class="wb-hud wb-hud-label mono" data-sc-count>{pad(start + 1)} / {pad(models.length)}</p>
     <!-- Only for models with `explode: true`: the boards (hover or tap one to isolate it) and the slider. -->
     <ul class="wb-parts" data-sc-parts aria-label="Boards (hover or tap to isolate)" hidden></ul>
     <label class="wb-explode" data-sc-explode hidden>
@@ -41,7 +41,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   </div>
 
   <div class="sc-scrub">
-    <span class="sc-end mono">now</span>
+    <span class="sc-end mono">{yearOf(models[0]?.date)}</span>
     <div
       class="sc-track"
       role="slider"
@@ -49,26 +49,26 @@ const pad = (n: number) => String(n).padStart(2, '0');
       aria-label="Timeline: choose a model"
       aria-valuemin="1"
       aria-valuemax={models.length}
-      aria-valuenow="1"
-      aria-valuetext={models[0]?.label}
+      aria-valuenow={start + 1}
+      aria-valuetext={models[start]?.label}
       data-sc-track
     >
       <span class="sc-rail"><span class="sc-fill" data-sc-fill></span></span>
       {models.map((m, i) => (
-        <span class:list={['sc-stop', { 'is-past': i === 0, 'is-start': i === 0, 'is-end': i === models.length - 1 }]} style={`--x:${i / last}`} data-sc-stop={i}>
+        <span class:list={['sc-stop', { 'is-past': i <= start, 'is-start': i === 0, 'is-end': i === models.length - 1 }]} style={`--x:${i / last}`} data-sc-stop={i}>
           <span class="sc-stop-tip">{m.label}</span>
         </span>
       ))}
-      <span class="sc-thumb" style="--x:0" data-sc-thumb>
-        <span class="sc-thumb-year mono" data-sc-year>{yearOf(models[0]?.date)}</span>
+      <span class="sc-thumb" style={`--x:${start / last}`} data-sc-thumb>
+        <span class="sc-thumb-year mono" data-sc-year>{start > 0 ? yearOf(models[start]?.date) : ''}</span>
       </span>
     </div>
-    <span class="sc-end mono">{yearOf(models[models.length - 1]?.date)}</span>
+    <span class="sc-end mono">now</span>
   </div>
 
   <div class="sc-details">
     {models.map((m, i) => (
-      <div class="sc-panel" data-sc-panel={i} hidden={i !== 0}>
+      <div class="sc-panel" data-sc-panel={i} hidden={i !== start}>
         {m.date ? <p class="sc-date mono">{m.date}</p> : null}
         <h2 class="sc-title">{m.label}</h2>
         {m.text ? <p class="muted">{m.text}</p> : null}
@@ -107,7 +107,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     const partsEl = root.querySelector<HTMLElement>('[data-sc-parts]')!;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    let active = 0;
+    let active = specs.length - 1; // the newest model
     let engine: Awaited<ReturnType<typeof createEngine>> | null = null;
     let visible = false;
     let elapsed = 0; // ms spent on the current model
@@ -152,8 +152,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
       const spec = specs[active];
       stops.forEach((s, k) => s.classList.toggle('is-past', k <= active));
       thumb.style.setProperty('--x', String(active / lastIndex));
-      // The oldest stop sits next to the end label, which already shows its year.
-      yearEl.textContent = active === specs.length - 1 ? '' : spec.date?.match(/\d{4}/)?.[0] ?? '';
+      // The first stop sits next to the start label, which already shows its year.
+      yearEl.textContent = active === 0 ? '' : spec.date?.match(/\d{4}/)?.[0] ?? '';
       track.setAttribute('aria-valuenow', String(active + 1));
       track.setAttribute('aria-valuetext', spec.label);
       countEl.textContent = `${pad(active + 1)} / ${pad(specs.length)}`;
@@ -215,11 +215,11 @@ const pad = (n: number) => String(n).padStart(2, '0');
       const running = visible && engine && !reduceMotion && !hovering && now > pausedUntil;
       if (running) {
         elapsed += dt;
-        if (elapsed >= ADVANCE_MS) select(active + 1);
+        if (elapsed >= ADVANCE_MS) select(active - 1); // back in time; from 2013 it wraps to now
       }
-      // The filled part of the line creeps towards the next stop while a model is shown.
-      const p = active < specs.length - 1 ? Math.min(1, elapsed / ADVANCE_MS) : 0;
-      fill.style.setProperty('--x', String(scrubX ?? (active + p) / lastIndex));
+      // The filled part of the line shrinks towards the previous stop while a model is shown.
+      const p = active > 0 ? Math.min(1, elapsed / ADVANCE_MS) : 0;
+      fill.style.setProperty('--x', String(scrubX ?? (active - p) / lastIndex));
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -230,7 +230,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
         engine?.setVisible(visible);
         if (visible && !engine) {
           try {
-            engine = await createEngine(canvas, specs, (i) => {
+            engine = await createEngine(canvas, specs, active, (i) => {
               if (i === active) renderParts();
             });
             engine.setVisible(true);
@@ -247,7 +247,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     io.observe(root);
   }
 
-  async function createEngine(canvas: HTMLCanvasElement, specs: ModelSpec[], onLoaded: (i: number) => void) {
+  async function createEngine(canvas: HTMLCanvasElement, specs: ModelSpec[], first: number, onLoaded: (i: number) => void) {
     const THREE = await import('three');
     const { GLTFLoader } = await import('three/examples/jsm/loaders/GLTFLoader.js');
     const { MeshoptDecoder } = await import('three/examples/jsm/libs/meshopt_decoder.module.js');
@@ -365,7 +365,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     const slots: (Slot | null)[] = specs.map(() => null);
     const loader = new GLTFLoader();
     loader.setMeshoptDecoder(MeshoptDecoder);
-    let activeIndex = 0;
+    let activeIndex = first;
 
     async function load(i: number) {
       const spec = specs[i];
@@ -487,7 +487,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
       onLoaded(i);
     }
 
-    let camX = 0;
+    let camX = first * SPACING;
     let lookY = 0;
     let spinAngle = 0;
     let explodeTarget = 0;
@@ -586,10 +586,12 @@ const pad = (n: number) => String(n).padStart(2, '0');
     };
     requestAnimationFrame(frame);
 
-    // The first model loads straight away, the rest one by one behind it.
-    await load(0);
+    // The opening model loads straight away, the rest one by one behind it, nearest first.
+    await load(first);
     (async () => {
-      for (let i = 1; i < specs.length; i++) {
+      const rest = specs.map((_, i) => i).filter((i) => i !== first);
+      rest.sort((a, b) => Math.abs(a - first) - Math.abs(b - first));
+      for (const i of rest) {
         try {
           await load(i);
         } catch (err) {
