@@ -38,7 +38,7 @@
   explode: true
 
 - src: /models/auv5.glb
-  label: AUV 5.0, RoboSub 2026 champions (model by NUS Bumblebee)
+  label: AUV 5.0, RoboSub 2026 champions
   project: full-electrical-stack-auv5
   # From experience.yaml (AUV Lead). TODO(Kenneth): reword if you like
   text: Development lead for AUV 5.0, Bumblebee's newest AUV, which won RoboSub 2026.
