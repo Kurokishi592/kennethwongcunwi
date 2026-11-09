@@ -21,7 +21,7 @@ Search the repo for `TODO(Kenneth)` to find every placeholder in the data files.
 - [x] `MAINTAINING.md`
 
 ## Before merging to main
-- [ ] **Get company clearance for the Kinova/GR00T material.** The rig photo and video are in `public/assets/embodied-ai/`, which is git-ignored so they can't be pushed by accident. Once cleared, delete that line from `.gitignore` and commit them. (The video shows a colleague at the back.)
+- [ ] **Get company clearance for the Kinova/GR00T run video.** `public/assets/embodied-ai/kinova-run.mp4` and its poster frame are git-ignored so they can't be pushed by accident (the rig photo is published). Once cleared, delete the `kinova-run*` line from `.gitignore` and commit them. (The video shows a colleague at the back.)
 - [ ] Look through the branch with `npm run dev`
 - [ ] Check Cloudflare's build command is `npm run build` (not `astro build`), so image previews get made
 - [ ] Merge `redesign` into `main` and push

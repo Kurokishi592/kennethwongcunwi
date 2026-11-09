@@ -29,5 +29,5 @@ raw-assets/
 # Generated image previews (npm run images)
 public/thumbs/
 
-# Kinova/GR00T photo + video: not cleared for publishing yet (see TODO.md)
-public/assets/embodied-ai/
+# Kinova/GR00T run video and its poster frame: not cleared for publishing (see TODO.md)
+public/assets/embodied-ai/kinova-run*
