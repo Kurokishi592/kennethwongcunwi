@@ -26,7 +26,12 @@ const pad = (n: number) => String(n).padStart(2, '0');
   <div class="sc-viewport">
     <canvas aria-label="3D models of my projects. Drag to rotate."></canvas>
     <p class="wb-hud wb-hud-label mono" data-sc-count>{pad(1)} / {pad(models.length)}</p>
-    <p class="wb-hud wb-hud-stats mono" data-sc-stats></p>
+    <!-- Only for models with `explode: true`: the boards (hover or tap one to isolate it) and the slider. -->
+    <ul class="wb-parts" data-sc-parts aria-label="Boards (hover or tap to isolate)" hidden></ul>
+    <label class="wb-explode" data-sc-explode hidden>
+      <span class="mono">explode</span>
+      <input type="range" min="0" max="100" value="0" />
+    </label>
     <p class="wb-hud wb-hud-hint mono">drag to rotate</p>
     <button class="sc-step sc-prev" type="button" data-sc-step="-1" aria-label="Previous model">‹</button>
     <button class="sc-step sc-next" type="button" data-sc-step="1" aria-label="Next model">›</button>
@@ -72,13 +77,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
         ) : null}
       </div>
     ))}
-    <div class="wb-tools">
-      <label class="wb-explode" data-sc-explode hidden>
-        <span class="mono">explode</span>
-        <input type="range" min="0" max="100" value="0" />
-      </label>
-      <ul class="wb-parts" data-sc-parts aria-label="Parts (hover to isolate)"></ul>
-    </div>
   </div>
 </div>
 
@@ -101,7 +99,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
     const stops = Array.from(root.querySelectorAll<HTMLElement>('[data-sc-stop]'));
     const panels = Array.from(root.querySelectorAll<HTMLElement>('[data-sc-panel]'));
     const countEl = root.querySelector<HTMLElement>('[data-sc-count]')!;
-    const statsEl = root.querySelector<HTMLElement>('[data-sc-stats]')!;
     const statusEl = root.querySelector<HTMLElement>('[data-sc-status]')!;
     const explodeEl = root.querySelector<HTMLElement>('[data-sc-explode]')!;
     const slider = explodeEl.querySelector('input')!;
@@ -117,23 +114,31 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
     const pause = () => (pausedUntil = performance.now() + RESUME_MS);
 
+    // Board buttons, only for exploding models. Hover shows a board on its own; a tap or click keeps
+    // it that way until tapped again (phones have no hover).
+    let pinned: string | null = null;
     const renderParts = () => {
       partsEl.replaceChildren();
-      for (const name of engine?.partNames(active) ?? []) {
+      pinned = null;
+      const names = specs[active].explode ? engine?.partNames(active) ?? [] : [];
+      partsEl.hidden = names.length === 0;
+      for (const name of names) {
         const li = document.createElement('li');
         const b = document.createElement('button');
         b.type = 'button';
         b.textContent = name;
-        const on = () => (pause(), engine?.highlight(name));
-        const off = () => engine?.highlight(null);
-        b.addEventListener('mouseenter', on);
-        b.addEventListener('focus', on);
-        b.addEventListener('mouseleave', off);
-        b.addEventListener('blur', off);
+        b.setAttribute('aria-pressed', 'false');
+        b.addEventListener('mouseenter', () => (pause(), engine?.highlight(name)));
+        b.addEventListener('mouseleave', () => engine?.highlight(pinned));
+        b.addEventListener('click', () => {
+          pause();
+          pinned = pinned === name ? null : name;
+          partsEl.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x.textContent === pinned)));
+          engine?.highlight(pinned);
+        });
         li.append(b);
         partsEl.append(li);
       }
-      statsEl.textContent = engine?.stats(active) ?? '';
     };
 
     const lastIndex = Math.max(1, specs.length - 1);
@@ -161,26 +166,31 @@ const pad = (n: number) => String(n).padStart(2, '0');
       b.addEventListener('click', () => (select(active + Number(b.dataset.scStep)), pause()))
     );
 
-    // The timeline is a slider: press or drag anywhere along it to scrub through the models.
-    const stopAt = (clientX: number) => {
+    // The timeline is a slider: press or drag anywhere along it. While dragging, the handle follows the
+    // pointer and the nearest model is shown; on release the handle snaps onto that model's stop.
+    let scrubX: number | null = null; // handle position (0..1) while dragging
+    const scrubTo = (clientX: number) => {
       const r = track.getBoundingClientRect();
-      return Math.round(Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * lastIndex);
+      scrubX = Math.min(1, Math.max(0, (clientX - r.left) / r.width));
+      const i = Math.round(scrubX * lastIndex);
+      if (i !== active) select(i);
+      thumb.style.setProperty('--x', String(scrubX));
+      fill.style.setProperty('--x', String(scrubX));
+      pause();
     };
-    let scrubbing = false;
     track.addEventListener('pointerdown', (e) => {
-      scrubbing = true;
+      e.preventDefault(); // no text selection or native drag
       track.setPointerCapture(e.pointerId);
       track.classList.add('is-scrubbing');
-      select(stopAt(e.clientX));
-      pause();
+      scrubTo(e.clientX);
     });
-    track.addEventListener('pointermove', (e) => {
-      if (!scrubbing) return;
-      const i = stopAt(e.clientX);
-      if (i !== active) select(i);
-      pause();
-    });
-    const endScrub = () => ((scrubbing = false), track.classList.remove('is-scrubbing'));
+    track.addEventListener('pointermove', (e) => scrubX !== null && scrubTo(e.clientX));
+    const endScrub = () => {
+      if (scrubX === null) return;
+      scrubX = null;
+      track.classList.remove('is-scrubbing');
+      thumb.style.setProperty('--x', String(active / lastIndex));
+    };
     track.addEventListener('pointerup', endScrub);
     track.addEventListener('pointercancel', endScrub);
     track.addEventListener('keydown', (e) => {
@@ -207,7 +217,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
       }
       // The filled part of the line creeps towards the next stop while a model is shown.
       const p = active < specs.length - 1 ? Math.min(1, elapsed / ADVANCE_MS) : 0;
-      fill.style.setProperty('--x', String((active + p) / lastIndex));
+      fill.style.setProperty('--x', String(scrubX ?? (active + p) / lastIndex));
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -342,7 +352,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
       spinner: Object3D; // turns about the model's centre
       parts: Part[];
       names: string[];
-      triangles: number;
       grow: number; // radius of the fully exploded model, relative to assembled
       height: number; // model height (radius = 1)
       lift: number; // how far the centre rises when fully exploded
@@ -360,7 +369,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
       const spec = specs[i];
       const gltf = await loader.loadAsync(spec.src);
       const model = gltf.scene;
-      let triangles = 0;
       model.traverse((o: Object3D) => {
         const mesh = o as Mesh;
         if (!mesh.isMesh) return;
@@ -369,7 +377,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
         // Own material per mesh so models and parts can be greyed out independently.
         mesh.material = (mesh.material as Material).clone();
         (mesh.material as Material).userData.color = (mesh.material as Material).color.clone();
-        triangles += mesh.geometry.getAttribute('position').count / 3;
       });
 
       // Centre the model and scale it to radius 1.
@@ -467,7 +474,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
         spinner,
         parts,
         names: names.map((n) => (count(n) > 1 ? `${n} ×${count(n)}` : n)),
-        triangles,
         grow,
         height: size.y / radius,
         lift,
@@ -604,10 +610,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
         highlighted = label === null ? null : label.replace(/ ×\d+$/, '');
       },
       partNames: (i: number) => slots[i]?.names ?? [],
-      stats: (i: number) => {
-        const s = slots[i];
-        return s ? `${Math.round(s.triangles / 1000)}k tris · ${s.names.length} parts` : '';
-      },
       setVisible(v: boolean) {
         visible = v;
       }

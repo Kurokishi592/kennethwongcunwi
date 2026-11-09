@@ -99,8 +99,8 @@ To link it from a model in the landing-page showcase, set that model's `project:
 
 The landing page's showcase lines up every model from `journey.yaml` in one 3D scene, in timeline
 order. It moves to the next model every few seconds; visitors can drag along the timeline (first
-year to now) or use the arrows, drag to rotate, pull the explode slider (where enabled) and hover a
-part name to isolate it. Under the timeline is the current model's description: its `text:`, or the
+year to now) or use the arrows, and drag to rotate. Models with `explode: true` also get an explode
+slider and a row of board buttons on the stage (hover or tap one to show it on its own). Under the timeline is the current model's description: its `text:`, or the
 subtitle of its `project:`. To add or replace a model:
 
 1. In SOLIDWORKS: File → Save As → `.glb`. Save it in `raw-assets/` (not uploaded; files there are
