@@ -1,13 +1,15 @@
 ---
 // Landing-page showcase: one wide 3D stage with every model from src/data/journey.yaml lined up in
-// timeline order. The active model sits in front in full colour; the others wait in the background,
-// smaller and greyed out. It advances on its own; the timeline underneath (2013 to now, one stop per
-// model) can be dragged or clicked, and the arrows on the stage step through the models.
+// timeline order, newest first. The active model sits in front in full colour; the others wait in the
+// background, smaller and greyed out. It advances on its own, back in time; the timeline underneath
+// (now back to the first year, one stop per model) can be dragged or clicked, and the arrows on the
+// stage step through the models.
 import { getData, getProjects } from '../lib/content';
 
 const projects = await getProjects();
 const bySlug = new Map(projects.map((p) => [p.slug, p]));
-const models = (await getData('journey')).map((m) => {
+// journey.yaml lists the models oldest first; the showcase opens on the newest.
+const models = (await getData('journey')).reverse().map((m) => {
   const project = m.project ? bySlug.get(m.project) : undefined;
   return {
     ...m,
@@ -39,7 +41,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   </div>
 
   <div class="sc-scrub">
-    <span class="sc-end mono">{yearOf(models[0]?.date)}</span>
+    <span class="sc-end mono">now</span>
     <div
       class="sc-track"
       role="slider"
@@ -58,10 +60,10 @@ const pad = (n: number) => String(n).padStart(2, '0');
         </span>
       ))}
       <span class="sc-thumb" style="--x:0" data-sc-thumb>
-        <span class="sc-thumb-year mono" data-sc-year></span>
+        <span class="sc-thumb-year mono" data-sc-year>{yearOf(models[0]?.date)}</span>
       </span>
     </div>
-    <span class="sc-end mono">now</span>
+    <span class="sc-end mono">{yearOf(models[models.length - 1]?.date)}</span>
   </div>
 
   <div class="sc-details">
@@ -150,8 +152,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
       const spec = specs[active];
       stops.forEach((s, k) => s.classList.toggle('is-past', k <= active));
       thumb.style.setProperty('--x', String(active / lastIndex));
-      // The first stop sits next to the start label, which already shows its year.
-      yearEl.textContent = active === 0 ? '' : spec.date?.match(/\d{4}/)?.[0] ?? '';
+      // The oldest stop sits next to the end label, which already shows its year.
+      yearEl.textContent = active === specs.length - 1 ? '' : spec.date?.match(/\d{4}/)?.[0] ?? '';
       track.setAttribute('aria-valuenow', String(active + 1));
       track.setAttribute('aria-valuetext', spec.label);
       countEl.textContent = `${pad(active + 1)} / ${pad(specs.length)}`;

@@ -97,9 +97,9 @@ To link it from a model in the landing-page showcase, set that model's `project:
 
 ## 3D models
 
-The landing page's showcase lines up every model from `journey.yaml` in one 3D scene, in timeline
-order. It moves to the next model every few seconds; visitors can drag along the timeline (first
-year to now) or use the arrows, and drag to rotate. Models with `explode: true` also get an explode
+The landing page's showcase lines up every model from `journey.yaml` in one 3D scene, newest
+first. It moves back to the next older model every few seconds; visitors can drag along the
+timeline (now back to the first year) or use the arrows, and drag to rotate. Models with `explode: true` also get an explode
 slider and a row of board buttons on the stage (hover or tap one to show it on its own). Under the timeline is the current model's description: its `text:`, or the
 subtitle of its `project:`. To add or replace a model:
 

@@ -1,5 +1,6 @@
-# The 3D showcase on the landing page, oldest first. All models stand in one row in this order; the
-# timeline under the viewer runs from the first model's year to "now", one stop per model.
+# The 3D showcase on the landing page. List the models oldest first; the showcase shows them newest
+# first, in one row, and the timeline under the viewer runs from "now" back to the first model's year,
+# one stop per model.
 #
 #   src            3D model (.glb in public/models/)
 #   label          name shown under the timeline
